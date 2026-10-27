@@ -1,0 +1,63 @@
+{
+  "orvane": "0.1",
+  "monde": "sv-1",
+  "instantane": 42,
+  "source": {
+    "jeu": "stone-valley",
+    "compte": "h:9f3a1c…",
+    "zone": "ile:884120"
+  },
+  "periode": {
+    "debut": "2026-10-27T03:00:00Z",
+    "fin": "2026-10-28T03:00:00Z"
+  },
+  "evenements": [
+    {
+      "taxon": "crapaud-buffle",
+      "biome": "marais-tempere",
+      "action": "rencontre",
+      "n": 31
+    },
+    {
+      "taxon": "crapaud-buffle",
+      "phenotype": "base",
+      "biome": "marais-tempere",
+      "action": "prelevement",
+      "n": 14,
+      "age": "adulte"
+    },
+    {
+      "taxon": "crapaud-buffle",
+      "phenotype": "cracheur",
+      "biome": "marais-tempere",
+      "action": "prelevement",
+      "n": 1
+    },
+    {
+      "taxon": "crapaud-buffle",
+      "phenotype": "geant",
+      "biome": "marais-tempere",
+      "action": "capture",
+      "n": 1
+    },
+    {
+      "taxon": "crapaud-buffle",
+      "biome": "marais-tempere",
+      "action": "nourrissage",
+      "n": 3
+    },
+    {
+      "taxon": "crapaud-buffle",
+      "biome": "marais-tempere",
+      "action": "deplacement",
+      "n": 2,
+      "vers": "prairie-humide"
+    },
+    {
+      "taxon": "crapaud-buffle",
+      "biome": "marais-tempere",
+      "action": "habitat_perdu",
+      "n": 1
+    }
+  ]
+}

@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orvane/schemas/profil.schema.json",
+  "title": "Orvane — profil d'un jeu (réglage du tampon)",
+  "description": "Un fichier par jeu, donc par monde. Il règle le tampon dans les deux sens : comment Orvane est exposé au jeu, et comment les actes des joueurs pèsent sur Orvane. Rien ici ne touche à la biologie elle-même.",
+  "type": "object",
+  "required": [
+    "orvane",
+    "jeu",
+    "monde",
+    "exposition",
+    "influence"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "orvane": {
+      "type": "string"
+    },
+    "jeu": {
+      "type": "string"
+    },
+    "monde": {
+      "type": "object",
+      "required": [
+        "id",
+        "graine",
+        "cycle"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "graine": {
+          "type": "integer"
+        },
+        "cycle": {
+          "type": "string",
+          "description": "Durée réelle d'un cycle : « 24h », « 6h », « 7d ». Le moteur tourne une fois par cycle."
+        },
+        "biomes": {
+          "type": "string",
+          "description": "Chemin du fichier décrivant les biomes du monde (axes, capacités, voisins) ; sinon les biomes par défaut d'Orvane."
+        },
+        "amorce": {
+          "type": "string",
+          "description": "Chemin d'un instantané de départ (génération 0) si le jeu part d'un bestiaire existant."
+        }
+      }
+    },
+    "exposition": {
+      "type": "object",
+      "description": "Sens Orvane → jeu.",
+      "required": [
+        "compression",
+        "propagation_cycles"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "compression": {
+          "type": "object",
+          "required": [
+            "defaut"
+          ],
+          "additionalProperties": false,
+          "description": "Facteur k appliqué à la COTE d’un phénotype (f/(1−f)) avant exposition : avec k = 0,1, 20 % dans Orvane devient 2,4 % dans le jeu, mais 99 % reste 91 % (une variante devenue majoritaire l’est aussi dans le jeu). Le phénotype de base absorbe le reste.",
+          "properties": {
+            "defaut": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "par_domaine": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "par_trait": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "par_biome": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        },
+        "propagation_cycles": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Un changement de fréquence dans Orvane est étalé sur autant de cycles côté jeu (interpolation linéaire entre instantanés)."
+        },
+        "inertie_max": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Variation maximale d'une fréquence exposée par cycle (0.05 = 5 points)."
+        },
+        "traits_rendus": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Traits que le jeu sait représenter. Les autres sont masqués : leurs phénotypes sont fusionnés avec le phénotype de base à l'exposition (ils continuent d'évoluer dans Orvane)."
+        },
+        "seuil_extinction_jeu": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Effectif Orvane sous lequel le jeu cesse de faire apparaître le taxon (avant l'extinction réelle)."
+        },
+        "retour_apres_extinction": {
+          "type": "boolean",
+          "description": "Un taxon éteint peut-il revenir par recolonisation d'un biome voisin ?"
+        }
+      }
+    },
+    "influence": {
+      "type": "object",
+      "description": "Sens jeu → Orvane.",
+      "required": [
+        "poids",
+        "plafonds"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "poids": {
+          "type": "object",
+          "description": "Poids d'une unité de chaque action, après dénormalisation, en individus équivalents retirés : 1 prélèvement = 1 ; négatif = favorable à la population (libération, nourrissage, habitat gagné).",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "denormaliser": {
+          "type": "boolean",
+          "description": "Rapporter les comptes à la fréquence exposée (une variante montrée à 2 % mais réelle à 20 % voit ses pertes multipliées par 10). Recommandé : true."
+        },
+        "exposition_ref": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Nombre de rencontres par compte et par cycle considéré comme activité normale ; au-delà, la pression d'un compte est ramenée à ce niveau."
+        },
+        "plafonds": {
+          "type": "object",
+          "required": [
+            "par_compte_cycle",
+            "part_max_compte"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "par_compte_cycle": {
+              "type": "number",
+              "description": "Pression maximale qu'un seul compte peut exercer sur un taxon par cycle (en individus équivalents)."
+            },
+            "part_max_compte": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Part maximale de la pression totale d'un taxon venant d'un seul compte."
+            },
+            "part_max_population": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Part maximale d'une population qu'un cycle de pressions peut retirer (empêche une extinction en un cycle)."
+            }
+          }
+        },
+        "memoire_cycles": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Les pressions sont lissées sur autant de cycles (une chasse ponctuelle pèse peu, une chasse soutenue pèse)."
+        },
+        "pseudo_comptes": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Lissage de la dénormalisation : autant de prélèvements fictifs répartis selon les fréquences exposées sont ajoutés aux comptes observés, pour qu’une seule bête rare tuée ne vaille pas une persécution (20 par défaut)."
+        }
+      }
+    }
+  }
+}

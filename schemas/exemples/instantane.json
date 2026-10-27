@@ -1,0 +1,266 @@
+{
+ "orvane": "0.1",
+ "monde": {
+  "id": "sv-1",
+  "graine": 7340021,
+  "nom": "Monde de Stone Valley"
+ },
+ "cycle": {
+  "n": 42,
+  "date": "2026-10-27T03:00:00Z",
+  "pressions_recues": 318
+ },
+ "biomes": [
+  {
+   "id": "marais-tempere",
+   "nom": "Marais tempéré",
+   "milieu": "amphibie",
+   "axes": {
+    "temperature": 0.5,
+    "humidite": 0.95,
+    "altitude": 0.1,
+    "lumiere": 0.6,
+    "couvert": 0.5
+   },
+   "capacite": 3600,
+   "voisins": [
+    "prairie-humide"
+   ]
+  },
+  {
+   "id": "prairie-humide",
+   "nom": "Prairie humide",
+   "milieu": "terrestre",
+   "axes": {
+    "temperature": 0.55,
+    "humidite": 0.7,
+    "altitude": 0.2,
+    "lumiere": 0.9,
+    "couvert": 0.3
+   },
+   "capacite": 1200,
+   "voisins": [
+    "marais-tempere"
+   ]
+  }
+ ],
+ "catalogue": {
+  "version": "0.1",
+  "traits": {
+   "glande-irritante": {
+    "domaine": "offense",
+    "organe": "glande parotoïde hypertrophiée",
+    "cout": 0.08,
+    "effet": "sécrète une substance irritante sur la peau",
+    "fournit": [
+     "secretion-irritante"
+    ]
+   },
+   "jet-glandulaire": {
+    "domaine": "offense",
+    "organe": "canal éjecteur sous la glande",
+    "cout": 0.07,
+    "effet": "projette la sécrétion à 3 longueurs de corps",
+    "comportement": "embuscade ; riposte à distance avant la fuite",
+    "exige": [
+     "glande-irritante"
+    ],
+    "ecarts": {
+     "temperament": 1.6
+    }
+   },
+   "gigantisme": {
+    "domaine": "morphologie",
+    "organe": "squelette et masse musculaire",
+    "cout": 0.25,
+    "effet": "masse ×1.8, taille ×1.3, vitesse ×0.8, maturité ×1.4",
+    "exclut": [
+     "nanisme"
+    ],
+    "ecarts": {
+     "masse_kg": 1.8,
+     "taille_m": 1.3,
+     "vitesse_rel": 0.8,
+     "maturite": 1.4,
+     "longevite": 1.15
+    }
+   },
+   "peau-epaisse": {
+    "domaine": "defense",
+    "organe": "derme kératinisé",
+    "cout": 0.05,
+    "effet": "résiste aux morsures et aux chocs légers",
+    "fournit": [
+     "cuir-de-crapaud"
+    ]
+   }
+  }
+ },
+ "taxons": [
+  {
+   "id": "crapaud-buffle",
+   "nom": "Crapaud buffle",
+   "parent": null,
+   "apparu": 0,
+   "eteint": null,
+   "statut": "declin",
+   "plan": {
+    "masse_kg": 2.4,
+    "taille_m": 0.32,
+    "locomotion": [
+     "saut",
+     "nage",
+     "marche"
+    ],
+    "regime": "carnivore",
+    "longevite": 60,
+    "maturite": 8,
+    "portee": 40,
+    "sociabilite": 0.2,
+    "temperament": 0.35,
+    "activite": "nocturne",
+    "vitesse_rel": 6,
+    "perception": 0.5,
+    "niche": {
+     "temperature": 0.5,
+     "humidite": 0.95,
+     "altitude": 0.1,
+     "lumiere": 0.6,
+     "couvert": 0.5
+    },
+    "tolerance": 0.4
+   },
+   "populations": [
+    {
+     "biome": "marais-tempere",
+     "effectif": 1140,
+     "tendance": -0.09,
+     "pression": 0.62,
+     "depuis": 0
+    },
+    {
+     "biome": "prairie-humide",
+     "effectif": 210,
+     "tendance": 0.03,
+     "pression": 0.1,
+     "depuis": 30
+    }
+   ],
+   "phenotypes": [
+    {
+     "id": "base",
+     "frequence": 0.72,
+     "traits": [],
+     "cout_total": 0,
+     "selection": -0.02
+    },
+    {
+     "id": "cracheur",
+     "frequence": 0.2,
+     "frequence_par_biome": {
+      "marais-tempere": 0.23,
+      "prairie-humide": 0.04
+     },
+     "traits": [
+      "glande-irritante",
+      "jet-glandulaire"
+     ],
+     "cout_total": 0.15,
+     "ecarts": {
+      "temperament": 1.6
+     },
+     "selection": 0.04
+    },
+    {
+     "id": "cuirasse",
+     "frequence": 0.06,
+     "traits": [
+      "peau-epaisse"
+     ],
+     "cout_total": 0.05,
+     "selection": 0.01
+    },
+    {
+     "id": "geant",
+     "frequence": 0.02,
+     "traits": [
+      "gigantisme",
+      "peau-epaisse"
+     ],
+     "cout_total": 0.3,
+     "ecarts": {
+      "masse_kg": 1.8,
+      "taille_m": 1.3,
+      "vitesse_rel": 0.8,
+      "maturite": 1.4
+     },
+     "selection": -0.03
+    }
+   ]
+  },
+  {
+   "id": "crapaud-buffle.ruisseau",
+   "nom": "Crapaud des ruisseaux",
+   "parent": "crapaud-buffle",
+   "apparu": 37,
+   "eteint": null,
+   "statut": "croissance",
+   "plan": {
+    "masse_kg": 1.1,
+    "taille_m": 0.22,
+    "locomotion": [
+     "nage",
+     "saut"
+    ],
+    "regime": "omnivore",
+    "longevite": 45,
+    "maturite": 6,
+    "portee": 60,
+    "sociabilite": 0.4,
+    "temperament": 0.15,
+    "activite": "crepusculaire",
+    "vitesse_rel": 7,
+    "perception": 0.55,
+    "niche": {
+     "temperature": 0.55,
+     "humidite": 0.7,
+     "altitude": 0.2,
+     "lumiere": 0.9,
+     "couvert": 0.3
+    },
+    "tolerance": 0.4
+   },
+   "populations": [
+    {
+     "biome": "prairie-humide",
+     "effectif": 95,
+     "tendance": 0.18,
+     "pression": 0,
+     "depuis": 37
+    }
+   ],
+   "phenotypes": [
+    {
+     "id": "base",
+     "frequence": 1,
+     "traits": [],
+     "cout_total": 0
+    }
+   ]
+  }
+ ],
+ "evenements": [
+  {
+   "type": "separation",
+   "taxon": "crapaud-buffle.ruisseau",
+   "biome": "prairie-humide",
+   "detail": "lignée issue des migrants du marais, plus petite et moins farouche"
+  },
+  {
+   "type": "effondrement",
+   "taxon": "crapaud-buffle",
+   "biome": "marais-tempere",
+   "detail": "prélèvement soutenu depuis 6 cycles ; les cracheurs gagnent du terrain"
+  }
+ ]
+}

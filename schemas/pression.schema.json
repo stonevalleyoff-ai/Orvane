@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orvane/schemas/pression.schema.json",
+  "title": "Orvane — lot de pressions (entrée, envoyé par le traducteur)",
+  "description": "Ce qu'un jeu renvoie à Orvane : des comptes bruts, jamais des conclusions. Le tampon rapporte ces comptes à l'exposition (rencontres), les dénormalise selon la rareté affichée par le jeu et les plafonne avant de les donner au moteur.",
+  "type": "object",
+  "required": ["orvane", "monde", "source", "periode", "evenements"],
+  "additionalProperties": false,
+  "properties": {
+    "orvane": { "type": "string" },
+    "monde": { "type": "string", "description": "Doit être l'id du monde de l'instantané lu." },
+    "instantane": { "type": "integer", "description": "Numéro du cycle que le jeu utilisait quand ces événements ont eu lieu (sert à dénormaliser avec les bonnes fréquences)." },
+    "source": {
+      "type": "object", "required": ["jeu", "compte"], "additionalProperties": false,
+      "properties": {
+        "jeu": { "type": "string" },
+        "compte": { "type": "string", "description": "Identifiant opaque du joueur (hash) : sert aux plafonds par compte, jamais stocké en clair." },
+        "zone": { "type": "string", "description": "Identifiant opaque de la zone de jeu (île, carte, serveur) : sert à la répartition géographique des pressions." }
+      }
+    },
+    "periode": {
+      "type": "object", "required": ["debut", "fin"], "additionalProperties": false,
+      "properties": { "debut": { "type": "string", "format": "date-time" }, "fin": { "type": "string", "format": "date-time" } }
+    },
+    "evenements": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["taxon", "biome", "action", "n"], "additionalProperties": false,
+        "properties": {
+          "taxon": { "type": "string" },
+          "phenotype": { "type": "string", "description": "Omis si le jeu ne distingue pas les phénotypes pour cette action." },
+          "biome": { "type": "string", "description": "Biome Orvane (déjà traduit par le traducteur, pas le biome du jeu)." },
+          "action": {
+            "enum": ["rencontre", "prelevement", "capture", "liberation", "nourrissage", "reproduction", "deplacement", "habitat_perdu", "habitat_gagne"],
+            "description": "rencontre : vu/approché, sans conséquence (mesure l'exposition). prelevement : mort causée par le joueur. capture : retiré du sauvage (apprivoisé). liberation : rendu au sauvage. nourrissage/reproduction : aide à la population. deplacement : emporté vers un autre biome (voir « vers »). habitat_* : surface d'habitat détruite/créée, en « n » unités."
+          },
+          "n": { "type": "number", "minimum": 0, "description": "Compte brut sur la période." },
+          "vers": { "type": "string", "description": "Biome de destination pour « deplacement »." },
+          "age": { "enum": ["jeune", "adulte", "vieux"], "description": "Si le jeu le sait : prélever des adultes reproducteurs pèse plus." }
+        }
+      }
+    }
+  }
+}

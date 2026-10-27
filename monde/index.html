@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Orvane — observatoire</title>
+<!-- Orvane — LE VISUALISEUR (monde/index.html)
+     Un observatoire du vivant : il lit des instantanés, fait tourner le moteur dans le navigateur et montre ce
+     qu'un traducteur recevra. Un seul fichier, zéro dépendance ; les scripts du moteur et du tampon sont chargés
+     depuis ../moteur et ../tampon. S'ouvre depuis le dépôt (python3 -m http.server) ou GitHub Pages. -->
+<style>
+:root { --fond:#0b0e14; --carte:#131824; --ligne:#243049; --texte:#e6e9f0; --sourd:#8a94a8; --or:#f4e26a; --vert:#7ad28f; --rouge:#f07a7a; --bleu:#7ab8f0; }
+* { box-sizing:border-box; }
+html, body { margin:0; background:var(--fond); color:var(--texte); font:15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { position:sticky; top:0; z-index:5; background:linear-gradient(var(--fond) 80%, transparent); padding:10px 16px 6px; }
+h1 { font-size:17px; margin:0 0 6px; letter-spacing:.04em; } h1 small { color:var(--sourd); font-weight:400; margin-left:8px; }
+h2 { font-size:14px; color:var(--or); margin:18px 0 8px; text-transform:uppercase; letter-spacing:.08em; }
+.barre { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.puce { border:1px solid var(--ligne); background:var(--carte); color:var(--texte); border-radius:999px; padding:5px 12px; font:inherit; font-size:13px; cursor:pointer; }
+.puce:hover { border-color:var(--or); } .puce.on { background:var(--or); color:#1a1600; border-color:var(--or); font-weight:600; }
+.puce.or { color:var(--or); } .puce.or:hover { background:var(--or); color:#1a1600; }
+main { padding:0 16px 40px; max-width:1100px; margin:0 auto; }
+section { display:none; } section.on { display:block; }
+.carte { background:var(--carte); border:1px solid var(--ligne); border-radius:12px; padding:12px; margin:10px 0; }
+canvas { width:100%; display:block; border-radius:8px; }
+.deux { display:grid; gap:10px; } @media (min-width:760px) { .deux { grid-template-columns:1fr 1fr; } }
+table { width:100%; border-collapse:collapse; font-size:13px; } td, th { padding:4px 6px; border-bottom:1px solid var(--ligne); text-align:left; vertical-align:top; } th { color:var(--sourd); font-weight:500; }
+td.n { text-align:right; font-variant-numeric:tabular-nums; }
+.sourd { color:var(--sourd); } .or { color:var(--or); } .vert { color:var(--vert); } .rouge { color:var(--rouge); }
+.leg { display:flex; flex-wrap:wrap; gap:4px 12px; font-size:12px; color:var(--sourd); margin:6px 0 0; } .leg i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+.ev { padding:6px 0; border-bottom:1px solid var(--ligne); font-size:14px; } .ev b { color:var(--or); font-weight:600; } .ev .c { color:var(--sourd); font-variant-numeric:tabular-nums; margin-right:8px; }
+.trait { border-left:2px solid var(--or); padding:4px 8px; margin:4px 0; font-size:13px; } .trait b { color:var(--texte); } .trait .sourd { display:block; }
+input[type=file] { display:none; } label.puce { display:inline-block; }
+#msg { color:var(--sourd); font-size:13px; margin:6px 0; }
+.stat { display:inline-block; margin:2px 14px 2px 0; } .stat b { color:var(--or); font-weight:600; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ORVANE <small id="titre">observatoire</small></h1>
+  <div class="barre" id="onglets">
+    <button class="puce on" data-s="monde">Monde</button><button class="puce" data-s="taxons">Taxons</button>
+    <button class="puce" data-s="lignees">Lignées</button><button class="puce" data-s="journal">Journal</button><button class="puce" data-s="pressions">Pressions</button>
+    <span style="flex:1"></span>
+    <button class="puce or" data-c="1">▶ 1</button><button class="puce or" data-c="10">▶ 10</button><button class="puce or" data-c="50">▶ 50</button>
+    <label class="puce">Charger… <input type="file" id="fInst" accept=".json"></label>
+    <button class="puce" id="bReset">Exemple</button>
+    <button class="puce" id="bMonde" title="un monde publié par ce dépôt : mondes/&lt;id&gt;/">Monde…</button>
+  </div>
+  <div id="msg"></div>
+</header>
+<main>
+  <section id="s-monde" class="on">
+    <div class="carte" id="resume"></div>
+    <div class="deux">
+      <div class="carte"><h2>Les biomes</h2><canvas id="cCarte" height="320"></canvas><div class="sourd" style="font-size:12px;margin-top:6px">position : température → , humidité ↑ · taille : capacité · anneau : saturation en biomasse · points : populations</div></div>
+      <div class="carte"><h2>Effectifs</h2><canvas id="cEff" height="320"></canvas><div class="leg" id="lEff"></div></div>
+    </div>
+  </section>
+  <section id="s-taxons">
+    <div class="barre" id="listeTaxons" style="margin:10px 0"></div>
+    <div id="fiche"></div>
+  </section>
+  <section id="s-lignees"><div class="carte"><h2>L'arbre des lignées</h2><canvas id="cArbre" height="360"></canvas></div></section>
+  <section id="s-journal"><div class="carte" id="journal"></div></section>
+  <section id="s-pressions">
+    <div class="carte">
+      <h2>Rejouer des pressions</h2>
+      <p class="sourd" style="margin:0 0 8px;font-size:13px">Un lot (pression.json) et un profil (profil.json) : à chaque cycle, le lot est rejoué pour N comptes, comme si les mêmes joueurs faisaient la même chose chaque jour. Sans lot, le monde vit seul.</p>
+      <div class="barre">
+        <label class="puce">Lot… <input type="file" id="fLot" accept=".json"></label>
+        <label class="puce">Profil… <input type="file" id="fProfil" accept=".json"></label>
+        <span class="sourd" style="font-size:13px">comptes</span><input type="range" id="rComptes" min="1" max="100" value="10" style="width:120px"><b id="vComptes">10</b>
+        <button class="puce" id="bExLot">Lot et profil de l'exemple</button>
+        <button class="puce" id="bSansLot">Sans pression</button>
+      </div>
+      <div id="etatPressions" class="sourd" style="font-size:13px;margin-top:8px"></div>
+    </div>
+    <div class="carte" id="vuePressions"></div>
+  </section>
+</main>
+<script src="../moteur/catalogue.js"></script>
+<script src="../moteur/orvane.js"></script>
+<script src="../tampon/tampon.js"></script>
+<script>
+'use strict';
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const COUL = ['#f4e26a', '#7ab8f0', '#7ad28f', '#f07a7a', '#c99cf0', '#f0b47a', '#7ae0d8', '#f0a0c8', '#b8d27a', '#9aa8f0'];
+const AXES = ['temperature', 'humidite', 'altitude', 'lumiere', 'couvert'];
+let H = [];                       // l'histoire : un instantané par cycle
+let lot = null, profil = null, etatTampon = {}, taxonChoisi = null;
+const inst = () => H[H.length - 1];
+const couleur = (() => { const m = new Map(); return id => { if (!m.has(id)) m.set(id, COUL[m.size % COUL.length]); return m.get(id); }; })();
+const msg = t => { $('#msg').textContent = t; };
+const pct = v => (v * 100).toFixed(v > 0 && v < .001 ? 3 : v < .1 ? 1 : 0) + ' %';
+
+// --- chargement ---
+async function charger(json) {
+  try { H = [typeof json === 'string' ? JSON.parse(json) : json]; etatTampon = {}; taxonChoisi = inst().taxons[0]?.id || null;
+    $('#titre').textContent = inst().monde.nom || inst().monde.id; tout(); msg(`instantané chargé : cycle ${inst().cycle.n}, ${inst().taxons.length} taxon(s), ${inst().biomes.length} biome(s)`); }
+  catch (e) { msg('fichier illisible : ' + e.message); }
+}
+async function exemple() {
+  try { const r = await fetch('../schemas/exemples/instantane.json'); if (!r.ok) throw 0; charger(await r.text()); }
+  catch (e) { charger(JSON.parse($('#exemple').textContent)); }
+}
+async function exempleLot() {
+  try { const [a, b] = await Promise.all([fetch('../schemas/exemples/pression.json'), fetch('../schemas/exemples/profil.json')]);
+    lot = await a.json(); profil = await b.json(); }
+  catch (e) { lot = JSON.parse($('#exLot').textContent); profil = JSON.parse($('#exProfil').textContent); }
+  etatTampon = {}; etatPressions();
+}
+// un monde publié (mondes/<id>/) : l'instantané complet, et l'historique allégé qui le précède
+async function monde(id) {
+  try { const [a, b, c] = await Promise.all([fetch(`../mondes/${id}/instantane.json`), fetch(`../mondes/${id}/historique.json`), fetch(`../mondes/${id}/profil.json`)]);
+    if (!a.ok) throw new Error('introuvable'); const courant = await a.json(), hist = b.ok ? await b.json() : [];
+    H = [...hist.filter(h => h.cycle.n < courant.cycle.n), courant]; etatTampon = {}; taxonChoisi = courant.taxons[0]?.id || null;
+    if (c.ok) { profil = await c.json(); etatPressions(); }
+    $('#titre').textContent = courant.monde.nom || courant.monde.id; tout(); msg(`monde « ${id} » : cycle ${courant.cycle.n}, ${H.length} cycle(s) d'historique — ▶ continue la simulation ici, sans toucher au monde publié`); }
+  catch (e) { msg(`monde « ${id} » introuvable (${e.message})`); }
+}
+$('#bMonde').onclick = () => { const id = prompt('identifiant du monde (dossier mondes/<id>/)', 'sv-1'); if (id) { history.replaceState(null, '', '?monde=' + encodeURIComponent(id)); monde(id); } };
+function lireFichier(input, cb) { input.addEventListener('change', () => { const f = input.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => cb(r.result); r.readAsText(f); input.value = ''; }); }
+lireFichier($('#fInst'), charger);
+lireFichier($('#fLot'), t => { try { lot = JSON.parse(t); etatTampon = {}; etatPressions(); } catch (e) { msg('lot illisible'); } });
+lireFichier($('#fProfil'), t => { try { profil = JSON.parse(t); etatPressions(); } catch (e) { msg('profil illisible'); } });
+$('#bReset').onclick = exemple; $('#bExLot').onclick = exempleLot; $('#bSansLot').onclick = () => { lot = null; etatTampon = {}; etatPressions(); };
+$('#rComptes').oninput = e => { $('#vComptes').textContent = e.target.value; };
+function etatPressions() { $('#etatPressions').textContent = lot && profil ? `lot « ${lot.source?.jeu || '?'} », ${lot.evenements.length} événement(s) ; profil « ${profil.jeu} » ; rejoué pour ${$('#rComptes').value} compte(s) par cycle` : lot ? 'lot chargé — il manque le profil' : 'aucune pression : le monde vit seul'; }
+
+// --- faire tourner ---
+let dernieresPressions = null;
+function tourner(n) {
+  if (!H.length) return;
+  for (let k = 0; k < n; k++) {
+    let pressions = {};
+    if (lot && profil) { const K = +$('#rComptes').value, c = lot.source?.compte || 'compte';
+      const lots = Array.from({ length: K }, (_, i) => ({ ...lot, instantane: inst().cycle.n, source: { ...lot.source, compte: `${c}#${i}` } }));
+      const r = OrvaneTampon.agreger(lots, inst(), profil, etatTampon); pressions = r.pressions; etatTampon = r.etat; }
+    H.push(Orvane.cycle(inst(), pressions)); dernieresPressions = pressions;
+  }
+  if (!inst().taxons.some(t => t.id === taxonChoisi)) taxonChoisi = inst().taxons[0]?.id || null;
+  tout(); msg(`cycle ${inst().cycle.n} — ${inst().evenements.length} événement(s) au dernier cycle`);
+}
+$$('[data-c]').forEach(b => b.onclick = () => tourner(+b.dataset.c));
+$$('[data-s]').forEach(b => b.onclick = () => { $$('[data-s]').forEach(x => x.classList.toggle('on', x === b)); $$('section').forEach(s => s.classList.toggle('on', s.id === 's-' + b.dataset.s)); tout(); });
+
+// --- dessin : utilitaires ---
+function toile(c) { const dpr = devicePixelRatio || 1, w = c.clientWidth || 600, h = +c.getAttribute('height'); c.width = w * dpr; c.height = h * dpr; const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, h); x.font = '12px system-ui, sans-serif'; return [x, w, h]; }
+// courbes : series = [{nom, coul, pts:[y…]}], x = cycles de H
+function courbes(c, series, empile) {
+  const [x, w, h] = toile(c); const m = { g: 44, d: 10, h: 10, b: 22 }, W = w - m.g - m.d, Hh = h - m.h - m.b;
+  const n = H.length, c0 = H[0].cycle.n; if (n < 2 || !series.length) { x.fillStyle = '#8a94a8'; x.fillText(n < 2 ? 'faites tourner quelques cycles (▶)' : 'rien à tracer', m.g, 30); return; }
+  let max = 1; if (empile) max = 1; else for (const s of series) for (const v of s.pts) if (v > max) max = v;
+  const X = i => m.g + W * i / (n - 1), Y = v => m.h + Hh * (1 - v / max);
+  x.strokeStyle = '#243049'; x.fillStyle = '#8a94a8'; x.textAlign = 'right';
+  for (let k = 0; k <= 4; k++) { const v = max * k / 4, y = Y(v); x.beginPath(); x.moveTo(m.g, y); x.lineTo(w - m.d, y); x.stroke(); x.fillText(empile ? Math.round(v * 100) + '%' : Math.round(v), m.g - 6, y + 4); }
+  x.textAlign = 'center'; for (let k = 0; k <= 4; k++) { const i = Math.round((n - 1) * k / 4); x.fillText('c' + (c0 + i), X(i), h - 6); }
+  if (empile) { const cum = new Array(n).fill(0);
+    for (const s of series) { x.beginPath(); for (let i = 0; i < n; i++) x.lineTo(X(i), Y(cum[i] + s.pts[i])); for (let i = n - 1; i >= 0; i--) x.lineTo(X(i), Y(cum[i])); x.closePath(); x.fillStyle = s.coul + 'b0'; x.fill(); for (let i = 0; i < n; i++) cum[i] += s.pts[i]; }
+  } else for (const s of series) { x.beginPath(); x.strokeStyle = s.coul; x.lineWidth = s.gras ? 2.5 : 1.5; x.setLineDash(s.tiret ? [4, 3] : []); for (let i = 0; i < n; i++) { const v = s.pts[i]; if (v == null) continue; x.lineTo(X(i), Y(v)); } x.stroke(); x.setLineDash([]); }
+}
+function legende(el, series) { el.innerHTML = series.map(s => `<span><i style="background:${s.coul}"></i>${s.nom}</span>`).join(''); }
+
+// --- Monde ---
+function dessinerMonde() {
+  const I = inst(), tot = I.taxons.filter(t => !t.eteint).reduce((a, t) => a + t.populations.reduce((b, p) => b + p.effectif, 0), 0);
+  $('#resume').innerHTML = `<span class="stat">cycle <b>${I.cycle.n}</b></span><span class="stat">taxons vivants <b>${I.taxons.filter(t => !t.eteint).length}</b></span><span class="stat">individus <b>${Math.round(tot)}</b></span><span class="stat">biomes <b>${I.biomes.length}</b></span><span class="stat">graine <b>${I.monde.graine}</b></span><span class="stat">pressions reçues <b>${I.cycle.pressions_recues || 0}</b></span><br><span class="sourd" style="font-size:13px">${I.evenements?.length ? I.evenements.map(e => `★ ${e.type} · ${e.taxon}`).join(' &nbsp; ') : 'cycle calme'}</span>`;
+  // la carte des biomes
+  const c = $('#cCarte'), [x, w, h] = toile(c), pos = {}, m = 40;
+  const masse = {}; for (const t of I.taxons) if (!t.eteint) for (const p of t.populations) masse[p.biome] = (masse[p.biome] || 0) + p.effectif * (t.plan.masse_kg || 1);
+  const capMax = Math.max(...I.biomes.map(b => b.capacite_base || b.capacite), 1);
+  // les axes sont étirés sur l'étendue des biomes présents : deux biomes proches ne se recouvrent pas
+  const et = k => { const v = I.biomes.map(b => b.axes[k]), a = Math.min(...v), z = Math.max(...v); return x => z - a < .05 ? .5 : (x - a) / (z - a); };
+  const eT = et('temperature'), eH = et('humidite'), mx = 70;
+  for (const b of I.biomes) pos[b.id] = [mx + (w - 2 * mx) * eT(b.axes.temperature), h - m - 24 - (h - 2 * m - 24) * eH(b.axes.humidite)];
+  x.strokeStyle = '#243049'; x.lineWidth = 1; for (const b of I.biomes) for (const v of b.voisins || []) if (pos[v]) { x.beginPath(); x.moveTo(...pos[b.id]); x.lineTo(...pos[v]); x.stroke(); }
+  for (const b of I.biomes) { const [px, py] = pos[b.id], r = 10 + 26 * Math.sqrt(b.capacite / capMax), sat = Math.min(1.2, (masse[b.id] || 0) / Math.max(1, b.capacite));
+    x.beginPath(); x.arc(px, py, r, 0, 7); x.fillStyle = '#1b2234'; x.fill(); x.strokeStyle = '#243049'; x.stroke();
+    x.beginPath(); x.arc(px, py, r, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * Math.min(1, sat)); x.strokeStyle = sat > 1 ? '#f07a7a' : sat > .85 ? '#f4e26a' : '#7ad28f'; x.lineWidth = 3; x.stroke(); x.lineWidth = 1;
+    let k = 0; for (const t of I.taxons) if (!t.eteint) for (const p of t.populations) if (p.biome === b.id) { const a = k++ * 1.1 - 1.5, rr = 4 + 6 * Math.sqrt(p.effectif / Math.max(1, Math.max(...I.taxons.flatMap(q => q.populations.map(z => z.effectif)))));
+      x.beginPath(); x.arc(px + Math.cos(a) * r * .55, py + Math.sin(a) * r * .55, rr, 0, 7); x.fillStyle = couleur(t.id); x.fill(); }
+    x.fillStyle = '#e6e9f0'; x.textAlign = 'center'; x.fillText(b.nom || b.id, px, py + r + 14); x.fillStyle = '#8a94a8'; x.fillText(`${Math.round(masse[b.id] || 0)} / ${Math.round(b.capacite)}`, px, py + r + 27); }
+  // les effectifs
+  const series = []; for (const t of I.taxons) { if (t.eteint && I.cycle.n - t.eteint > 2) continue;
+    series.push({ nom: t.nom || t.id, coul: couleur(t.id), gras: true, pts: H.map(s => { const q = s.taxons.find(z => z.id === t.id); return q ? q.populations.reduce((a, p) => a + p.effectif, 0) : null; }) });
+    if (I.biomes.length > 1) for (const b of I.biomes) { const pts = H.map(s => s.taxons.find(z => z.id === t.id)?.populations.find(p => p.biome === b.id)?.effectif ?? null); if (pts.some(v => v)) series.push({ nom: `${t.id} · ${b.id}`, coul: couleur(t.id), tiret: true, pts }); } }
+  courbes($('#cEff'), series, false); legende($('#lEff'), series.filter(s => s.gras));
+}
+
+// --- Taxons ---
+function dessinerTaxons() {
+  const I = inst(), cat = { ...(OrvaneCatalogue?.TRAITS || {}), ...(I.catalogue?.traits || {}) };
+  $('#listeTaxons').innerHTML = I.taxons.map(t => `<button class="puce ${t.id === taxonChoisi ? 'on' : ''}" data-t="${t.id}" style="${t.id === taxonChoisi ? '' : 'border-color:' + couleur(t.id)}">${t.nom || t.id}${t.eteint ? ' †' : ''}</button>`).join('');
+  $$('[data-t]').forEach(b => b.onclick = () => { taxonChoisi = b.dataset.t; dessinerTaxons(); });
+  const t = I.taxons.find(z => z.id === taxonChoisi); if (!t) { $('#fiche').innerHTML = ''; return; }
+  const p = t.plan, expo = profil ? (() => { try { return OrvaneTampon.exposer(t, profil, cat); } catch (e) { return null; } })() : null;
+  const statut = { croissance: 'vert', stable: 'sourd', declin: 'rouge', menace: 'rouge', eteint: 'rouge' }[t.statut] || 'sourd';
+  let html = `<div class="carte"><h2>${t.nom || t.id} <span class="sourd" style="text-transform:none;letter-spacing:0">· ${t.id}</span></h2>
+    <span class="stat">statut <b class="${statut}">${t.statut}</b></span><span class="stat">apparu <b>c${t.apparu}</b></span>${t.parent ? `<span class="stat">issu de <b>${t.parent}</b></span>` : ''}${t.eteint ? `<span class="stat">éteint <b>c${t.eteint}</b></span>` : ''}
+    <table style="margin-top:8px"><tr><th>masse</th><td class="n">${p.masse_kg} kg</td><th>taille</th><td class="n">${p.taille_m} m</td><th>locomotion</th><td>${(p.locomotion || []).join(', ')}</td></tr>
+    <tr><th>régime</th><td>${p.regime}</td><th>activité</th><td>${p.activite}</td><th>vitesse</th><td class="n">${p.vitesse_rel ?? '—'} L/s</td></tr>
+    <tr><th>longévité</th><td class="n">${p.longevite} c.</td><th>maturité</th><td class="n">${p.maturite} c.</td><th>portée</th><td class="n">${p.portee ?? '—'}</td></tr>
+    <tr><th>sociabilité</th><td class="n">${p.sociabilite}</td><th>tempérament</th><td class="n">${p.temperament}</td><th>perception</th><td class="n">${p.perception ?? '—'}</td></tr></table>
+    ${p.niche ? `<div class="sourd" style="font-size:12px;margin-top:6px">niche : ${AXES.map(a => `${a} ${p.niche[a]}`).join(' · ')} · tolérance ${p.tolerance || .35}</div>` : ''}</div>`;
+  html += `<div class="carte"><h2>Populations</h2><table><tr><th>biome</th><th class="n">effectif</th><th class="n">tendance</th><th class="n">part due aux pressions</th><th class="n">depuis</th></tr>${t.populations.map(q => `<tr><td>${q.biome}</td><td class="n">${q.effectif}</td><td class="n ${q.tendance > .02 ? 'vert' : q.tendance < -.02 ? 'rouge' : ''}">${q.tendance > 0 ? '+' : ''}${Math.round(q.tendance * 100)} %</td><td class="n">${q.pression != null ? pct(q.pression) : '—'}</td><td class="n">c${q.depuis ?? t.apparu}</td></tr>`).join('')}</table></div>`;
+  html += `<div class="carte"><h2>Phénotypes</h2><table><tr><th>phénotype</th><th class="n">réel</th>${expo ? '<th class="n">exposé au jeu</th>' : ''}<th class="n">coût</th><th class="n">sélection</th><th>traits</th></tr>${t.phenotypes.map(q => `<tr><td><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${couleur(t.id + '/' + q.id)};margin-right:6px"></i>${q.id}</td><td class="n">${pct(q.frequence)}</td>${expo ? `<td class="n or">${pct(expo[q.id] ?? 0)}</td>` : ''}<td class="n">${q.cout_total ?? 0}</td><td class="n ${q.selection > 0 ? 'vert' : q.selection < 0 ? 'rouge' : ''}">${q.selection != null ? (q.selection > 0 ? '+' : '') + (q.selection * 100).toFixed(1) : '—'}</td><td>${q.traits.join(', ') || '<span class="sourd">plan de base</span>'}</td></tr>`).join('')}</table>
+    ${expo ? '' : '<div class="sourd" style="font-size:12px;margin-top:6px">chargez un profil (onglet Pressions) pour voir les fréquences exposées au jeu</div>'}
+    <canvas id="cPh" height="200" style="margin-top:10px"></canvas></div>`;
+  const traits = [...new Set(t.phenotypes.flatMap(q => q.traits))];
+  if (traits.length) html += `<div class="carte"><h2>Les traits portés</h2>${traits.map(id => { const c = cat[id]; return c ? `<div class="trait"><b>${id}</b> <span class="sourd" style="display:inline">· ${c.domaine} · coût ${c.cout}</span><span class="sourd">${c.organe} — ${c.effet}${c.comportement ? ' — ' + c.comportement : ''}${c.fournit ? ' — fournit : ' + c.fournit.join(', ') : ''}${c.ecarts ? ' — écarts : ' + Object.entries(c.ecarts).map(([k, v]) => `${k} ×${v}`).join(', ') : ''}</span></div>` : `<div class="trait"><b>${id}</b> <span class="sourd">hors catalogue</span></div>`; }).join('')}</div>`;
+  $('#fiche').innerHTML = html;
+  const ids = [...new Set(H.flatMap(s => (s.taxons.find(z => z.id === t.id)?.phenotypes || []).map(q => q.id)))];
+  courbes($('#cPh'), ids.map(id => ({ nom: id, coul: couleur(t.id + '/' + id), pts: H.map(s => s.taxons.find(z => z.id === t.id)?.phenotypes.find(q => q.id === id)?.frequence ?? 0) })), true);
+}
+
+// --- Lignées ---
+function dessinerArbre() {
+  const I = inst(), c = $('#cArbre'), [x, w, h] = toile(c), T = I.taxons, c0 = Math.min(...T.map(t => t.apparu), H[0].cycle.n), c1 = I.cycle.n;
+  const enfants = id => T.filter(t => t.parent === id), racines = T.filter(t => !t.parent || !T.some(z => z.id === t.parent));
+  const lignes = []; (function poser(liste, prof) { for (const t of liste) { t._y = lignes.length; lignes.push(t); poser(enfants(t.id), prof + 1); } })(racines, 0);
+  const m = { g: 10, d: 10, h: 14, b: 22 }, X = n => m.g + (w - m.g - m.d) * (n - c0) / Math.max(1, c1 - c0), Y = i => m.h + (h - m.h - m.b) * (i + .5) / Math.max(1, lignes.length);
+  x.strokeStyle = '#243049'; x.fillStyle = '#8a94a8'; x.textAlign = 'center';
+  for (let k = 0; k <= 4; k++) { const n = Math.round(c0 + (c1 - c0) * k / 4); x.beginPath(); x.moveTo(X(n), m.h); x.lineTo(X(n), h - m.b); x.stroke(); x.fillText('c' + n, X(n), h - 6); }
+  for (const t of lignes) { const y = Y(t._y), x0 = X(t.apparu), x1 = X(t.eteint ?? c1); x.strokeStyle = couleur(t.id); x.lineWidth = 3; x.beginPath(); x.moveTo(x0, y); x.lineTo(x1, y); x.stroke();
+    if (t.parent) { const pt = T.find(z => z.id === t.parent); if (pt && pt._y != null) { x.lineWidth = 1; x.setLineDash([3, 3]); x.beginPath(); x.moveTo(x0, Y(pt._y)); x.lineTo(x0, y); x.stroke(); x.setLineDash([]); } }
+    if (t.eteint) { x.fillStyle = '#f07a7a'; x.fillText('†', x1 + 8, y + 4); }
+    const lib = `${t.nom || t.id}  ·  ${t.populations.reduce((a, p) => a + p.effectif, 0)}`, droite = x0 > w * .6;   // près du bord droit, l'étiquette passe à gauche
+    x.fillStyle = '#e6e9f0'; x.textAlign = droite ? 'right' : 'left'; x.fillText(lib, droite ? x1 - 4 : x0 + 6, y - 7); x.textAlign = 'center'; }
+  for (const t of T) delete t._y;
+}
+
+// --- Journal ---
+function dessinerJournal() {
+  const L = []; for (let i = H.length - 1; i >= 0 && L.length < 200; i--) for (const e of H[i].evenements || []) L.push(`<div class="ev"><span class="c">c${H[i].cycle.n}</span><b>${e.type}</b> · ${e.taxon}${e.biome ? ` <span class="sourd">@ ${e.biome}</span>` : ''}${e.detail ? ` — ${e.detail}` : ''}</div>`);
+  $('#journal').innerHTML = `<h2>Journal</h2>` + (L.join('') || '<div class="sourd">rien encore</div>');
+}
+
+// --- Pressions reçues au dernier cycle ---
+function dessinerPressions() {
+  const P = dernieresPressions; if (!P || !P.taxons) { $('#vuePressions').innerHTML = '<h2>Dernier cycle</h2><div class="sourd">aucune pression intégrée au dernier cycle</div>'; return; }
+  let html = '<h2>Pressions intégrées au dernier cycle</h2><table><tr><th>taxon</th><th>biome</th><th>phénotype</th><th class="n">retrait (individus)</th></tr>';
+  for (const [tid, Bs] of Object.entries(P.taxons)) for (const [bid, O] of Object.entries(Bs)) { for (const [k, v] of Object.entries(O.retrait || {})) html += `<tr><td>${tid}</td><td>${bid}</td><td>${k === '*' ? '<span class="sourd">tous</span>' : k}</td><td class="n ${v > 0 ? 'rouge' : 'vert'}">${v > 0 ? '−' : '+'}${Math.abs(v).toFixed(1)}</td></tr>`;
+    for (const d of O.deplacement || []) html += `<tr><td>${tid}</td><td>${bid}</td><td class="sourd">déplacement → ${d.vers}</td><td class="n">${d.n}</td></tr>`; }
+  for (const [bid, b] of Object.entries(P.biomes || {})) html += `<tr><td class="sourd">habitat</td><td>${bid}</td><td></td><td class="n ${b.habitat < 0 ? 'rouge' : 'vert'}">${b.habitat > 0 ? '+' : ''}${b.habitat}</td></tr>`;
+  $('#vuePressions').innerHTML = html + '</table>';
+}
+
+function tout() { if (!H.length) return; const on = $$('section').find(s => s.classList.contains('on')).id;
+  ({ 's-monde': dessinerMonde, 's-taxons': dessinerTaxons, 's-lignees': dessinerArbre, 's-journal': dessinerJournal, 's-pressions': dessinerPressions })[on](); }
+addEventListener('resize', tout);
+if (typeof Orvane === 'undefined') msg('moteur introuvable : ouvrir ce fichier depuis le dossier du dépôt (../moteur, ../tampon)');
+else { const id = new URLSearchParams(location.search).get('monde'); if (id) monde(id); else exemple(); }
+</script>
+<!-- l'exemple, pour que la page vive même sans serveur (file://) -->
+<script type="application/json" id="exemple">{"orvane":"0.1","monde":{"id":"sv-1","graine":7340021,"nom":"Monde de Stone Valley"},"cycle":{"n":42,"date":"2026-10-27T03:00:00Z","pressions_recues":318},"biomes":[{"id":"marais-tempere","nom":"Marais tempéré","milieu":"amphibie","axes":{"temperature":0.5,"humidite":0.95,"altitude":0.1,"lumiere":0.6,"couvert":0.5},"capacite":3600,"voisins":["prairie-humide"]},{"id":"prairie-humide","nom":"Prairie humide","milieu":"terrestre","axes":{"temperature":0.55,"humidite":0.7,"altitude":0.2,"lumiere":0.9,"couvert":0.3},"capacite":1200,"voisins":["marais-tempere"]}],"catalogue":{"version":"0.1","traits":{"glande-irritante":{"domaine":"offense","organe":"glande parotoïde hypertrophiée","cout":0.08,"effet":"sécrète une substance irritante sur la peau","fournit":["secretion-irritante"]},"jet-glandulaire":{"domaine":"offense","organe":"canal éjecteur sous la glande","cout":0.07,"effet":"projette la sécrétion à 3 longueurs de corps","comportement":"embuscade ; riposte à distance avant la fuite","exige":["glande-irritante"],"ecarts":{"temperament":1.6}},"gigantisme":{"domaine":"morphologie","organe":"squelette et masse musculaire","cout":0.25,"effet":"masse ×1.8, taille ×1.3, vitesse ×0.8, maturité ×1.4","exclut":["nanisme"],"ecarts":{"masse_kg":1.8,"taille_m":1.3,"vitesse_rel":0.8,"maturite":1.4,"longevite":1.15}},"peau-epaisse":{"domaine":"defense","organe":"derme kératinisé","cout":0.05,"effet":"résiste aux morsures et aux chocs légers","fournit":["cuir-de-crapaud"]}}},"taxons":[{"id":"crapaud-buffle","nom":"Crapaud buffle","parent":null,"apparu":0,"eteint":null,"statut":"declin","plan":{"masse_kg":2.4,"taille_m":0.32,"locomotion":["saut","nage","marche"],"regime":"carnivore","longevite":60,"maturite":8,"portee":40,"sociabilite":0.2,"temperament":0.35,"activite":"nocturne","vitesse_rel":6,"perception":0.5,"niche":{"temperature":0.5,"humidite":0.95,"altitude":0.1,"lumiere":0.6,"couvert":0.5},"tolerance":0.4},"populations":[{"biome":"marais-tempere","effectif":1140,"tendance":-0.09,"pression":0.62,"depuis":0},{"biome":"prairie-humide","effectif":210,"tendance":0.03,"pression":0.1,"depuis":30}],"phenotypes":[{"id":"base","frequence":0.72,"traits":[],"cout_total":0,"selection":-0.02},{"id":"cracheur","frequence":0.2,"frequence_par_biome":{"marais-tempere":0.23,"prairie-humide":0.04},"traits":["glande-irritante","jet-glandulaire"],"cout_total":0.15,"ecarts":{"temperament":1.6},"selection":0.04},{"id":"cuirasse","frequence":0.06,"traits":["peau-epaisse"],"cout_total":0.05,"selection":0.01},{"id":"geant","frequence":0.02,"traits":["gigantisme","peau-epaisse"],"cout_total":0.3,"ecarts":{"masse_kg":1.8,"taille_m":1.3,"vitesse_rel":0.8,"maturite":1.4},"selection":-0.03}]},{"id":"crapaud-buffle.ruisseau","nom":"Crapaud des ruisseaux","parent":"crapaud-buffle","apparu":37,"eteint":null,"statut":"croissance","plan":{"masse_kg":1.1,"taille_m":0.22,"locomotion":["nage","saut"],"regime":"omnivore","longevite":45,"maturite":6,"portee":60,"sociabilite":0.4,"temperament":0.15,"activite":"crepusculaire","vitesse_rel":7,"perception":0.55,"niche":{"temperature":0.55,"humidite":0.7,"altitude":0.2,"lumiere":0.9,"couvert":0.3},"tolerance":0.4},"populations":[{"biome":"prairie-humide","effectif":95,"tendance":0.18,"pression":0,"depuis":37}],"phenotypes":[{"id":"base","frequence":1,"traits":[],"cout_total":0}]}],"evenements":[{"type":"separation","taxon":"crapaud-buffle.ruisseau","biome":"prairie-humide","detail":"lignée issue des migrants du marais, plus petite et moins farouche"},{"type":"effondrement","taxon":"crapaud-buffle","biome":"marais-tempere","detail":"prélèvement soutenu depuis 6 cycles ; les cracheurs gagnent du terrain"}]}</script>
+<script type="application/json" id="exLot">{"orvane":"0.1","monde":"sv-1","instantane":42,"source":{"jeu":"stone-valley","compte":"h:9f3a1c…","zone":"ile:884120"},"periode":{"debut":"2026-10-27T03:00:00Z","fin":"2026-10-28T03:00:00Z"},"evenements":[{"taxon":"crapaud-buffle","biome":"marais-tempere","action":"rencontre","n":31},{"taxon":"crapaud-buffle","phenotype":"base","biome":"marais-tempere","action":"prelevement","n":14,"age":"adulte"},{"taxon":"crapaud-buffle","phenotype":"cracheur","biome":"marais-tempere","action":"prelevement","n":1},{"taxon":"crapaud-buffle","phenotype":"geant","biome":"marais-tempere","action":"capture","n":1},{"taxon":"crapaud-buffle","biome":"marais-tempere","action":"nourrissage","n":3},{"taxon":"crapaud-buffle","biome":"marais-tempere","action":"deplacement","n":2,"vers":"prairie-humide"},{"taxon":"crapaud-buffle","biome":"marais-tempere","action":"habitat_perdu","n":1}]}</script>
+<script type="application/json" id="exProfil">{"orvane":"0.1","jeu":"stone-valley","monde":{"id":"sv-1","graine":7340021,"cycle":"24h","biomes":"mondes/sv-1/biomes.json","amorce":"mondes/sv-1/generation-0.json"},"exposition":{"compression":{"defaut":0.1,"par_domaine":{"morphologie":0.3,"defense":0.2},"par_trait":{"gigantisme":0.5},"par_biome":{"prairie-humide":0.05}},"propagation_cycles":3,"inertie_max":0.05,"traits_rendus":["glande-irritante","jet-glandulaire","gigantisme","nanisme","peau-epaisse"],"seuil_extinction_jeu":40,"retour_apres_extinction":true},"influence":{"poids":{"prelevement":1,"capture":1,"liberation":-1,"nourrissage":-0.2,"reproduction":-0.5,"deplacement":1,"habitat_perdu":1,"habitat_gagne":-1},"denormaliser":true,"exposition_ref":40,"plafonds":{"par_compte_cycle":25,"part_max_compte":0.15,"part_max_population":0.2},"memoire_cycles":5}}</script>
+</body>
+</html>

@@ -1,0 +1,516 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orvane/schemas/instantane.schema.json",
+  "title": "Orvane — instantané (sortie du moteur)",
+  "description": "L'état du vivant d'un monde à un cycle donné. Orvane ne connaît aucun jeu : tout est biologie abstraite. Le traducteur du jeu lit ce fichier et en fait des données jouables.",
+  "type": "object",
+  "required": [
+    "orvane",
+    "monde",
+    "cycle",
+    "biomes",
+    "catalogue",
+    "taxons"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "orvane": {
+      "type": "string",
+      "description": "Version du contrat, ex. « 0.1 »."
+    },
+    "monde": {
+      "type": "object",
+      "required": [
+        "id",
+        "graine"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Un monde par jeu : identifiant stable du monde."
+        },
+        "graine": {
+          "type": "integer",
+          "description": "Graine du monde. Même graine + mêmes pressions ⇒ même histoire."
+        },
+        "nom": {
+          "type": "string"
+        }
+      }
+    },
+    "cycle": {
+      "type": "object",
+      "required": [
+        "n",
+        "date"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "n": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Numéro de cycle, croissant de 1 à chaque tour du moteur."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Quand le cycle a été calculé (UTC)."
+        },
+        "pressions_recues": {
+          "type": "integer",
+          "description": "Nombre d'événements de pression intégrés dans ce cycle."
+        }
+      }
+    },
+    "biomes": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Les biomes sont décrits par des axes, pas par des noms : un jeu fait correspondre ses propres biomes aux axes.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "milieu",
+          "axes",
+          "capacite"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nom": {
+            "type": "string"
+          },
+          "milieu": {
+            "enum": [
+              "terrestre",
+              "aquatique",
+              "amphibie",
+              "aerien",
+              "souterrain"
+            ]
+          },
+          "axes": {
+            "type": "object",
+            "required": [
+              "temperature",
+              "humidite",
+              "altitude",
+              "lumiere",
+              "couvert"
+            ],
+            "additionalProperties": false,
+            "description": "Chaque axe va de 0 à 1 : 0 = froid/sec/bas/sombre/nu, 1 = chaud/humide/haut/lumineux/dense.",
+            "properties": {
+              "temperature": {
+                "$ref": "#/$defs/unite"
+              },
+              "humidite": {
+                "$ref": "#/$defs/unite"
+              },
+              "altitude": {
+                "$ref": "#/$defs/unite"
+              },
+              "lumiere": {
+                "$ref": "#/$defs/unite"
+              },
+              "couvert": {
+                "$ref": "#/$defs/unite"
+              }
+            }
+          },
+          "capacite": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Capacité d'accueil totale (unités de biomasse abstraites)."
+          },
+          "voisins": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Biomes vers lesquels une population peut migrer."
+          },
+          "capacite_base": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Capacité d’origine, vers laquelle le biome regagne lentement après une perte d’habitat."
+          }
+        }
+      }
+    },
+    "catalogue": {
+      "type": "object",
+      "required": [
+        "version",
+        "traits"
+      ],
+      "additionalProperties": false,
+      "description": "Les traits cités par les phénotypes de cet instantané, avec ce qu'ils impliquent. Un trait n'est jamais une stat de jeu : c'est un organe, un coût, un effet, un comportement.",
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "traits": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "domaine",
+              "organe",
+              "cout",
+              "effet"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "domaine": {
+                "enum": [
+                  "morphologie",
+                  "locomotion",
+                  "sens",
+                  "offense",
+                  "defense",
+                  "metabolisme",
+                  "reproduction",
+                  "social",
+                  "activite"
+                ]
+              },
+              "organe": {
+                "type": "string",
+                "description": "Ce que le corps porte pour ce trait (glande, carapace, membrane…)."
+              },
+              "cout": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Surcoût énergétique relatif par rapport au plan de base (0.15 = +15 %)."
+              },
+              "effet": {
+                "type": "string",
+                "description": "Ce que le trait permet, en langage biologique (« projette une sécrétion irritante à 3 longueurs de corps »)."
+              },
+              "comportement": {
+                "type": "string",
+                "description": "Conduite induite, si le trait en impose une (« embuscade, riposte à distance »)."
+              },
+              "exige": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Traits requis pour que celui-ci existe (cohérence des combinaisons)."
+              },
+              "exclut": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "fournit": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Matières que l'organe laisse derrière lui (pour les traducteurs : objets, récolte)."
+              },
+              "ecarts": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "description": "Multiplicateurs appliqués au plan corporel (masse_kg, longevite, portee…)."
+              },
+              "fixe": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Valeurs imposées au plan (activite, regime)."
+              }
+            }
+          }
+        }
+      }
+    },
+    "taxons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "apparu",
+          "statut",
+          "plan",
+          "populations",
+          "phenotypes"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable dans le temps ; un jeu peut l'associer à une entité."
+          },
+          "nom": {
+            "type": "string",
+            "description": "Nom donné par le moteur (ou gardé si le jeu en a proposé un)."
+          },
+          "parent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Taxon dont celui-ci s'est séparé (lignée)."
+          },
+          "apparu": {
+            "type": "integer",
+            "description": "Cycle d'apparition."
+          },
+          "eteint": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Cycle d'extinction, sinon null. Un taxon éteint reste listé 10 cycles."
+          },
+          "statut": {
+            "enum": [
+              "croissance",
+              "stable",
+              "declin",
+              "menace",
+              "eteint"
+            ]
+          },
+          "plan": {
+            "type": "object",
+            "description": "Le plan corporel de base, commun à tous les phénotypes.",
+            "required": [
+              "masse_kg",
+              "taille_m",
+              "locomotion",
+              "regime",
+              "longevite",
+              "maturite",
+              "sociabilite",
+              "temperament",
+              "activite"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "masse_kg": {
+                "type": "number",
+                "minimum": 0
+              },
+              "taille_m": {
+                "type": "number",
+                "minimum": 0
+              },
+              "locomotion": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "enum": [
+                    "marche",
+                    "course",
+                    "saut",
+                    "nage",
+                    "vol",
+                    "fouissage",
+                    "reptation",
+                    "grimpe"
+                  ]
+                }
+              },
+              "regime": {
+                "enum": [
+                  "herbivore",
+                  "carnivore",
+                  "omnivore",
+                  "detritivore",
+                  "filtreur"
+                ]
+              },
+              "longevite": {
+                "type": "number",
+                "description": "En cycles."
+              },
+              "maturite": {
+                "type": "number",
+                "description": "Âge de reproduction, en cycles."
+              },
+              "portee": {
+                "type": "number",
+                "description": "Descendants par reproduction (moyenne)."
+              },
+              "sociabilite": {
+                "$ref": "#/$defs/unite",
+                "description": "0 solitaire, 1 grégaire."
+              },
+              "temperament": {
+                "$ref": "#/$defs/unite",
+                "description": "0 fuit toujours, 1 riposte toujours."
+              },
+              "activite": {
+                "enum": [
+                  "diurne",
+                  "nocturne",
+                  "crepusculaire",
+                  "continue"
+                ]
+              },
+              "vitesse_rel": {
+                "type": "number",
+                "description": "Vitesse de pointe en longueurs de corps par seconde."
+              },
+              "perception": {
+                "$ref": "#/$defs/unite",
+                "description": "Acuité des sens (portée relative)."
+              },
+              "niche": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "description": "Axes du biome idéal (mêmes clés que biomes.axes). Sans niche, tout biome au milieu compatible convient."
+              },
+              "tolerance": {
+                "type": "number",
+                "minimum": 0.05,
+                "description": "Largeur de la niche : écart-type de la convenance sur la distance entre axes (0.35 par défaut)."
+              }
+            }
+          },
+          "populations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "biome",
+                "effectif",
+                "tendance"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "biome": {
+                  "type": "string"
+                },
+                "effectif": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "tendance": {
+                  "type": "number",
+                  "description": "Variation relative sur le cycle (−0.12 = −12 %)."
+                },
+                "pression": {
+                  "$ref": "#/$defs/unite",
+                  "description": "Part de la mortalité du cycle due aux pressions externes (joueurs)."
+                },
+                "depuis": {
+                  "type": "integer",
+                  "description": "Cycle d’installation dans ce biome (sert à la séparation des lignées)."
+                }
+              }
+            }
+          },
+          "phenotypes": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Combinaisons cohérentes de traits, avec leur fréquence dans le taxon. Les fréquences somment à 1. Le premier est le phénotype de base.",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "frequence",
+                "traits"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "frequence": {
+                  "$ref": "#/$defs/unite"
+                },
+                "frequence_par_biome": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/unite"
+                  }
+                },
+                "traits": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Identifiants du catalogue. Vide pour le phénotype de base."
+                },
+                "cout_total": {
+                  "type": "number",
+                  "description": "Somme des coûts : ce que ce phénotype paie en énergie."
+                },
+                "ecarts": {
+                  "type": "object",
+                  "description": "Ce que le phénotype change au plan (multiplicateurs).",
+                  "additionalProperties": {
+                    "type": "number"
+                  }
+                },
+                "selection": {
+                  "type": "number",
+                  "description": "Avantage sélectif net du cycle (positif : la fréquence monte)."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "evenements": {
+      "type": "array",
+      "description": "Ce qui s'est passé de notable dans le cycle : lisible par le visualiseur et par un jeu qui veut le raconter.",
+      "items": {
+        "type": "object",
+        "required": [
+          "type",
+          "taxon"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": [
+              "apparition",
+              "extinction",
+              "separation",
+              "migration",
+              "effondrement",
+              "explosion",
+              "nouveau_trait"
+            ]
+          },
+          "taxon": {
+            "type": "string"
+          },
+          "biome": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "unite": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  }
+}

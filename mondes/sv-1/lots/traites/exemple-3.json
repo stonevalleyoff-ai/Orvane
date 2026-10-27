@@ -1,0 +1,35 @@
+{
+ "orvane": "0.1",
+ "monde": "sv-1",
+ "instantane": 0,
+ "periode": {
+  "debut": "2026-10-26T03:00:00Z",
+  "fin": "2026-10-27T03:00:00Z"
+ },
+ "source": {
+  "jeu": "stone-valley",
+  "compte": "h:c3",
+  "zone": "ile:3"
+ },
+ "evenements": [
+  {
+   "taxon": "crapaud",
+   "biome": "tourbiere",
+   "action": "rencontre",
+   "n": 12
+  },
+  {
+   "taxon": "crapaud",
+   "phenotype": "gigantisme",
+   "biome": "tourbiere",
+   "action": "capture",
+   "n": 1
+  },
+  {
+   "taxon": "crapaud",
+   "biome": "tourbiere",
+   "action": "habitat_perdu",
+   "n": 2
+  }
+ ]
+}

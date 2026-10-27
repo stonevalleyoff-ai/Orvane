@@ -1,0 +1,53 @@
+{
+  "orvane": "0.1",
+  "jeu": "stone-valley",
+  "monde": {
+    "id": "sv-1",
+    "graine": 7340021,
+    "cycle": "24h",
+    "amorce": "traducteurs/stone-valley/generation-0.json"
+  },
+  "exposition": {
+    "compression": {
+      "defaut": 0.1,
+      "par_domaine": {
+        "morphologie": 0.1
+      },
+      "par_trait": {
+        "gigantisme": 0.1,
+        "nanisme": 0.1
+      }
+    },
+    "propagation_cycles": 3,
+    "inertie_max": 0.05,
+    "traits_rendus": [
+      "albinisme",
+      "melanisme",
+      "robe-doree",
+      "gigantisme",
+      "nanisme"
+    ],
+    "seuil_extinction_jeu": 40,
+    "retour_apres_extinction": true
+  },
+  "influence": {
+    "poids": {
+      "prelevement": 1,
+      "capture": 1,
+      "liberation": -1,
+      "nourrissage": -0.2,
+      "deplacement": 1,
+      "habitat_perdu": 1,
+      "habitat_gagne": -1
+    },
+    "denormaliser": true,
+    "exposition_ref": 60,
+    "plafonds": {
+      "par_compte_cycle": 30,
+      "part_max_compte": 0.15,
+      "part_max_population": 0.2
+    },
+    "memoire_cycles": 5,
+    "pseudo_comptes": 20
+  }
+}
