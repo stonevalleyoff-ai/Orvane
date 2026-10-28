@@ -31,7 +31,8 @@ const ecrire = (n, o, compact) => fs.writeFileSync(f(n), compact ? JSON.stringif
 //  - à l'ancienne : SUPABASE_URL et SUPABASE_SERVICE_KEY dans l'environnement, lecture directe de la table.
 async function lotsEnLigne(tampon, profil) {
   if (sansReseau) return [];
-  const Pp = profil.monde?.pressions, secret = Pp && process.env[Pp.secret || 'ORVANE_LECTURE_SECRET'];
+  // (le secret tel qu'on l'a collé : sans les espaces, retours à la ligne ou guillemets qui s'y glissent souvent)
+  const Pp = profil.monde?.pressions, secret = Pp && (process.env[Pp.secret || 'ORVANE_LECTURE_SECRET'] || '').trim().replace(/^["']+|["']+$/g, '');
   if (Pp && Pp.url && Pp.cle && secret) {
     const out = []; let apres = tampon.dernier_id || 0;
     for (let page = 0; page < 200; page++) {
