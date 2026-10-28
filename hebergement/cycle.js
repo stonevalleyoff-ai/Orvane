@@ -86,12 +86,21 @@ const alleger = I => ({ cycle: I.cycle, taxons: I.taxons.map(t => ({ id: t.id, n
   }
   if (profil.monde?.annee != null) etat.monde.annee = profil.monde.annee;   // la durée de l'année suit le profil
   const tampon = lire('tampon.json', { lisse: {}, dernier_id: 0 });
+  let lectureEchouee = false;
   const gen0 = lire('generation-0.json', null);   // la référence du mode relatif (profil.exposition.mode)
   let avant = etat;
   let historique = lire('historique.json', []);
   const ms = (c => { const n = parseFloat(c) || 24; return c.endsWith('d') ? n * 864e5 : c.endsWith('m') ? n * 6e4 : n * 36e5; })(profil.monde?.cycle || '24h');
   for (let k = 0; k < nCycles; k++) {
-    const enLigne = await lotsEnLigne(tampon, profil), locaux = lotsLocaux(), lots = [...enLigne, ...locaux];
+    // une lecture qui échoue n'arrête pas le monde : il tourne sans les lots en ligne (ils restent dans Supabase et seront lus
+    // la fois suivante, dernier_id n'avance pas), et l'action le signale en clair
+    let enLigne = [];
+    try { enLigne = await lotsEnLigne(tampon, profil); }
+    catch (e) { lectureEchouee = true; const m = String(e.message || e);
+      const pourquoi = /secret invalide/.test(m) ? 'le secret ORVANE_LECTURE_SECRET du dépôt ne correspond pas à celui enregistré dans Supabase : recopiez-le exactement, sans espace ni guillemets (Settings › Secrets and variables › Actions)'
+        : /\b40[13]\b/.test(m) ? 'Supabase refuse la lecture : vérifiez la clé publique et l\'URL dans profil.monde.pressions' : m;
+      console.log(`::error title=${monde} · lecture des pressions::${pourquoi}. Le cycle tourne sans les lots en ligne ; ils seront lus la prochaine fois.`); }
+    const locaux = lotsLocaux(), lots = [...enLigne, ...locaux];
     const r = Tampon.agreger(lots, etat, profil, tampon, gen0);
     const suivant = Orvane.cycle(etat, r.pressions, { duree_ms: ms });
     if (k === nCycles - 1) suivant.cycle.date = new Date().toISOString();   // le dernier cycle est daté de maintenant : les traducteurs s'y réfèrent
@@ -106,4 +115,5 @@ const alleger = I => ({ cycle: I.cycle, taxons: I.taxons.map(t => ({ id: t.id, n
   const pr = alleger(avant);
   ecrire('etat.json', etat); ecrire('instantane.json', { ...etat, precedent: { cycle: pr.cycle.n, taxons: pr.taxons.map(t => ({ id: t.id, populations: t.populations, phenotypes: t.phenotypes.map(p => ({ id: p.id, frequence: p.frequence })) })) } }, true); ecrire('historique.json', historique, true); ecrire('tampon.json', tampon);
   console.log(`→ ${path.relative(process.cwd(), f('instantane.json'))}`);
+  if (lectureEchouee) process.exitCode = 2;          // le monde est publié, mais l'action se marque en échec pour qu'on le voie
 })().catch(e => { console.error('cycle interrompu :', e.message); process.exit(1); });
