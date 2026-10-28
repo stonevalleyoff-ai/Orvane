@@ -7,7 +7,8 @@
     "cycle": "24h",
     "annee": 120,
     "amorce": "mondes/genese-7/amorce.json",
-    "historique": 30
+    "historique": 30,
+    "nocturne": false
   },
   "exposition": {
     "compression": {
