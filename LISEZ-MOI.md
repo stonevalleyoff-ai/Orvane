@@ -8,7 +8,8 @@ moteur/catalogue.js   l'univers des traits : organe, coût, effet, écarts sur l
 moteur/corps.js       la silhouette d'une lignée (forme, proportions, organes, couleurs) et sa dérive à chaque séparation
 moteur/genese.js      la genèse : des biomes, cinq ancêtres, des milliers de cycles → un monde de lignées inventées, nommées
 tampon/tampon.js      exposer() Orvane → jeu ; agreger() jeu → Orvane (dénormalisation, plafonds, lissage)
-monde/index.html      l’observatoire : fait tourner le moteur dans le navigateur et montre ce qu’un traducteur recevra
+monde/index.html      l’observatoire : ce que vit un monde (espèces, biomes, lignées, chaîne alimentaire, journal), et une simulation locale
+index.html            l’entrée du site publié : ouvre l’observatoire sur le monde sv-1 ; mondes/liste.json : les mondes qu’il propose
 schemas/              le contrat : instantane, pression, profil — avec exemples (crapaud buffle)
 traducteurs/stone-valley/   le premier client, de bout en bout : correspondances, traducteur, génération 0, banc, SQL
 hebergement/cycle.js  le cycle nocturne : lots → tampon → moteur → instantané publié (action GitHub .github/workflows/cycle.yml)
@@ -19,7 +20,7 @@ docs/                 le mode d'emploi : brancher son jeu, écrire son traducteu
 
 ## Essayer
 
-Dans le navigateur : `python3 -m http.server` à la racine, puis http://localhost:8000/monde/ — l’exemple se charge seul ; ▶ fait tourner des cycles ; l’onglet Pressions rejoue un lot pour N comptes ; l’onglet Taxons montre, pour chaque phénotype, la fréquence réelle et celle **exposée au jeu** dès qu’un profil est chargé.
+Dans le navigateur : https://stonevalleyoff-ai.github.io/orvane/ (ou `python3 -m http.server` à la racine, puis http://localhost:8000/). L’observatoire ouvre le monde publié sv-1 ; le menu en haut change de monde (ceux de `mondes/liste.json`, l’exemple fictif, ou un fichier). La vue d’ensemble dit ce qui s’est passé au dernier cycle ; Espèces est un registre qu’on fouille (recherche, filtres) et dont chaque fiche montre populations, phénotypes (réels et **montrés au jeu**, d’après le profil du monde), hérédité, traits continus et traits portés ; Simuler fait tourner le moteur ici, sans toucher au monde publié, et peut rejouer un lot de pressions pour N joueurs. L’adresse garde le monde, la vue et l’espèce : `monde/?monde=genese-7&vue=especes&espece=…` se partage.
 
 En ligne de commande :
 
