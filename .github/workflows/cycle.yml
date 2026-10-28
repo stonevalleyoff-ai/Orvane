@@ -28,7 +28,9 @@ jobs:
         run: |
           echec=0
           for m in mondes/*/; do
-            node hebergement/cycle.js "$(basename "$m")" --cycles "${{ github.event.inputs.cycles || '1' }}" || { echo "::error::le monde $(basename "$m") n'a pas tourné"; echec=1; }
+            c=0; node hebergement/cycle.js "$(basename "$m")" --cycles "${{ github.event.inputs.cycles || '1' }}" || c=$?
+            if [ "$c" = 2 ]; then echec=1                     # le monde a tourné, mais sans les lots en ligne (le message dit pourquoi)
+            elif [ "$c" != 0 ]; then echo "::error::le monde $(basename "$m") n'a pas tourné"; echec=1; fi
           done
           exit $echec
       - name: publier
@@ -37,7 +39,8 @@ jobs:
           git config user.email "orvane@users.noreply.github.com"
           git add mondes
           git diff --cached --quiet || git commit -m "cycle $(date -u +%Y-%m-%d)"
-          git push
+          git pull --rebase --autostash -q || true
+          git push || { echo "::error title=publication::GitHub refuse que l'action publie le cycle. Dans Settings › Actions › General › Workflow permissions, choisissez « Read and write permissions », puis relancez."; exit 1; }
       - name: signaler un monde en panne
         if: steps.tourner.outcome == 'failure'
         run: exit 1
