@@ -1,0 +1,54 @@
+{
+  "orvane": "0.1",
+  "jeu": "(aucun : un monde né de la genèse, à observer)",
+  "monde": {
+    "id": "genese-7",
+    "graine": 7,
+    "cycle": "24h",
+    "annee": 120,
+    "amorce": "mondes/genese-7/amorce.json",
+    "historique": 30
+  },
+  "exposition": {
+    "compression": {
+      "defaut": 0.3
+    },
+    "propagation_cycles": 3,
+    "traits_rendus": [
+      "nanisme",
+      "metabolisme-lent",
+      "peau-epaisse",
+      "vibrisses",
+      "pattes-longues",
+      "ponte-abondante",
+      "queue-prehensile",
+      "robe-doree",
+      "estomac-large",
+      "albinisme",
+      "soins-parentaux",
+      "melanisme",
+      "palmes",
+      "glande-irritante",
+      "crocs-allonges",
+      "camouflage",
+      "crepuscularite",
+      "yeux-nocturnes",
+      "membrane-planante",
+      "gregarisme",
+      "gigantisme"
+    ],
+    "seuil_extinction_jeu": 20
+  },
+  "influence": {
+    "poids": {
+      "prelevement": 1,
+      "capture": 1
+    },
+    "plafonds": {
+      "par_compte_cycle": 30,
+      "part_max_compte": 0.15,
+      "part_max_population": 0.2
+    },
+    "memoire_cycles": 5
+  }
+}

@@ -1,0 +1,43 @@
+# Orvane — le cycle nocturne : chaque nuit, chaque monde avance d'un cycle et son instantané est publié.
+# Secret du dépôt à renseigner : ORVANE_LECTURE_SECRET (le secret de lecture ; où lire est dans profil.monde.pressions).
+# GitHub Pages (Settings › Pages, branche main, dossier /) sert ensuite mondes/<id>/instantane.json avec CORS *.
+name: cycle
+on:
+  schedule:
+    - cron: '17 3 * * *'      # 03:17 UTC, tous les jours
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: 'nombre de cycles à faire tourner'
+        default: '1'
+permissions:
+  contents: write
+concurrency: cycle
+jobs:
+  cycle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: faire tourner chaque monde
+        id: tourner
+        continue-on-error: true          # un monde en panne n'empêche pas les autres d'être publiés
+        env:
+          ORVANE_LECTURE_SECRET: ${{ secrets.ORVANE_LECTURE_SECRET }}   # le secret de lecture (profil.monde.pressions) : pas la clé de service du jeu
+        run: |
+          echec=0
+          for m in mondes/*/; do
+            node hebergement/cycle.js "$(basename "$m")" --cycles "${{ github.event.inputs.cycles || '1' }}" || { echo "::error::le monde $(basename "$m") n'a pas tourné"; echec=1; }
+          done
+          exit $echec
+      - name: publier
+        run: |
+          git config user.name "orvane"
+          git config user.email "orvane@users.noreply.github.com"
+          git add mondes
+          git diff --cached --quiet || git commit -m "cycle $(date -u +%Y-%m-%d)"
+          git push
+      - name: signaler un monde en panne
+        if: steps.tourner.outcome == 'failure'
+        run: exit 1

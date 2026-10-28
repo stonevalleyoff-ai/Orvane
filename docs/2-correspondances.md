@@ -24,8 +24,10 @@ const TAXON_ESPECE = { 'crapaud-buffle': 'crapaud' };
 ```
 
 **Les lignées nouvelles.** Orvane fera apparaître des taxons que votre jeu ne connaît pas (`brouteur.bois`, séparé du brouteur). Deux politiques :
-- *rendre par le parent* : remonter `parent` jusqu'à un taxon connu, et afficher ce corps-là avec les stats de la lignée (plus petite, moins farouche…). C'est ce que fait Stone Valley ;
-- *construire le corps* : si votre jeu assemble ses créatures par morceaux (taille, locomotion, organes), vous pouvez dessiner la lignée telle qu'Orvane la décrit. C'est la voie royale, et la plus coûteuse.
+- *rendre par le parent* : remonter `parent` jusqu'à un taxon connu, et afficher ce corps-là avec les stats de la lignée (plus petite, moins farouche…) et les couleurs de sa silhouette ;
+- *construire le corps* : si votre jeu assemble ses créatures par morceaux, dessinez la lignée d'après `plan.corps` (forme, pattes, proportions, organes, couleurs) et les traits que porte la majorité de ses phénotypes. C'est la voie royale, et la plus coûteuse.
+
+Stone Valley fait les deux : une lignée est rendue par son parent tant que sa silhouette lui ressemble (`OrvaneCorps.distance` sous 0,3, même forme, mêmes pattes, pas d'ailes gagnées), construite dès qu'elle s'en écarte ; une lignée sans ancêtre dans le jeu (un monde né de la genèse) est toujours construite, et emprunte sa conduite à un gabarit choisi par son régime. Gardez la fiche d'une lignée chez le joueur : une bête liée doit survivre à l'extinction de sa lignée.
 
 Et à l'inverse, une espèce de votre jeu qui n'est **pas** dans Orvane (un automate, un boss) : le traducteur répond « je ne sais pas » et le jeu fait comme avant. Ne forcez jamais une correspondance.
 

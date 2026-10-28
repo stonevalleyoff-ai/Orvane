@@ -45,6 +45,49 @@
         "amorce": {
           "type": "string",
           "description": "Chemin d'un instantané de départ (génération 0) si le jeu part d'un bestiaire existant."
+        },
+        "rodage": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Au premier cycle, le monde tourne seul autant de cycles avant d’être publié : la génération 0 est alors un équilibre, pas une amorce brute."
+        },
+        "annee": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Durée de l’année en cycles (120 : quatre saisons de 30 jours avec un cycle de 24 h). 0 : pas de saisons. Recopié dans monde.annee de l’instantané à chaque cycle."
+        },
+        "historique": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Combien de cycles allégés garder dans historique.json (365 par défaut)."
+        },
+        "nocturne": {
+          "type": "boolean",
+          "default": true,
+          "description": "false : le cycle nocturne passe ce monde (hebergement/cycle.js --forcer pour le faire tourner quand même)."
+        },
+        "pressions": {
+          "type": "object",
+          "description": "Où l'action nocturne lit les lots de pressions de ce monde : le projet Supabase du jeu (url), sa clé PUBLIQUE (cle), la fonction de lecture (orvane_lire_lots) et le NOM de la variable d'environnement qui porte le secret de lecture d'Orvane. Le secret lui-même n'est jamais dans le profil.",
+          "properties": {
+            "url": {
+              "type": "string"
+            },
+            "cle": {
+              "type": "string"
+            },
+            "fonction": {
+              "type": "string"
+            },
+            "secret": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "url",
+            "cle"
+          ],
+          "additionalProperties": false
         }
       }
     },
@@ -122,6 +165,65 @@
         "retour_apres_extinction": {
           "type": "boolean",
           "description": "Un taxon éteint peut-il revenir par recolonisation d'un biome voisin ?"
+        },
+        "mode": {
+          "enum": [
+            "compression",
+            "relatif"
+          ],
+          "default": "compression",
+          "description": "compression : la fréquence réelle d'un phénotype passe par la compression (sur la cote). relatif : le jeu garde ses propres taux (taux_jeu) à la génération 0, et ne suit que l'ÉCART d'Orvane depuis elle — une variante deux fois plus répandue qu'à la génération 0 l'est deux fois plus dans le jeu (sur la cote). Le jour un, le jeu est exactement ce qu'il était."
+        },
+        "taux_jeu": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "description": "Mode relatif : par trait rendu, la chance qu'avait une naissance de le porter avant Orvane. Un phénotype à plusieurs traits rendus : le produit."
+        },
+        "reference_min": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.01,
+          "description": "Mode relatif : la fréquence de référence plancher, pour une combinaison absente de la génération 0 (elle n'apparaît dans le jeu qu'une fois installée)."
+        },
+        "seuil_extinction_part": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.25,
+          "description": "Une espèce disparaît du jeu sur une île quand son effectif sur les sols de l'île tombe sous seuil_extinction_jeu ET sous cette part de ce qu'il était à la génération 0 : une espèce rare dès le départ n'est pas rayée pour autant."
+        },
+        "non_rendus": {
+          "enum": [
+            "reel",
+            "base"
+          ],
+          "default": "reel",
+          "description": "Mode relatif : un phénotype dont aucun trait n'est rendu garde sa fréquence réelle (reel) — le jeu peut faire agir ses traits (docs/7-conduites.md) — ou se fond dans le plan de base (base)."
+        },
+        "quantitatifs": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Les traits continus (docs/8) que le jeu montre, et combien de leur variation naturelle.",
+          "properties": {
+            "rendus": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Les traits continus que le jeu sait jouer (taille, vitesse, audace, sociabilite) : il en tire une valeur par bête et la rapporte."
+            },
+            "variation": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Part de la variation individuelle montrée. 0 : toutes les bêtes d’une population ont l’allure de sa moyenne (seul l’écart depuis la génération 0 se voit ; le jour un ne change rien). 1 : toute la variation naturelle."
+            }
+          }
         }
       }
     },

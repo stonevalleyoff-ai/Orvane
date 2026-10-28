@@ -3,11 +3,12 @@
  "monde": {
   "id": "sv-1",
   "graine": 7340021,
-  "nom": "Monde de Stone Valley"
+  "nom": "Monde de Stone Valley",
+  "annee": 120
  },
  "cycle": {
   "n": 0,
-  "date": "2026-10-27T18:48:40.630Z",
+  "date": "2026-10-28T08:05:25.682Z",
   "pressions_recues": 0
  },
  "biomes": [
@@ -22,7 +23,7 @@
     "lumiere": 0.9,
     "couvert": 0.1
    },
-   "capacite": 72147,
+   "capacite": 64221,
    "voisins": [
     "prairie"
    ]
@@ -38,7 +39,7 @@
     "lumiere": 0.9,
     "couvert": 0.3
    },
-   "capacite": 2751289,
+   "capacite": 2628137,
    "voisins": [
     "rivage",
     "bois",
@@ -58,7 +59,7 @@
     "lumiere": 0.4,
     "couvert": 0.9
    },
-   "capacite": 1459375,
+   "capacite": 1286340,
    "voisins": [
     "prairie",
     "lande",
@@ -78,7 +79,7 @@
     "lumiere": 0.8,
     "couvert": 0.3
    },
-   "capacite": 673034,
+   "capacite": 590922,
    "voisins": [
     "prairie",
     "bois",
@@ -99,7 +100,7 @@
     "lumiere": 0.8,
     "couvert": 0.1
    },
-   "capacite": 57140,
+   "capacite": 52496,
    "voisins": [
     "lande",
     "pierre"
@@ -116,7 +117,7 @@
     "lumiere": 0.8,
     "couvert": 0.05
    },
-   "capacite": 19518,
+   "capacite": 19125,
    "voisins": [
     "falaise",
     "neige",
@@ -305,8 +306,10 @@
      "robe-doree"
     ],
     "ecarts": {
-     "perception": 0.9
-    }
+     "perception": 0.9,
+     "resistance": 1.1
+    },
+    "vulnerabilite": 1.15
    },
    "melanisme": {
     "domaine": "morphologie",
@@ -316,7 +319,8 @@
     "exclut": [
      "albinisme",
      "robe-doree"
-    ]
+    ],
+    "vulnerabilite": 0.95
    },
    "robe-doree": {
     "domaine": "morphologie",
@@ -329,7 +333,8 @@
     ],
     "ecarts": {
      "temperament": 1.1
-    }
+    },
+    "vulnerabilite": 1.1
    },
    "gigantisme": {
     "domaine": "morphologie",
@@ -344,8 +349,11 @@
      "taille_m": 1.3,
      "vitesse_rel": 0.8,
      "maturite": 1.4,
-     "longevite": 1.15
-    }
+     "longevite": 1.15,
+     "resistance": 0.95
+    },
+    "vulnerabilite": 0.85,
+    "chasse": 1.1
    },
    "nanisme": {
     "domaine": "morphologie",
@@ -360,8 +368,11 @@
      "taille_m": 0.75,
      "maturite": 0.7,
      "longevite": 0.8,
-     "portee": 0.85
-    }
+     "portee": 0.85,
+     "resistance": 1.1
+    },
+    "vulnerabilite": 1.15,
+    "chasse": 0.9
    }
   }
  },
@@ -397,7 +408,46 @@
      "lumiere": 0.7,
      "couvert": 0.5
     },
-    "tolerance": 0.6
+    "tolerance": 0.6,
+    "corps": {
+     "forme": "hexapode",
+     "pattes": 6,
+     "long": 0.5,
+     "haut": 0.3,
+     "cou": 0,
+     "tete": 0.45,
+     "museau": 0.3,
+     "oreilles": 0,
+     "queue": 0.1,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0.6,
+     "antennes": 0.3,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       188,
+       168,
+       124
+      ],
+      "sombre": [
+       132,
+       112,
+       78
+      ],
+      "ventre": [
+       211,
+       198,
+       170
+      ],
+      "oeil": [
+       60,
+       52,
+       40
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -498,7 +548,46 @@
      "lumiere": 0.7,
      "couvert": 0.43
     },
-    "tolerance": 0.74
+    "tolerance": 0.74,
+    "corps": {
+     "forme": "hexapode",
+     "pattes": 6,
+     "long": 0.45,
+     "haut": 0.35,
+     "cou": 0,
+     "tete": 0.45,
+     "museau": 0.3,
+     "oreilles": 0,
+     "queue": 0.1,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0.8,
+     "antennes": 0.3,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       150,
+       132,
+       150
+      ],
+      "sombre": [
+       100,
+       86,
+       104
+      ],
+      "ventre": [
+       187,
+       175,
+       187
+      ],
+      "oeil": [
+       70,
+       60,
+       70
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -587,7 +676,7 @@
     "regime": "omnivore",
     "longevite": 27.5,
     "maturite": 5.5,
-    "portee": 4,
+    "portee": 3,
     "sociabilite": 0.2,
     "temperament": 0.2,
     "activite": "diurne",
@@ -600,7 +689,46 @@
      "lumiere": 0.7,
      "couvert": 0.5
     },
-    "tolerance": 0.6
+    "tolerance": 0.6,
+    "corps": {
+     "forme": "hexapode",
+     "pattes": 6,
+     "long": 0.5,
+     "haut": 0.3,
+     "cou": 0,
+     "tete": 0.45,
+     "museau": 0.3,
+     "oreilles": 0,
+     "queue": 0.1,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0.6,
+     "antennes": 0.3,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       196,
+       140,
+       86
+      ],
+      "sombre": [
+       142,
+       96,
+       52
+      ],
+      "ventre": [
+       217,
+       180,
+       145
+      ],
+      "oeil": [
+       250,
+       220,
+       140
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -702,24 +830,63 @@
      "lumiere": 0.7,
      "couvert": 0.5
     },
-    "tolerance": 0.6
+    "tolerance": 0.6,
+    "corps": {
+     "forme": "hexapode",
+     "pattes": 6,
+     "long": 0.5,
+     "haut": 0.4,
+     "cou": 0,
+     "tete": 0.45,
+     "museau": 0.5,
+     "oreilles": 0,
+     "queue": 0.1,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0.6,
+     "antennes": 0.3,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       178,
+       94,
+       106
+      ],
+      "sombre": [
+       116,
+       56,
+       70
+      ],
+      "ventre": [
+       205,
+       150,
+       158
+      ],
+      "oeil": [
+       255,
+       228,
+       150
+      ]
+     }
+    }
    },
    "populations": [
     {
      "biome": "prairie",
-     "effectif": 4000,
+     "effectif": 1200,
      "tendance": 0,
      "depuis": 0
     },
     {
      "biome": "bois",
-     "effectif": 3280,
+     "effectif": 984,
      "tendance": 0,
      "depuis": 0
     },
     {
      "biome": "lande",
-     "effectif": 1520,
+     "effectif": 456,
      "tendance": 0,
      "depuis": 0
     }
@@ -804,24 +971,63 @@
      "lumiere": 0.67,
      "couvert": 0.43
     },
-    "tolerance": 0.67
+    "tolerance": 0.67,
+    "corps": {
+     "forme": "hexapode",
+     "pattes": 6,
+     "long": 0.5,
+     "haut": 0.45,
+     "cou": 0,
+     "tete": 0.45,
+     "museau": 0.3,
+     "oreilles": 0,
+     "queue": 0.1,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0.6,
+     "antennes": 0.5,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       92,
+       80,
+       120
+      ],
+      "sombre": [
+       52,
+       44,
+       72
+      ],
+      "ventre": [
+       149,
+       141,
+       167
+      ],
+      "oeil": [
+       180,
+       240,
+       255
+      ]
+     }
+    }
    },
    "populations": [
     {
      "biome": "bois",
-     "effectif": 1476,
+     "effectif": 443,
      "tendance": 0,
      "depuis": 0
     },
     {
      "biome": "falaise",
-     "effectif": 90,
+     "effectif": 27,
      "tendance": 0,
      "depuis": 0
     },
     {
      "biome": "lande",
-     "effectif": 684,
+     "effectif": 205,
      "tendance": 0,
      "depuis": 0
     }
@@ -905,7 +1111,46 @@
      "lumiere": 0.85,
      "couvert": 0.3
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "bipede",
+     "pattes": 2,
+     "long": 0.4,
+     "haut": 0.85,
+     "cou": 0.75,
+     "tete": 0.4,
+     "museau": 0.5,
+     "oreilles": 0,
+     "queue": 0.35,
+     "cornes": 0,
+     "crete": 0.3,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       232,
+       190,
+       60
+      ],
+      "sombre": [
+       176,
+       124,
+       36
+      ],
+      "ventre": [
+       240,
+       213,
+       128
+      ],
+      "oeil": [
+       38,
+       30,
+       30
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -1000,7 +1245,46 @@
      "lumiere": 0.87,
      "couvert": 0.23
     },
-    "tolerance": 0.32
+    "tolerance": 0.32,
+    "corps": {
+     "forme": "bipede",
+     "pattes": 2,
+     "long": 0.4,
+     "haut": 0.85,
+     "cou": 0.75,
+     "tete": 0.4,
+     "museau": 0.5,
+     "oreilles": 0,
+     "queue": 0.35,
+     "cornes": 0,
+     "crete": 0.3,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       236,
+       132,
+       48
+      ],
+      "sombre": [
+       176,
+       80,
+       30
+      ],
+      "ventre": [
+       243,
+       175,
+       120
+      ],
+      "oeil": [
+       38,
+       30,
+       30
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -1101,7 +1385,46 @@
      "lumiere": 0.8,
      "couvert": 0.15
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "bipede",
+     "pattes": 2,
+     "long": 0.4,
+     "haut": 0.85,
+     "cou": 0.75,
+     "tete": 0.4,
+     "museau": 0.5,
+     "oreilles": 0,
+     "queue": 0.35,
+     "cornes": 0,
+     "crete": 0.3,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       214,
+       60,
+       54
+      ],
+      "sombre": [
+       140,
+       34,
+       40
+      ],
+      "ventre": [
+       228,
+       128,
+       124
+      ],
+      "oeil": [
+       38,
+       30,
+       30
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -1202,7 +1525,46 @@
      "lumiere": 0.7,
      "couvert": 0.5
     },
-    "tolerance": 0.6
+    "tolerance": 0.6,
+    "corps": {
+     "forme": "bipede",
+     "pattes": 2,
+     "long": 0.4,
+     "haut": 0.85,
+     "cou": 0.75,
+     "tete": 0.4,
+     "museau": 0.5,
+     "oreilles": 0,
+     "queue": 0.35,
+     "cornes": 0,
+     "crete": 0.6,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       240,
+       120,
+       120
+      ],
+      "sombre": [
+       120,
+       90,
+       200
+      ],
+      "ventre": [
+       245,
+       167,
+       167
+      ],
+      "oeil": [
+       38,
+       30,
+       30
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -1304,7 +1666,46 @@
      "lumiere": 0.6,
      "couvert": 0.5
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.3,
+     "haut": 0.2,
+     "cou": 0,
+     "tete": 0.7,
+     "museau": 0.2,
+     "oreilles": 0.1,
+     "queue": 0,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "taches",
+     "couleurs": {
+      "robe": [
+       104,
+       118,
+       70
+      ],
+      "sombre": [
+       70,
+       82,
+       46
+      ],
+      "ventre": [
+       157,
+       166,
+       135
+      ],
+      "oeil": [
+       232,
+       196,
+       70
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -1395,7 +1796,46 @@
      "lumiere": 1,
      "couvert": 0.1
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.8,
+     "haut": 0.18,
+     "cou": 0.25,
+     "tete": 0.45,
+     "museau": 0.6,
+     "oreilles": 0.1,
+     "queue": 0.85,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "bandes",
+     "couleurs": {
+      "robe": [
+       196,
+       122,
+       70
+      ],
+      "sombre": [
+       120,
+       68,
+       40
+      ],
+      "ventre": [
+       217,
+       169,
+       135
+      ],
+      "oeil": [
+       250,
+       210,
+       90
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -1484,7 +1924,46 @@
      "lumiere": 0.2,
      "couvert": 0.95
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "bipede",
+     "pattes": 2,
+     "long": 0.3,
+     "haut": 0.3,
+     "cou": 0,
+     "tete": 0.9,
+     "museau": 0,
+     "oreilles": 0.1,
+     "queue": 0,
+     "cornes": 0,
+     "crete": 0.7,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       152,
+       74,
+       172
+      ],
+      "sombre": [
+       96,
+       48,
+       110
+      ],
+      "ventre": [
+       188,
+       137,
+       201
+      ],
+      "oeil": [
+       40,
+       26,
+       50
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -1573,7 +2052,46 @@
      "lumiere": 0.9,
      "couvert": 0.2
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.5,
+     "haut": 0.8,
+     "cou": 0.6,
+     "tete": 0.4,
+     "museau": 0.5,
+     "oreilles": 0.45,
+     "queue": 0.15,
+     "cornes": 0.9,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       226,
+       244,
+       252
+      ],
+      "sombre": [
+       96,
+       140,
+       176
+      ],
+      "ventre": [
+       236,
+       248,
+       253
+      ],
+      "oeil": [
+       30,
+       50,
+       80
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -1664,7 +2182,46 @@
      "lumiere": 0.7,
      "couvert": 0.03
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.8,
+     "haut": 0.15,
+     "cou": 0.15,
+     "tete": 0.45,
+     "museau": 0.4,
+     "oreilles": 0.1,
+     "queue": 0.8,
+     "cornes": 0,
+     "crete": 0.2,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "taches",
+     "couleurs": {
+      "robe": [
+       58,
+       44,
+       46
+      ],
+      "sombre": [
+       255,
+       122,
+       44
+      ],
+      "ventre": [
+       127,
+       118,
+       119
+      ],
+      "oeil": [
+       255,
+       220,
+       120
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -1759,7 +2316,46 @@
      "lumiere": 0.65,
      "couvert": 0.6
     },
-    "tolerance": 0.64
+    "tolerance": 0.64,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.6,
+     "haut": 0.35,
+     "cou": 0.35,
+     "tete": 0.4,
+     "museau": 0.35,
+     "oreilles": 0.2,
+     "queue": 0.2,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0.85,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       132,
+       120,
+       102
+      ],
+      "sombre": [
+       88,
+       80,
+       68
+      ],
+      "ventre": [
+       175,
+       167,
+       156
+      ],
+      "oeil": [
+       40,
+       34,
+       30
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -1854,7 +2450,46 @@
      "lumiere": 0.87,
      "couvert": 0.23
     },
-    "tolerance": 0.32
+    "tolerance": 0.32,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.45,
+     "haut": 0.45,
+     "cou": 0.25,
+     "tete": 0.4,
+     "museau": 0.3,
+     "oreilles": 0.45,
+     "queue": 0.2,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       238,
+       232,
+       220
+      ],
+      "sombre": [
+       150,
+       138,
+       128
+      ],
+      "ventre": [
+       244,
+       240,
+       232
+      ],
+      "oeil": [
+       28,
+       24,
+       22
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -1955,7 +2590,46 @@
      "lumiere": 0.83,
      "couvert": 0.23
     },
-    "tolerance": 0.38
+    "tolerance": 0.38,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.5,
+     "haut": 0.75,
+     "cou": 0.5,
+     "tete": 0.4,
+     "museau": 0.3,
+     "oreilles": 0.4,
+     "queue": 0.2,
+     "cornes": 0.8,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       204,
+       190,
+       164
+      ],
+      "sombre": [
+       146,
+       128,
+       104
+      ],
+      "ventre": [
+       222,
+       213,
+       196
+      ],
+      "oeil": [
+       40,
+       34,
+       30
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -2056,7 +2730,46 @@
      "lumiere": 0.83,
      "couvert": 0.07
     },
-    "tolerance": 0.31
+    "tolerance": 0.31,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.6,
+     "haut": 0.35,
+     "cou": 0.3,
+     "tete": 0.4,
+     "museau": 0.9,
+     "oreilles": 0.2,
+     "queue": 0.5,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       88,
+       96,
+       110
+      ],
+      "sombre": [
+       56,
+       60,
+       72
+      ],
+      "ventre": [
+       146,
+       152,
+       161
+      ],
+      "oeil": [
+       250,
+       186,
+       74
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -2157,24 +2870,63 @@
      "lumiere": 0.7,
      "couvert": 0.5
     },
-    "tolerance": 0.6
+    "tolerance": 0.6,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.6,
+     "haut": 0.5,
+     "cou": 0.3,
+     "tete": 0.45,
+     "museau": 0.35,
+     "oreilles": 0.55,
+     "queue": 0.7,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "rayures",
+     "couleurs": {
+      "robe": [
+       164,
+       174,
+       188
+      ],
+      "sombre": [
+       88,
+       96,
+       114
+      ],
+      "ventre": [
+       208,
+       214,
+       222
+      ],
+      "oeil": [
+       178,
+       236,
+       255
+      ]
+     }
+    }
    },
    "populations": [
     {
      "biome": "prairie",
-     "effectif": 800,
+     "effectif": 240,
      "tendance": 0,
      "depuis": 0
     },
     {
      "biome": "bois",
-     "effectif": 656,
+     "effectif": 197,
      "tendance": 0,
      "depuis": 0
     },
     {
      "biome": "lande",
-     "effectif": 304,
+     "effectif": 91,
      "tendance": 0,
      "depuis": 0
     }
@@ -2258,7 +3010,46 @@
      "lumiere": 0.9,
      "couvert": 0.3
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.6,
+     "haut": 0.65,
+     "cou": 0.4,
+     "tete": 0.5,
+     "museau": 0.5,
+     "oreilles": 0.3,
+     "queue": 0.2,
+     "cornes": 0.8,
+     "crete": 0.4,
+     "ailes": 0,
+     "carapace": 0.3,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       92,
+       74,
+       62
+      ],
+      "sombre": [
+       58,
+       46,
+       40
+      ],
+      "ventre": [
+       149,
+       137,
+       130
+      ],
+      "oeil": [
+       36,
+       30,
+       26
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -2330,10 +3121,10 @@
     "locomotion": [
      "vol"
     ],
-    "regime": "carnivore",
+    "regime": "omnivore",
     "longevite": 55,
     "maturite": 11,
-    "portee": 2,
+    "portee": 3,
     "sociabilite": 0.9,
     "temperament": 0.24,
     "activite": "diurne",
@@ -2346,12 +3137,51 @@
      "lumiere": 0.9,
      "couvert": 0.1
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "oiseau",
+     "pattes": 2,
+     "long": 0.45,
+     "haut": 0.25,
+     "cou": 0.35,
+     "tete": 0.4,
+     "museau": 0.55,
+     "oreilles": 0,
+     "queue": 0.5,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 1,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       246,
+       246,
+       242
+      ],
+      "sombre": [
+       164,
+       176,
+       192
+      ],
+      "ventre": [
+       252,
+       252,
+       250
+      ],
+      "oeil": [
+       20,
+       22,
+       28
+      ]
+     }
+    }
    },
    "populations": [
     {
      "biome": "rivage",
-     "effectif": 144,
+     "effectif": 43,
      "tendance": 0,
      "depuis": 0
     }
@@ -2435,24 +3265,63 @@
      "lumiere": 0.8,
      "couvert": 0.15
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.95,
+     "haut": 0.25,
+     "cou": 0.6,
+     "tete": 0.5,
+     "museau": 0.55,
+     "oreilles": 0,
+     "queue": 1,
+     "cornes": 0,
+     "crete": 0.6,
+     "ailes": 0.95,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       46,
+       120,
+       98
+      ],
+      "sombre": [
+       34,
+       92,
+       84
+      ],
+      "ventre": [
+       119,
+       167,
+       153
+      ],
+      "oeil": [
+       255,
+       196,
+       60
+      ]
+     }
+    }
    },
    "populations": [
     {
      "biome": "lande",
-     "effectif": 76,
+     "effectif": 23,
      "tendance": 0,
      "depuis": 0
     },
     {
      "biome": "falaise",
-     "effectif": 10,
+     "effectif": 3,
      "tendance": 0,
      "depuis": 0
     },
     {
      "biome": "pierre",
-     "effectif": 16,
+     "effectif": 5,
      "tendance": 0,
      "depuis": 0
     }
@@ -2536,7 +3405,46 @@
      "lumiere": 0.85,
      "couvert": 0.7
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.5,
+     "haut": 0.8,
+     "cou": 0.6,
+     "tete": 0.4,
+     "museau": 0.5,
+     "oreilles": 0.5,
+     "queue": 0.15,
+     "cornes": 0.8,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "taches",
+     "couleurs": {
+      "robe": [
+       246,
+       238,
+       232
+      ],
+      "sombre": [
+       214,
+       188,
+       192
+      ],
+      "ventre": [
+       249,
+       244,
+       240
+      ],
+      "oeil": [
+       40,
+       30,
+       36
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -2625,7 +3533,46 @@
      "lumiere": 0.85,
      "couvert": 0.7
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.55,
+     "haut": 0.45,
+     "cou": 0.3,
+     "tete": 0.45,
+     "museau": 0.6,
+     "oreilles": 0.8,
+     "queue": 0.9,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       246,
+       226,
+       214
+      ],
+      "sombre": [
+       232,
+       138,
+       164
+      ],
+      "ventre": [
+       255,
+       250,
+       246
+      ],
+      "oeil": [
+       255,
+       196,
+       96
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -2714,7 +3661,46 @@
      "lumiere": 0.85,
      "couvert": 0.7
     },
-    "tolerance": 0.3
+    "tolerance": 0.3,
+    "corps": {
+     "forme": "quadrupede",
+     "pattes": 4,
+     "long": 0.6,
+     "haut": 0.35,
+     "cou": 0.35,
+     "tete": 0.4,
+     "museau": 0.35,
+     "oreilles": 0.2,
+     "queue": 0.2,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0.85,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       150,
+       128,
+       118
+      ],
+      "sombre": [
+       100,
+       84,
+       80
+      ],
+      "ventre": [
+       187,
+       172,
+       166
+      ],
+      "oeil": [
+       40,
+       34,
+       30
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -2803,7 +3789,46 @@
      "lumiere": 0.7,
      "couvert": 0.5
     },
-    "tolerance": 0.6
+    "tolerance": 0.6,
+    "corps": {
+     "forme": "bipede",
+     "pattes": 2,
+     "long": 0.6,
+     "haut": 0.4,
+     "cou": 0.3,
+     "tete": 0.55,
+     "museau": 0.5,
+     "oreilles": 0.3,
+     "queue": 0.6,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       118,
+       128,
+       100
+      ],
+      "sombre": [
+       70,
+       78,
+       58
+      ],
+      "ventre": [
+       166,
+       172,
+       154
+      ],
+      "oeil": [
+       255,
+       184,
+       72
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -2904,7 +3929,46 @@
      "lumiere": 0.7,
      "couvert": 0.5
     },
-    "tolerance": 0.6
+    "tolerance": 0.6,
+    "corps": {
+     "forme": "bipede",
+     "pattes": 2,
+     "long": 0.35,
+     "haut": 0.95,
+     "cou": 0.45,
+     "tete": 0.55,
+     "museau": 0.3,
+     "oreilles": 0.3,
+     "queue": 0.3,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       146,
+       150,
+       132
+      ],
+      "sombre": [
+       88,
+       92,
+       80
+      ],
+      "ventre": [
+       184,
+       187,
+       175
+      ],
+      "oeil": [
+       255,
+       196,
+       96
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -3005,7 +4069,46 @@
      "lumiere": 0.7,
      "couvert": 0.5
     },
-    "tolerance": 0.6
+    "tolerance": 0.6,
+    "corps": {
+     "forme": "bipede",
+     "pattes": 2,
+     "long": 0.45,
+     "haut": 0.35,
+     "cou": 0.3,
+     "tete": 0.6,
+     "museau": 0.3,
+     "oreilles": 0.3,
+     "queue": 0.3,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       106,
+       100,
+       82
+      ],
+      "sombre": [
+       62,
+       56,
+       44
+      ],
+      "ventre": [
+       158,
+       154,
+       143
+      ],
+      "oeil": [
+       255,
+       170,
+       60
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -3106,7 +4209,46 @@
      "lumiere": 0.7,
      "couvert": 0.5
     },
-    "tolerance": 0.6
+    "tolerance": 0.6,
+    "corps": {
+     "forme": "bipede",
+     "pattes": 2,
+     "long": 0.35,
+     "haut": 0.5,
+     "cou": 0.3,
+     "tete": 0.55,
+     "museau": 0.3,
+     "oreilles": 0.5,
+     "queue": 0.3,
+     "cornes": 0,
+     "crete": 0,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       126,
+       128,
+       104
+      ],
+      "sombre": [
+       76,
+       76,
+       60
+      ],
+      "ventre": [
+       171,
+       172,
+       157
+      ],
+      "oeil": [
+       255,
+       184,
+       72
+      ]
+     }
+    }
    },
    "populations": [
     {
@@ -3207,7 +4349,46 @@
      "lumiere": 0.7,
      "couvert": 0.5
     },
-    "tolerance": 0.6
+    "tolerance": 0.6,
+    "corps": {
+     "forme": "bipede",
+     "pattes": 2,
+     "long": 0.35,
+     "haut": 0.6,
+     "cou": 0.3,
+     "tete": 0.55,
+     "museau": 0.3,
+     "oreilles": 0.3,
+     "queue": 0.3,
+     "cornes": 0,
+     "crete": 0.7,
+     "ailes": 0,
+     "carapace": 0,
+     "antennes": 0,
+     "motif": "uni",
+     "couleurs": {
+      "robe": [
+       120,
+       130,
+       124
+      ],
+      "sombre": [
+       66,
+       74,
+       70
+      ],
+      "ventre": [
+       167,
+       174,
+       170
+      ],
+      "oeil": [
+       255,
+       206,
+       110
+      ]
+     }
+    }
    },
    "populations": [
     {

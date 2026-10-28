@@ -10,6 +10,9 @@ Orvane fait vivre un monde : des espèces, des biomes, des populations qui naiss
 | [4. Renvoyer des pressions](4-renvoyer-des-pressions.md) | compter ce que font les joueurs, sans tricher ni compter deux fois |
 | [5. Le profil et les essais](5-profil-et-essais.md) | régler le tampon pour votre jeu et tout vérifier hors ligne |
 | [6. L'exemple Stone Valley](6-exemple-stone-valley.md) | le traducteur complet, commenté |
+| [7. Les conduites](7-conduites.md) | ce que l'évolution fait faire aux bêtes : le vocabulaire abstrait, un phénotype par bête, trois règles pour les jouer, et ce qui vient ensuite |
+| [8. La génétique continue](8-genetique-continue.md) | taille, vitesse, audace, sociabilité : une moyenne et une variance par population, une valeur par bête, ce que la sélection en fait |
+| [9. La reproduction sexuée](9-reproduction.md) | des allèles par population, dominants ou récessifs, des pères choisis, et des petits qui ressemblent à leur mère |
 
 ## En une page
 
@@ -24,4 +27,4 @@ Trois règles pour que ça reste juste :
 - Un trait n'est jamais une stat. C'est un organe, un coût, un effet. C'est *vous* qui décidez ce qu'une glande qui crache vaut en dégâts.
 - Ce que votre jeu ne sait pas rendre continue d'évoluer dans Orvane ; vous l'exposerez le jour où vous saurez le dessiner.
 
-Les fichiers de référence : `schemas/` (le contrat, avec un exemple rempli), `moteur/catalogue.js` (tous les traits possibles), `tampon/tampon.js` (`exposer()` et `agreger()`).
+Les fichiers de référence : `schemas/` (le contrat, avec un exemple rempli), `moteur/catalogue.js` (tous les traits possibles, et les traits continus), `moteur/corps.js` (la silhouette d'une lignée), `tampon/tampon.js` (`exposer()` et `agreger()`).

@@ -10,7 +10,9 @@ Un instantané, c'est l'état du vivant d'un monde à un cycle. Il est publié e
   "cycle": { "n": 12, "date": "2026-10-27T20:16:41Z", "pressions_recues": 0 },
 ```
 
-`cycle.n` monte de 1 à chaque nuit ; `cycle.date` dit quand il a été calculé — c'est la référence pour étaler un changement dans le temps (chapitre 5). `pressions_recues` : combien d'événements de joueurs ont pesé sur ce cycle.
+`cycle.n` monte de 1 à chaque nuit ; `cycle.date` dit quand il a été calculé — c'est la référence pour étaler un changement dans le temps (chapitre 5). `pressions_recues` : combien d'événements de joueurs ont pesé sur ce cycle. Si le monde a une année (`monde.annee`, en cycles), `cycle.saison` donne la phase (0 plein hiver, 0,5 plein été), son nom et le facteur de production du moment (0,75 en hiver, 1,25 en été) : de quoi caler la météo et l'abondance de votre jeu sur celles du monde.
+
+Deux champs servent aux traducteurs : `monde.ne`, la naissance du monde (avec son `id`, c'est son identité — un monde refait de zéro change de date, et le traducteur repart de sa nouvelle génération 0), et `precedent`, le cycle d'avant allégé (effectifs par biome, fréquences des phénotypes), joint à l'instantané publié pour que tous les traducteurs interpolent de la même façon.
 
 ## Les biomes
 
@@ -22,7 +24,7 @@ Un instantané, c'est l'état du vivant d'un monde à un cycle. Il est publié e
       "voisins": ["rivage", "bois", "lande", "tourbiere", "cerisaie"] },
 ```
 
-Un biome n'est pas un nom, c'est **cinq curseurs de 0 à 1** : froid→chaud, sec→humide, bas→haut, sombre→lumineux, nu→dense ; plus un `milieu` (terrestre, aquatique, amphibie, aérien, souterrain). C'est ce qui rend Orvane universel : votre jeu fait correspondre ses propres sols à ces curseurs (chapitre 2). `capacite` est la place disponible (en biomasse) ; quand les joueurs abîment l'habitat elle baisse, et elle regagne lentement `capacite_base`. `voisins` : par où les populations migrent.
+Un biome n'est pas un nom, c'est **cinq curseurs de 0 à 1** : froid→chaud, sec→humide, bas→haut, sombre→lumineux, nu→dense ; plus un `milieu` (terrestre, aquatique, amphibie, aérien, souterrain). C'est ce qui rend Orvane universel : votre jeu fait correspondre ses propres sols à ces curseurs (chapitre 2). `capacite` est la place disponible (en biomasse) ; quand les joueurs abîment l'habitat elle baisse, et elle regagne lentement `capacite_base`. `voisins` : par où les populations migrent. Avec des saisons, `axes_saison` donne les axes du moment (`axes` reste la valeur annuelle : c'est elle que vous faites correspondre) ; `saisons: false` marque un biome sans saison (grotte, volcan).
 
 ## Le catalogue
 
@@ -32,7 +34,7 @@ Un biome n'est pas un nom, c'est **cinq curseurs de 0 à 1** : froid→chaud, se
                    "effet": "robe blanche, yeux clairs ; voit moins bien en plein jour", "ecarts": { "perception": 0.9 } },
 ```
 
-Seuls les traits **réellement portés** ce cycle sont listés ; l'univers complet est dans `moteur/catalogue.js`. Chaque trait dit : son `domaine` (morphologie, locomotion, sens, offense, defense, metabolisme, reproduction, social, activite), l'`organe` qui le porte, son `cout` (ce phénotype fait autant de petits en moins : 0.04 = −4 %), son `effet` en langage biologique, parfois un `comportement` induit, des `ecarts` (multiplicateurs sur le plan corporel), ce qu'il `fournit` (des matières), et ses contraintes `exige`/`exclut`.
+Seuls les traits **réellement portés** ce cycle sont listés ; l'univers complet est dans `moteur/catalogue.js`. Chaque trait dit : son `domaine` (morphologie, locomotion, sens, offense, defense, metabolisme, reproduction, social, activite), l'`organe` qui le porte, son `cout` (ce phénotype fait autant de petits en moins : 0.04 = −4 %), son `effet` en langage biologique, parfois un `comportement` induit, des `ecarts` (multiplicateurs sur le plan corporel), ce qu'il `fournit` (des matières), ses contraintes `exige`/`exclut`, et sa place dans la chaîne alimentaire : `vulnerabilite` (une carapace : 0.55, deux fois moins mangé) et `chasse` (des crocs allongés : 1.25).
 
 ## Un taxon
 
@@ -55,7 +57,8 @@ Seuls les traits **réellement portés** ce cycle sont listés ; l'univers compl
 
 - **`id`** est stable dans le temps : c'est la clé de votre table de correspondance. **`parent`** dit de quel taxon celui-ci s'est séparé (une lignée nouvelle s'appelle `parent.biome`, ex. `brouteur.bois`). **`statut`** : croissance, stable, declin, menace, eteint. Un taxon éteint reste listé dix cycles avec `eteint: <cycle>`.
 - **`plan`** : le corps de base, commun à tous les phénotypes. Les durées (`longevite`, `maturite`) sont en cycles. `vitesse_rel` est en longueurs de corps par seconde. `sociabilite` 0 = solitaire, 1 = grégaire ; `temperament` 0 = fuit toujours, 1 = riposte toujours. `niche` + `tolerance` : les axes du biome idéal et la largeur de ce qu'il supporte.
-- **`populations`** : l'effectif par biome, la variation du cycle (`tendance`), depuis quand la population est installée là, et la part de sa mortalité due aux joueurs (`pression`).
+- **`plan.corps`** (facultatif) : la silhouette — `forme` (quadrupede, hexapode, bipede, oiseau, serpent), `pattes`, des proportions de 0 à 1 (`long`, `haut`, `cou`, `tete`, `museau`, `oreilles`, `queue`, `cornes`, `crete`, `ailes`, `carapace`, `antennes`), un `motif` et des `couleurs` (`robe`, `sombre`, `ventre`, `oeil` en [r, v, b]). Elle dérive à chaque séparation : c'est ce qu'il faut pour dessiner une lignée que votre jeu ne connaît pas (`moteur/corps.js` : `normaliser`, `distance`, `decrire`).
+- **`populations`** : l'effectif par biome, la variation du cycle (`tendance`), depuis quand la population est installée là, la part de sa mortalité due aux joueurs (`pression`) et aux prédateurs (`predation`), et pour un prédateur sa `satiete` (0 famine, 1 rassasié — un bon curseur d'agressivité pour un jeu). Une `maladie` en cours dit combien de cycles il lui reste, sa virulence et sa part des morts : de quoi montrer des bêtes amaigries, ou faire d'une viande un risque. `quant` : ses traits continus (taille, vitesse, audace, sociabilité), moyenne `m`, variance `v` et part héritable `g`, en écarts-types de la génération 0 — de quoi tirer chaque bête (chapitre 8). `alleles` : la fréquence de l'allèle de chaque trait, dont les porteurs cachés d'un trait récessif (chapitre 9).
 - **`phenotypes`** : les combinaisons de traits présentes, avec leur fréquence (somme 1 ; le premier est le plan de base). Un phénotype est toujours **complet et cohérent** : si un jet glandulaire est là, la glande y est, et le coût inclut les deux. `ecarts` résume ce que les traits changent au plan ; `selection` dit si la fréquence monte ou descend.
 
 ## Les événements
@@ -64,7 +67,7 @@ Seuls les traits **réellement portés** ce cycle sont listés ; l'univers compl
   "evenements": [ { "type": "separation", "taxon": "trottin_menu.bois", "biome": "bois", "detail": "lignée issue de trottin_menu, plus petite" } ] }
 ```
 
-Types : apparition, extinction, separation, migration, effondrement, explosion, nouveau_trait. Utiles pour un journal en jeu (« une nouvelle lignée de trottins vit dans les bois ») ou pour l'observatoire.
+Types : apparition, extinction, separation, migration, effondrement, explosion, nouveau_trait, epidemie, remission, catastrophe (incendie, crue, sécheresse : le détail dit laquelle et la capacité perdue). Utiles pour un journal en jeu (« une nouvelle lignée de trottins vit dans les bois ») ou pour l'observatoire.
 
 ## Ce qu'il faut en retenir pour un traducteur
 

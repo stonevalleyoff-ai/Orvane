@@ -1,10 +1,5 @@
 {
- "lisse": {
-  "brouteur": {
-   "prairie": {
-    "base": 0.015
-   }
-  }
- },
- "derniere_lecture": "1970-01-01T00:00:00Z"
+ "lisse": {},
+ "dernier_id": 0,
+ "lisseQ": {}
 }

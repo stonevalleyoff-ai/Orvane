@@ -8,7 +8,7 @@ Commencez par calculer le plan effectif (le moteur l'exporte : `Orvane.planDe(ta
 
 - **Points de vie** : la robustesse suit la masse, mais moins que proportionnellement (métabolisme) : `PV = PV_ref × (masse_kg / masse_ref) ^ 0.75`. Avec `masse_ref` = la masse de votre créature « moyenne » et `PV_ref` ses PV, un géant ×1.8 a ×1.55 PV, un nain ×0.45 a ×0.55.
 - **Boîte de collision / échelle du sprite** : `taille_m / taille_ref`. Les traits de morphologie passent par `ecarts.taille_m`, rien d'autre à faire.
-- **Résistance** : un trait du domaine `defense` réduit les dégâts reçus. Barème : `peau-epaisse` −20 %, `carapace` −45 % (elle exige la peau épaisse : −45 % en tout, pas −65 %), `camouflage` rien sur les dégâts mais la détection (voir comportement). Le `cout` est un bon ordre de grandeur de la force d'un trait : −3 × coût en dégâts reçus donne peau −15 %, carapace −54 %.
+- **Résistance** : un trait du domaine `defense` réduit les dégâts reçus, et le catalogue vous donne déjà la mesure : `vulnerabilite` (peau épaisse 0.8, carapace 0.55). Barème : dégâts reçus × vulnerabilite — c'est exactement ce que le moteur fait subir à ce phénotype sous les crocs des prédateurs, autant que le jeu dise la même chose. `camouflage` joue sur la détection (voir comportement).
 
 ## Mouvement — vitesse, milieux, horaires
 
@@ -19,6 +19,8 @@ Commencez par calculer le plan effectif (le moteur l'exporte : `Orvane.planDe(ta
 ## Comportement — IA
 
 - **Fuite ou riposte** : `temperament` est le curseur. 0 → fuit à vue ; 1 → attaque à vue. Entre les deux, un seuil : riposte si `blessure > 1 − temperament`, ou si acculée. Le brouteur (0) ne se bat jamais ; un cracheur (×1.6) riposte tôt.
+- **Qui mange qui** : l'onglet Chaîne de l'observatoire dessine, biome par biome, les flèches prédateur → proie et leur poids ; c'est la carte de vos comportements de chasse et de fuite à écrire.
+- **Faim** : la `satiete` d'une population de prédateurs (dans l'instantané) dit si les proies manquent. Sous 0,4, rendez-les agressifs, errants, prêts à s'en prendre au joueur ou à ses compagnons ; au-dessus de 0,8, paisibles. C'est gratuit et c'est vivant : une île où les joueurs ont vidé les proies devient dangereuse.
 - **Groupe** : `sociabilite` → taille de groupe `1 + round(sociabilite × 6)` et alerte collective au-delà de 0,5. `gregarisme` pousse encore.
 - **Détection** : rayon = `perception × portée_max` ; `camouflage` divise par deux la distance à laquelle *on la voit*.
 - **Régime** : `herbivore` broute (et fuit), `carnivore` cible les autres bêtes selon la masse (une proie de moins de la moitié de sa masse), `omnivore` les deux, `detritivore`/`filtreur` ne chasse pas.
@@ -27,7 +29,7 @@ Commencez par calculer le plan effectif (le moteur l'exporte : `Orvane.planDe(ta
 ## Attaque
 
 - Une attaque **par organe offensif** (domaine `offense`) ; sans trait offensif, le plan de base n'a qu'une charge/morsure proportionnelle à la masse.
-- **Dégâts** : `deg = deg_ref × (masse_kg / masse_ref) ^ 0.5 × (1 + 2 × cout_du_trait)` — la masse pèse, le coût de l'organe dit sa puissance (jet glandulaire 0,07 → +14 %, dard 0,09 → +18 %).
+- **Dégâts** : `deg = deg_ref × (masse_kg / masse_ref) ^ 0.5 × chasse` — la masse pèse, et `chasse` (crocs allongés 1.25, dard 1.1) dit ce que l'organe ajoute, avec la même mesure que le moteur.
 - **Portée** : lisez l'`effet` : « à 3 longueurs de corps » → `3 × taille_m`. Les effets du catalogue sont écrits avec ces unités exprès.
 - **Cadence** : un organe coûteux se recharge lentement : `recharge_s = 2 + 20 × cout` (jet : 3,4 s ; dard : 3,8 s).
 - **Effets secondaires** : une `glande-irritante` sans jet, c'est un contact qui irrite (dégâts dans le temps) ; `coloration-aposematique` annonce la toxicité (les prédateurs IA l'évitent).

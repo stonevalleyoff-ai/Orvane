@@ -25,6 +25,8 @@ Le jeu renvoie des **comptes bruts**, jamais des conclusions. Le tampon fait le 
 | `deplacement` (+ `vers`) | emportée sur un autre biome | fonde ou renforce une population ailleurs |
 | `habitat_perdu` / `habitat_gagne` | surface détruite / créée (en unités de votre jeu : cases, arbres…) | la capacité du biome bouge |
 
+**La valeur des bêtes.** Si votre jeu tire les traits continus (chapitre 8), joignez à un prélèvement ou à une capture `q` : la valeur moyenne z, par trait, des bêtes de l'événement, telle qu'elles l'ont tirée à la naissance (`"q": { "taille": 1.3 }`). C'est ainsi qu'Orvane sait si vos joueurs prennent les plus grandes ou les plus audacieuses ; sans `q`, il suppose qu'ils prennent au hasard.
+
 **Ne comptez pas** : les morts naturelles (faim, vieillesse), les proies d'autres bêtes, les bêtes d'un autre joueur (c'est son lot), les compagnons.
 
 ## Comment ne pas compter deux fois

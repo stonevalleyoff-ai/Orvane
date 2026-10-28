@@ -5,7 +5,15 @@
     "id": "sv-1",
     "graine": 7340021,
     "cycle": "24h",
-    "amorce": "traducteurs/stone-valley/generation-0.json"
+    "amorce": "traducteurs/stone-valley/generation-0.json",
+    "rodage": 400,
+    "annee": 120,
+    "pressions": {
+      "url": "https://ldazucyrnpewkqdneznc.supabase.co",
+      "cle": "sb_publishable_qUrfgAsAUzc3jd_tiqkY9g_EVkkQRAs",
+      "fonction": "orvane_lire_lots",
+      "secret": "ORVANE_LECTURE_SECRET"
+    }
   },
   "exposition": {
     "compression": {
@@ -18,6 +26,15 @@
         "nanisme": 0.1
       }
     },
+    "mode": "relatif",
+    "taux_jeu": {
+      "albinisme": 0.0002924,
+      "melanisme": 0.0002924,
+      "robe-doree": 0.0002924,
+      "gigantisme": 3.333e-05,
+      "nanisme": 2.222e-05
+    },
+    "reference_min": 0.01,
     "propagation_cycles": 3,
     "inertie_max": 0.05,
     "traits_rendus": [
@@ -28,7 +45,8 @@
       "nanisme"
     ],
     "seuil_extinction_jeu": 40,
-    "retour_apres_extinction": true
+    "retour_apres_extinction": true,
+    "seuil_extinction_part": 0.25
   },
   "influence": {
     "poids": {

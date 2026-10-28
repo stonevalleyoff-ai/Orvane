@@ -36,7 +36,8 @@
           },
           "n": { "type": "number", "minimum": 0, "description": "Compte brut sur la période." },
           "vers": { "type": "string", "description": "Biome de destination pour « deplacement »." },
-          "age": { "enum": ["jeune", "adulte", "vieux"], "description": "Si le jeu le sait : prélever des adultes reproducteurs pèse plus." }
+          "age": { "enum": ["jeune", "adulte", "vieux"], "description": "Si le jeu le sait : prélever des adultes reproducteurs pèse plus." },
+          "q": { "type": "object", "additionalProperties": { "type": "number" }, "description": "Traits continus (docs/8) : la valeur moyenne z des bêtes de cet événement, telle qu'elles l'ont tirée à la naissance. C'est ce qui dit à Orvane si les joueurs prennent les plus grandes, les plus audacieuses…" }
         }
       }
     }

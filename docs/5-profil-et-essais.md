@@ -5,15 +5,16 @@
 Un monde par jeu. Avant le premier cycle, il lui faut une **amorce** : un instantané de génération 0. Deux façons :
 
 - **depuis votre bestiaire** : un script qui lit vos espèces et en fait des taxons (`traducteurs/stone-valley/generer-generation-0.js` est l'exemple : masse depuis la taille, régime, longévité et maturité depuis vos valeurs, niche depuis vos biomes, populations proportionnelles à votre densité). Les variantes rares de votre jeu étaient des *taux par naissance* : posez-les comme des fréquences installées réalistes (0,4 % par robe, 0,1 % par forme) et laissez le profil les rendre rares à l'écran ;
-- **à la main** : un bestiaire d'auteur, écrit directement dans le format de l'instantané.
+- **à la main** : un bestiaire d'auteur, écrit directement dans le format de l'instantané ;
+- **par la genèse** : `node moteur/genese.js <biomes.json> --cycles 3000` crée la vie à partir de cinq ancêtres — des lignées que personne n'a dessinées, nommées par le moteur. C'est la voie d'un jeu qui assemble ses créatures par morceaux (chapitre 2).
 
-Dans les deux cas, faites tourner le monde seul 60 cycles (`node moteur/orvane.js amorce.json --cycles 60`) et vérifiez qu'il est **stable** : pas d'extinction, pas d'explosion, des saturations entre 60 et 90 %. Si une espèce s'effondre seule, c'est sa niche ou sa longévité qui est mal posée, pas le moteur.
+Dans les deux cas, le bestiaire d'un jeu n'est pas un équilibre écologique : trop de prédateurs, des herbivores de même taille qui se gênent. Donnez au profil un **rodage** (`monde.rodage`, 400 cycles est un bon départ) : au premier cycle, le monde tourne seul autant de fois, et c'est l'équilibre atteint qui est publié comme génération 0 — le jeu ne voit rien changer le premier jour. Vérifiez avant que ce rodage ne tue personne (`node moteur/orvane.js amorce.json --cycles 400`) : une espèce qui s'éteint seule a une niche, une masse ou une longévité mal posée, ou un prédateur sans proie à sa taille.
 
 ## Le profil (`profil.json`)
 
 ```json
 { "orvane": "0.1", "jeu": "stone-valley",
-  "monde": { "id": "sv-1", "graine": 7340021, "cycle": "24h", "amorce": "traducteurs/stone-valley/generation-0.json" },
+  "monde": { "id": "sv-1", "graine": 7340021, "cycle": "24h", "amorce": "traducteurs/stone-valley/generation-0.json", "rodage": 400, "annee": 120 },
   "exposition": {
     "compression": { "defaut": 0.1, "par_domaine": { "morphologie": 0.1 }, "par_trait": { "gigantisme": 0.1 } },
     "propagation_cycles": 3, "inertie_max": 0.05,
@@ -26,11 +27,16 @@ Dans les deux cas, faites tourner le monde seul 60 cycles (`node moteur/orvane.j
     "memoire_cycles": 5 } }
 ```
 
+**Le monde.** `cycle` : la durée réelle d'un cycle (24h) ; `annee` : la durée de l'année en cycles (120 : quatre saisons de trente jours) — 0 pour un monde sans saison ; `rodage` : voir ci-dessus ; `historique` : combien de cycles garder dans `historique.json` (365 par défaut) ; `nocturne: false` : le cycle nocturne passe ce monde.
+
 **Exposition (Orvane → jeu).**
+- `mode` : `compression` (par défaut) ou `relatif`. En mode relatif, `taux_jeu` donne, par trait rendu, la chance qu'avait une naissance de le porter avant Orvane ; le jeu garde ces taux à la génération 0 et ne suit que l'écart du monde depuis elle, sur la cote (`cote jeu = cote taux_jeu × cote aujourd'hui / cote génération 0`). Une combinaison absente de la génération 0 garde le taux du jeu jusqu'à ce qu'Orvane l'installe au-delà de `reference_min`. C'est le mode qui garantit qu'un jeu existant ne change pas le jour où il se branche — Stone Valley l'utilise.
+- `quantitatifs` : `rendus`, les traits continus que le jeu sait jouer ; `variation` (0 à 1), la part de la variation individuelle montrée — 0 : seul l'écart de la population depuis la génération 0 se voit, le jour un ne change rien ; 1 : toute la variation naturelle (chapitre 8).
+- `non_rendus` (mode relatif) : `reel` (par défaut) — les traits non rendus gardent leur fréquence réelle, tirés à part de l'allure : le jeu peut les faire agir (chapitre 7) et rapporter le phénotype exact ; `base` — ils se fondent dans le plan de base.
 - `compression` : le facteur appliqué à la *cote* d'un phénotype (f/(1−f)). 0,1 : 20 % → 2,4 %, 50 % → 9 %, 99 % → 91 %. Une variante rare reste rare, une variante qui a gagné l'emporte aussi à l'écran. Affinez par domaine, par trait, par biome.
 - `propagation_cycles` : un changement est étalé sur autant de cycles ; `inertie_max` borne la variation par cycle. Les bêtes déjà nées gardent leur phénotype.
 - `traits_rendus` : la liste de ce que votre jeu sait montrer (chapitre 2).
-- `seuil_extinction_jeu` : en dessous de cet effectif, le jeu cesse de faire apparaître le taxon — avant l'extinction réelle, pour que la rareté se voie.
+- `seuil_extinction_jeu` et `seuil_extinction_part` : le jeu cesse de faire apparaître le taxon quand son effectif tombe sous le premier **et** sous cette part (un quart) de ce qu'il était à la génération 0 — avant l'extinction réelle, pour que la rareté se voie, sans rayer une espèce rare dès le départ.
 
 **Influence (jeu → Orvane).**
 - `poids` : un prélèvement vaut 1 individu retiré ; les autres actions sont relatives ; négatif = favorable.

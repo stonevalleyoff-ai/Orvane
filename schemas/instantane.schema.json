@@ -36,6 +36,35 @@
         },
         "nom": {
           "type": "string"
+        },
+        "annee": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Durée de l’année en cycles (0 ou absent : pas de saisons). Phase 0 = plein hiver, 0,5 = plein été."
+        },
+        "genese": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cycles": {
+              "type": "integer"
+            },
+            "graine": {
+              "type": "integer"
+            },
+            "ancetres": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Si le monde est né de la genèse (moteur/genese.js) : combien de cycles, quelle graine, quels ancêtres."
+        },
+        "ne": {
+          "type": "string",
+          "format": "date-time",
+          "description": "La naissance du monde (le premier cycle, posé par hebergement/cycle.js). Avec l'id, c'est l'identité d'un monde : un monde refait de zéro garde son id mais change de date — les traducteurs repartent alors de sa nouvelle génération 0."
         }
       }
     },
@@ -60,6 +89,31 @@
         "pressions_recues": {
           "type": "integer",
           "description": "Nombre d'événements de pression intégrés dans ce cycle."
+        },
+        "saison": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "phase",
+            "nom"
+          ],
+          "properties": {
+            "phase": {
+              "$ref": "#/$defs/unite"
+            },
+            "nom": {
+              "enum": [
+                "hiver",
+                "printemps",
+                "été",
+                "automne"
+              ]
+            },
+            "production": {
+              "type": "number",
+              "description": "Facteur de production des biomes à saisons ce cycle (0,75 en plein hiver, 1,25 en plein été par défaut)."
+            }
+          }
         }
       }
     },
@@ -137,6 +191,46 @@
             "type": "number",
             "minimum": 0,
             "description": "Capacité d’origine, vers laquelle le biome regagne lentement après une perte d’habitat."
+          },
+          "saisons": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "temperature": {
+                    "type": "number"
+                  },
+                  "lumiere": {
+                    "type": "number"
+                  },
+                  "humidite": {
+                    "type": "number"
+                  },
+                  "capacite": {
+                    "type": "number"
+                  }
+                }
+              }
+            ],
+            "description": "Amplitudes saisonnières de ce biome (false : aucune, ex. une grotte ou un volcan). Par défaut : température ±0,15, lumière ±0,1, humidité ±0,08, production ±25 %."
+          },
+          "axes_saison": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/unite"
+            },
+            "description": "Les axes tels qu’ils sont en cette saison (axes reste la valeur annuelle, stable : c’est elle qu’un traducteur fait correspondre)."
+          },
+          "catastrophes": {
+            "type": "boolean",
+            "description": "false : ce biome est à l’abri des catastrophes (incendie, crue, sécheresse)."
           }
         }
       }
@@ -148,7 +242,7 @@
         "traits"
       ],
       "additionalProperties": false,
-      "description": "Les traits cités par les phénotypes de cet instantané, avec ce qu'ils impliquent. Un trait n'est jamais une stat de jeu : c'est un organe, un coût, un effet, un comportement.",
+      "description": "Les traits cités par les phénotypes de cet instantané, avec ce qu'ils impliquent. Un trait n'est jamais une stat de jeu : c'est un organe, un coût, un effet, un comportement. Les traits y sont dans l’ordre du catalogue du moteur : c’est lui qui dit qui masque qui (docs/9).",
       "properties": {
         "version": {
           "type": "string"
@@ -228,6 +322,118 @@
                   "type": "string"
                 },
                 "description": "Valeurs imposées au plan (activite, regime)."
+              },
+              "vulnerabilite": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Multiplicateur de la chance d’être mangé (0.55 = une carapace divise presque par deux). 1 = neutre."
+              },
+              "chasse": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Multiplicateur de l’efficacité de chasse (1.25 = crocs allongés). 1 = neutre."
+              },
+              "resistance": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Multiplicateur de la mortalité par maladie (0.85 résiste ; 1.25 : le groupe propage). 1 = neutre."
+              },
+              "conduite": {
+                "type": "object",
+                "description": "Ce que l'organe fait faire à la bête, en vocabulaire abstrait (docs/7-conduites.md). type : riposte-distance, riposte-contact, defense-contact, repli, protection, immobilite, alerte-groupe, defense-petits, vol-plane, vision-nocturne, perception-proche, vue-diurne-faible, morsure, sprint, lenteur, escalade, nage, avertissement, activite-crepuscule. presage : ce qu'un joueur attentif voit avant qu'elle ne se déclenche.",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "effet": {
+                    "type": "string"
+                  },
+                  "portee": {
+                    "type": "number"
+                  },
+                  "recharge": {
+                    "type": "number"
+                  },
+                  "force": {
+                    "type": "number"
+                  },
+                  "presage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              },
+              "heredite": {
+                "enum": [
+                  "dominant",
+                  "recessif"
+                ],
+                "description": "Dominant (par défaut) : une copie de l’allèle suffit à montrer le trait. Récessif : il en faut deux ; deux parents qui ne le montrent pas peuvent le transmettre (docs/9)."
+              },
+              "attrait": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Ce que le trait pèse dans le choix du partenaire : 1,6, un porteur a 60 % de chances en plus d’être choisi pour père (docs/9)."
+              }
+            }
+          }
+        },
+        "quantitatifs": {
+          "type": "object",
+          "description": "Les traits continus (docs/8) et ce qu’ils modulent : champ du plan, mode (log : × e^(echelle·z) ; lin : + echelle·z), héritabilité de départ, largeur de la sélection stabilisante, pentes de prédation, de fécondité, de maladie, optimum selon un axe du biome.",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "champ",
+              "mode",
+              "echelle",
+              "h2"
+            ],
+            "properties": {
+              "champ": {
+                "type": "string"
+              },
+              "mode": {
+                "enum": [
+                  "log",
+                  "lin"
+                ]
+              },
+              "echelle": {
+                "type": "number"
+              },
+              "h2": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "omega2": {
+                "type": "number"
+              },
+              "predation": {
+                "type": "number"
+              },
+              "fecondite": {
+                "type": "number"
+              },
+              "maladie": {
+                "type": "number"
+              },
+              "optimum": {
+                "type": "object",
+                "properties": {
+                  "axe": {
+                    "type": "string"
+                  },
+                  "pente": {
+                    "type": "number"
+                  }
+                }
+              },
+              "effet": {
+                "type": "string"
               }
             }
           }
@@ -381,6 +587,142 @@
                 "type": "number",
                 "minimum": 0.05,
                 "description": "Largeur de la niche : écart-type de la convenance sur la distance entre axes (0.35 par défaut)."
+              },
+              "corps": {
+                "type": "object",
+                "description": "La silhouette (moteur/corps.js) : des proportions de 0 à 1 et des couleurs, pour qu'un jeu dessine une lignée qu'il n'a jamais vue. Dérive à chaque séparation. Facultatif.",
+                "properties": {
+                  "forme": {
+                    "enum": [
+                      "quadrupede",
+                      "hexapode",
+                      "bipede",
+                      "oiseau",
+                      "serpent"
+                    ]
+                  },
+                  "pattes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8
+                  },
+                  "long": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "haut": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "cou": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "tete": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "museau": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "oreilles": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "queue": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "cornes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "crete": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "ailes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "carapace": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "antennes": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "motif": {
+                    "enum": [
+                      "uni",
+                      "rayures",
+                      "taches",
+                      "bandes",
+                      "masque"
+                    ]
+                  },
+                  "couleurs": {
+                    "type": "object",
+                    "properties": {
+                      "robe": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 255
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "sombre": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 255
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "ventre": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 255
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "oeil": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 255
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
               }
             }
           },
@@ -414,6 +756,72 @@
                 "depuis": {
                   "type": "integer",
                   "description": "Cycle d’installation dans ce biome (sert à la séparation des lignées)."
+                },
+                "predation": {
+                  "$ref": "#/$defs/unite",
+                  "description": "Part de la mortalité du cycle due aux prédateurs."
+                },
+                "satiete": {
+                  "$ref": "#/$defs/unite",
+                  "description": "Prédateurs et omnivores : à quel point les proies suffisent (0 = famine, 1 = rassasié). Un traducteur peut en faire l’agressivité."
+                },
+                "maladie": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "reste",
+                    "virulence"
+                  ],
+                  "properties": {
+                    "reste": {
+                      "type": "integer",
+                      "description": "Cycles avant que l’épidémie ne s’éteigne."
+                    },
+                    "virulence": {
+                      "type": "number",
+                      "description": "Mortalité supplémentaire par cycle, avant résistance et entassement."
+                    },
+                    "part": {
+                      "$ref": "#/$defs/unite",
+                      "description": "Part de la mortalité du cycle due à la maladie."
+                    }
+                  },
+                  "description": "Une épidémie en cours dans cette population."
+                },
+                "quant": {
+                  "type": "object",
+                  "description": "Les traits continus de cette population (docs/8) : pour chacun, la moyenne m, la variance phénotypique v et la variance additive g, en écarts-types naturels de la génération 0 (z = 1 : un écart-type au-dessus de la moyenne d’alors). Un jeu tire chaque bête dans N(m, v) ; l’héritabilité est g / v. Ce que vaut un écart-type sur le plan : catalogue.quantitatifs.",
+                  "additionalProperties": {
+                    "type": "object",
+                    "required": [
+                      "m",
+                      "v",
+                      "g"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "m": {
+                        "type": "number"
+                      },
+                      "v": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "g": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                },
+                "alleles": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "description": "La reproduction sexuée (docs/9) : pour chaque trait, la fréquence de l’allèle qui le porte dans cette population. Une bête en a deux copies ; un trait dominant se voit chez une part 1 − (1 − p)² des bêtes, un récessif chez p². Un allèle récessif peut donc être bien plus répandu que le trait ne se voit."
                 }
               }
             }
@@ -490,7 +898,10 @@
               "migration",
               "effondrement",
               "explosion",
-              "nouveau_trait"
+              "nouveau_trait",
+              "epidemie",
+              "remission",
+              "catastrophe"
             ]
           },
           "taxon": {
@@ -501,6 +912,35 @@
           },
           "detail": {
             "type": "string"
+          }
+        }
+      }
+    },
+    "precedent": {
+      "type": "object",
+      "description": "Le cycle d'avant, allégé (effectifs par biome, fréquences des phénotypes), joint à l'instantané publié : tous les traducteurs interpolent entre les deux de la même façon.",
+      "properties": {
+        "cycle": {
+          "type": "integer"
+        },
+        "taxons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "populations": {
+                "type": "array"
+              },
+              "phenotypes": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "id"
+            ]
           }
         }
       }

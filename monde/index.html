@@ -26,7 +26,7 @@ section { display:none; } section.on { display:block; }
 canvas { width:100%; display:block; border-radius:8px; }
 .deux { display:grid; gap:10px; } @media (min-width:760px) { .deux { grid-template-columns:1fr 1fr; } }
 table { width:100%; border-collapse:collapse; font-size:13px; } td, th { padding:4px 6px; border-bottom:1px solid var(--ligne); text-align:left; vertical-align:top; } th { color:var(--sourd); font-weight:500; }
-td.n { text-align:right; font-variant-numeric:tabular-nums; }
+td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; }
 .sourd { color:var(--sourd); } .or { color:var(--or); } .vert { color:var(--vert); } .rouge { color:var(--rouge); }
 .leg { display:flex; flex-wrap:wrap; gap:4px 12px; font-size:12px; color:var(--sourd); margin:6px 0 0; } .leg i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
 .ev { padding:6px 0; border-bottom:1px solid var(--ligne); font-size:14px; } .ev b { color:var(--or); font-weight:600; } .ev .c { color:var(--sourd); font-variant-numeric:tabular-nums; margin-right:8px; }
@@ -41,7 +41,7 @@ input[type=file] { display:none; } label.puce { display:inline-block; }
   <h1>ORVANE <small id="titre">observatoire</small></h1>
   <div class="barre" id="onglets">
     <button class="puce on" data-s="monde">Monde</button><button class="puce" data-s="taxons">Taxons</button>
-    <button class="puce" data-s="lignees">Lignées</button><button class="puce" data-s="journal">Journal</button><button class="puce" data-s="pressions">Pressions</button>
+    <button class="puce" data-s="lignees">Lignées</button><button class="puce" data-s="chaine">Chaîne</button><button class="puce" data-s="journal">Journal</button><button class="puce" data-s="pressions">Pressions</button>
     <span style="flex:1"></span>
     <button class="puce or" data-c="1">▶ 1</button><button class="puce or" data-c="10">▶ 10</button><button class="puce or" data-c="50">▶ 50</button>
     <label class="puce">Charger… <input type="file" id="fInst" accept=".json"></label>
@@ -55,7 +55,7 @@ input[type=file] { display:none; } label.puce { display:inline-block; }
     <div class="carte" id="resume"></div>
     <div class="deux">
       <div class="carte"><h2>Les biomes</h2><canvas id="cCarte" height="320"></canvas><div class="sourd" style="font-size:12px;margin-top:6px">position : température → , humidité ↑ · taille : capacité · anneau : saturation en biomasse · points : populations</div></div>
-      <div class="carte"><h2>Effectifs</h2><canvas id="cEff" height="320"></canvas><div class="leg" id="lEff"></div></div>
+      <div class="carte"><h2>Effectifs <button class="puce" id="bLog" style="float:right;margin-top:-4px">échelle log</button></h2><canvas id="cEff" height="320"></canvas><div class="leg" id="lEff"></div></div>
     </div>
   </section>
   <section id="s-taxons">
@@ -63,6 +63,13 @@ input[type=file] { display:none; } label.puce { display:inline-block; }
     <div id="fiche"></div>
   </section>
   <section id="s-lignees"><div class="carte"><h2>L'arbre des lignées</h2><canvas id="cArbre" height="360"></canvas></div></section>
+  <section id="s-chaine">
+    <div class="carte"><h2>La chaîne alimentaire</h2>
+      <div class="barre" id="chaineBiomes" style="margin-bottom:8px"></div>
+      <canvas id="cChaine" height="460"></canvas>
+      <div class="sourd" style="font-size:12px;margin-top:6px">position : masse → (échelle log), niveau trophique ↑ (herbivores en bas, omnivores, carnivores) · taille : biomasse · anneau : satiété · flèches : qui mange qui, épaisseur = part du régime du prédateur (les trois premières proies de chacun)</div>
+    </div>
+  </section>
   <section id="s-journal"><div class="carte" id="journal"></div></section>
   <section id="s-pressions">
     <div class="carte">
@@ -81,6 +88,7 @@ input[type=file] { display:none; } label.puce { display:inline-block; }
   </section>
 </main>
 <script src="../moteur/catalogue.js"></script>
+<script src="../moteur/corps.js"></script>
 <script src="../moteur/orvane.js"></script>
 <script src="../tampon/tampon.js"></script>
 <script>
@@ -89,7 +97,7 @@ const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAl
 const COUL = ['#f4e26a', '#7ab8f0', '#7ad28f', '#f07a7a', '#c99cf0', '#f0b47a', '#7ae0d8', '#f0a0c8', '#b8d27a', '#9aa8f0'];
 const AXES = ['temperature', 'humidite', 'altitude', 'lumiere', 'couvert'];
 let H = [];                       // l'histoire : un instantané par cycle
-let lot = null, profil = null, etatTampon = {}, taxonChoisi = null;
+let lot = null, profil = null, etatTampon = {}, taxonChoisi = null, echelleLog = false, gen0 = null;   // gen0 : la génération 0 du monde (mode relatif du profil)
 const inst = () => H[H.length - 1];
 const couleur = (() => { const m = new Map(); return id => { if (!m.has(id)) m.set(id, COUL[m.size % COUL.length]); return m.get(id); }; })();
 const msg = t => { $('#msg').textContent = t; };
@@ -113,7 +121,8 @@ async function exempleLot() {
 }
 // un monde publié (mondes/<id>/) : l'instantané complet, et l'historique allégé qui le précède
 async function monde(id) {
-  try { const [a, b, c] = await Promise.all([fetch(`../mondes/${id}/instantane.json`), fetch(`../mondes/${id}/historique.json`), fetch(`../mondes/${id}/profil.json`)]);
+  try { const [a, b, c, d] = await Promise.all([fetch(`../mondes/${id}/instantane.json`), fetch(`../mondes/${id}/historique.json`), fetch(`../mondes/${id}/profil.json`), fetch(`../mondes/${id}/generation-0.json`)]);
+    gen0 = d.ok ? await d.json() : null;
     if (!a.ok) throw new Error('introuvable'); const courant = await a.json(), hist = b.ok ? await b.json() : [];
     H = [...hist.filter(h => h.cycle.n < courant.cycle.n), courant]; etatTampon = {}; taxonChoisi = courant.taxons[0]?.id || null;
     if (c.ok) { profil = await c.json(); etatPressions(); }
@@ -127,6 +136,7 @@ lireFichier($('#fLot'), t => { try { lot = JSON.parse(t); etatTampon = {}; etatP
 lireFichier($('#fProfil'), t => { try { profil = JSON.parse(t); etatPressions(); } catch (e) { msg('profil illisible'); } });
 $('#bReset').onclick = exemple; $('#bExLot').onclick = exempleLot; $('#bSansLot').onclick = () => { lot = null; etatTampon = {}; etatPressions(); };
 $('#rComptes').oninput = e => { $('#vComptes').textContent = e.target.value; };
+$('#bLog').onclick = () => { echelleLog = !echelleLog; $('#bLog').classList.toggle('on', echelleLog); tout(); };
 function etatPressions() { $('#etatPressions').textContent = lot && profil ? `lot « ${lot.source?.jeu || '?'} », ${lot.evenements.length} événement(s) ; profil « ${profil.jeu} » ; rejoué pour ${$('#rComptes').value} compte(s) par cycle` : lot ? 'lot chargé — il manque le profil' : 'aucune pression : le monde vit seul'; }
 
 // --- faire tourner ---
@@ -137,7 +147,7 @@ function tourner(n) {
     let pressions = {};
     if (lot && profil) { const K = +$('#rComptes').value, c = lot.source?.compte || 'compte';
       const lots = Array.from({ length: K }, (_, i) => ({ ...lot, instantane: inst().cycle.n, source: { ...lot.source, compte: `${c}#${i}` } }));
-      const r = OrvaneTampon.agreger(lots, inst(), profil, etatTampon); pressions = r.pressions; etatTampon = r.etat; }
+      const r = OrvaneTampon.agreger(lots, inst(), profil, etatTampon, gen0); pressions = r.pressions; etatTampon = r.etat; }
     H.push(Orvane.cycle(inst(), pressions)); dernieresPressions = pressions;
   }
   if (!inst().taxons.some(t => t.id === taxonChoisi)) taxonChoisi = inst().taxons[0]?.id || null;
@@ -149,13 +159,15 @@ $$('[data-s]').forEach(b => b.onclick = () => { $$('[data-s]').forEach(x => x.cl
 // --- dessin : utilitaires ---
 function toile(c) { const dpr = devicePixelRatio || 1, w = c.clientWidth || 600, h = +c.getAttribute('height'); c.width = w * dpr; c.height = h * dpr; const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, h); x.font = '12px system-ui, sans-serif'; return [x, w, h]; }
 // courbes : series = [{nom, coul, pts:[y…]}], x = cycles de H
-function courbes(c, series, empile) {
-  const [x, w, h] = toile(c); const m = { g: 44, d: 10, h: 10, b: 22 }, W = w - m.g - m.d, Hh = h - m.h - m.b;
+function courbes(c, series, empile, log) {
+  const [x, w, h] = toile(c); const m = { g: 48, d: 10, h: 10, b: 22 }, W = w - m.g - m.d, Hh = h - m.h - m.b;
   const n = H.length, c0 = H[0].cycle.n; if (n < 2 || !series.length) { x.fillStyle = '#8a94a8'; x.fillText(n < 2 ? 'faites tourner quelques cycles (▶)' : 'rien à tracer', m.g, 30); return; }
   let max = 1; if (empile) max = 1; else for (const s of series) for (const v of s.pts) if (v > max) max = v;
-  const X = i => m.g + W * i / (n - 1), Y = v => m.h + Hh * (1 - v / max);
+  const lmin = 0, lmax = Math.ceil(Math.log10(max));           // échelle log : de 1 à la puissance de dix au-dessus du max
+  const X = i => m.g + W * i / (n - 1), Y = v => log ? m.h + Hh * (1 - (Math.log10(Math.max(1, v)) - lmin) / Math.max(1, lmax - lmin)) : m.h + Hh * (1 - v / max);
   x.strokeStyle = '#243049'; x.fillStyle = '#8a94a8'; x.textAlign = 'right';
-  for (let k = 0; k <= 4; k++) { const v = max * k / 4, y = Y(v); x.beginPath(); x.moveTo(m.g, y); x.lineTo(w - m.d, y); x.stroke(); x.fillText(empile ? Math.round(v * 100) + '%' : Math.round(v), m.g - 6, y + 4); }
+  if (log) for (let k = lmin; k <= lmax; k++) { const v = Math.pow(10, k), y = Y(v); x.beginPath(); x.moveTo(m.g, y); x.lineTo(w - m.d, y); x.stroke(); x.fillText(v >= 1000 ? (v / 1000) + ' k' : v, m.g - 6, y + 4); }
+  else for (let k = 0; k <= 4; k++) { const v = max * k / 4, y = Y(v); x.beginPath(); x.moveTo(m.g, y); x.lineTo(w - m.d, y); x.stroke(); x.fillText(empile ? Math.round(v * 100) + '%' : Math.round(v), m.g - 6, y + 4); }
   x.textAlign = 'center'; for (let k = 0; k <= 4; k++) { const i = Math.round((n - 1) * k / 4); x.fillText('c' + (c0 + i), X(i), h - 6); }
   if (empile) { const cum = new Array(n).fill(0);
     for (const s of series) { x.beginPath(); for (let i = 0; i < n; i++) x.lineTo(X(i), Y(cum[i] + s.pts[i])); for (let i = n - 1; i >= 0; i--) x.lineTo(X(i), Y(cum[i])); x.closePath(); x.fillStyle = s.coul + 'b0'; x.fill(); for (let i = 0; i < n; i++) cum[i] += s.pts[i]; }
@@ -166,7 +178,7 @@ function legende(el, series) { el.innerHTML = series.map(s => `<span><i style="b
 // --- Monde ---
 function dessinerMonde() {
   const I = inst(), tot = I.taxons.filter(t => !t.eteint).reduce((a, t) => a + t.populations.reduce((b, p) => b + p.effectif, 0), 0);
-  $('#resume').innerHTML = `<span class="stat">cycle <b>${I.cycle.n}</b></span><span class="stat">taxons vivants <b>${I.taxons.filter(t => !t.eteint).length}</b></span><span class="stat">individus <b>${Math.round(tot)}</b></span><span class="stat">biomes <b>${I.biomes.length}</b></span><span class="stat">graine <b>${I.monde.graine}</b></span><span class="stat">pressions reçues <b>${I.cycle.pressions_recues || 0}</b></span><br><span class="sourd" style="font-size:13px">${I.evenements?.length ? I.evenements.map(e => `★ ${e.type} · ${e.taxon}`).join(' &nbsp; ') : 'cycle calme'}</span>`;
+  $('#resume').innerHTML = `<span class="stat">cycle <b>${I.cycle.n}</b></span><span class="stat">taxons vivants <b>${I.taxons.filter(t => !t.eteint).length}</b></span><span class="stat">individus <b>${Math.round(tot)}</b></span><span class="stat">biomes <b>${I.biomes.length}</b></span><span class="stat">graine <b>${I.monde.graine}</b></span><span class="stat">pressions reçues <b>${I.cycle.pressions_recues || 0}</b></span>${I.cycle.saison ? `<span class="stat">saison <b>${I.cycle.saison.nom}</b> <span class="sourd">(production ×${I.cycle.saison.production})</span></span>` : ''}<br><span class="sourd" style="font-size:13px">${I.evenements?.length ? I.evenements.map(e => `★ ${e.type} · ${e.taxon}`).join(' &nbsp; ') : 'cycle calme'}</span>`;
   // la carte des biomes
   const c = $('#cCarte'), [x, w, h] = toile(c), pos = {}, m = 40;
   const masse = {}; for (const t of I.taxons) if (!t.eteint) for (const p of t.populations) masse[p.biome] = (masse[p.biome] || 0) + p.effectif * (t.plan.masse_kg || 1);
@@ -185,17 +197,55 @@ function dessinerMonde() {
   // les effectifs
   const series = []; for (const t of I.taxons) { if (t.eteint && I.cycle.n - t.eteint > 2) continue;
     series.push({ nom: t.nom || t.id, coul: couleur(t.id), gras: true, pts: H.map(s => { const q = s.taxons.find(z => z.id === t.id); return q ? q.populations.reduce((a, p) => a + p.effectif, 0) : null; }) });
-    if (I.biomes.length > 1) for (const b of I.biomes) { const pts = H.map(s => s.taxons.find(z => z.id === t.id)?.populations.find(p => p.biome === b.id)?.effectif ?? null); if (pts.some(v => v)) series.push({ nom: `${t.id} · ${b.id}`, coul: couleur(t.id), tiret: true, pts }); } }
-  courbes($('#cEff'), series, false); legende($('#lEff'), series.filter(s => s.gras));
+    // (le détail par biome seulement quand le monde est petit ; sinon l'onglet Taxons)
+    if (I.biomes.length > 1 && I.taxons.length <= 6) for (const b of I.biomes) { const pts = H.map(s => s.taxons.find(z => z.id === t.id)?.populations.find(p => p.biome === b.id)?.effectif ?? null); if (pts.some(v => v)) series.push({ nom: `${t.id} · ${b.id}`, coul: couleur(t.id), tiret: true, pts }); } }
+  courbes($('#cEff'), series, false, echelleLog); legende($('#lEff'), series.filter(s => s.gras));
 }
 
 // --- Taxons ---
+// La silhouette d'une lignée (plan.corps, moteur/corps.js), de profil : de quoi la reconnaître d'un coup d'œil.
+function croquis(c, traits = []) {
+  c = OrvaneCorps.normaliser(c); const C = c.couleurs, rgb = v => `rgb(${v.join(',')})`, k = 120, sol = 82, E = [];
+  const Lt = (.26 + c.long * .34) * k, Th = (.2 - c.long * .05) * k, Hl = c.forme === 'serpent' ? 0 : (.07 + c.haut * .36) * k * (traits.includes('pattes-longues') ? 1.25 : 1);
+  const bip = c.forme === 'bipede' || c.forme === 'oiseau', cx = 82, cy = sol - Hl - Th / 2, xa = cx + Lt / 2, xr = cx - Lt / 2;
+  if (c.forme === 'serpent') { let d = ''; for (let i = 0; i <= 12; i++) { const x = 20 + i * 9, y = sol - 8 - Math.sin(i * .9) * 5; d += (i ? 'L' : 'M') + x + ' ' + y; }
+    E.push(`<path d="${d}" stroke="${rgb(C.robe)}" stroke-width="${Th * .8}" fill="none" stroke-linecap="round"/>`, `<circle cx="132" cy="${sol - 12}" r="${Th * .55}" fill="${rgb(C.robe)}"/>`, `<circle cx="136" cy="${sol - 14}" r="2" fill="${rgb(C.oeil)}"/>`);
+    return `<svg viewBox="0 0 170 90" width="170" height="90">${E.join('')}</svg>`; }
+  if (c.queue > .08) { const L = (.06 + c.queue * .42) * k; E.push(`<path d="M${xr + 4} ${cy - Th * .1} Q${xr - L * .5} ${cy - Th * .2 - (traits.includes('queue-prehensile') ? L * .4 : 0)} ${xr - L} ${cy + (bip ? 4 : -L * .25)}" stroke="${rgb(C.robe)}" stroke-width="${Th * .35}" fill="none" stroke-linecap="round"/>`); }
+  const paires = Math.max(1, c.pattes / 2);
+  for (let i = 0; i < paires && c.pattes; i++) { const x = bip ? cx - 4 + i * 6 : xa - 6 - (Lt - 12) * i / Math.max(1, paires - 1);
+    E.push(`<line x1="${x}" y1="${cy + Th * .3}" x2="${x + (c.forme === 'hexapode' ? (i % 2 ? -6 : 6) : 0)}" y2="${sol}" stroke="${rgb(C.sombre)}" stroke-width="${c.forme === 'hexapode' ? 2.5 : 4}"/>`); }
+  if (c.ailes > .3) E.push(`<path d="M${xa - Lt * .35} ${cy - Th * .3} L${xr - 6} ${cy - Th - c.ailes * 26} L${xr + 6} ${cy - Th * .2}Z" fill="${rgb(C.sombre)}" opacity=".85"/>`);
+  E.push(`<ellipse cx="${cx}" cy="${cy}" rx="${Lt / 2 + 3}" ry="${Th / 2 + 1}" fill="${rgb(C.robe)}"/>`, `<ellipse cx="${cx + 2}" cy="${cy + Th * .3}" rx="${Lt * .4}" ry="${Th * .18}" fill="${rgb(C.ventre)}"/>`);
+  if (c.carapace > .3) E.push(`<path d="M${xr + 3} ${cy - 2} Q${cx} ${cy - Th * .9 - c.carapace * 6} ${xa - 3} ${cy - 2}Z" fill="${rgb(C.sombre)}"/>`);
+  if (c.motif === 'rayures' || traits.includes('coloration-aposematique')) for (let i = 0; i < 4; i++) E.push(`<line x1="${xr + 8 + i * Lt / 5}" y1="${cy - Th / 2}" x2="${xr + 6 + i * Lt / 5}" y2="${cy + Th / 4}" stroke="${traits.includes('coloration-aposematique') ? '#e8bc2a' : rgb(C.sombre)}" stroke-width="3"/>`);
+  if (c.motif === 'taches') for (let i = 0; i < 4; i++) E.push(`<circle cx="${xr + 8 + i * Lt / 4.5}" cy="${cy - Th * .15 + (i % 2) * 4}" r="2.5" fill="${rgb(C.sombre)}"/>`);
+  if (c.motif === 'bandes') E.push(`<line x1="${xr + 4}" y1="${cy - Th * .3}" x2="${xa - 4}" y2="${cy - Th * .3}" stroke="${rgb(C.sombre)}" stroke-width="3"/>`);
+  const hs = (.09 + c.tete * .09) * k, nl = c.cou * .3 * k, hx = xa + nl * .55 + hs * .3, hy = cy - Th * .15 - nl * .8 - (bip ? 8 : 0);
+  if (nl > 3) E.push(`<line x1="${xa - 4}" y1="${cy - Th * .1}" x2="${hx - hs * .3}" y2="${hy}" stroke="${rgb(C.robe)}" stroke-width="${Th * .45}" stroke-linecap="round"/>`);
+  if (c.museau > .12) E.push(`<rect x="${hx + hs * .3}" y="${hy - hs * .1}" width="${(.03 + c.museau * .13) * k}" height="${hs * .45}" rx="2" fill="${c.forme === 'oiseau' ? '#d6ac5c' : rgb(C.robe)}"/>`);
+  E.push(`<circle cx="${hx}" cy="${hy}" r="${hs / 2}" fill="${rgb(C.robe)}"/>`);
+  if (c.oreilles > .25) E.push(`<path d="M${hx - hs * .3} ${hy - hs * .3} L${hx - hs * .55} ${hy - hs * .5 - c.oreilles * 14} L${hx - hs * .05} ${hy - hs * .4}Z" fill="${rgb(C.robe)}"/>`);
+  if (c.cornes > .25) E.push(`<path d="M${hx - hs * .1} ${hy - hs * .4} Q${hx - hs * .2} ${hy - hs - c.cornes * 16} ${hx - hs * .9} ${hy - hs * .7 - c.cornes * 18}" stroke="#e8dcc0" stroke-width="3" fill="none"/>`);
+  if (c.crete > .25) E.push(`<path d="M${hx - hs * .6} ${hy - hs * .35} Q${hx - hs * .1} ${hy - hs * .5 - c.crete * 14} ${hx + hs * .3} ${hy - hs * .4}Z" fill="${rgb(OrvaneCorps.tourner(C.robe, 150))}"/>`);
+  if (c.antennes > .25) E.push(`<path d="M${hx + hs * .1} ${hy - hs * .4} Q${hx + hs * .5} ${hy - hs - c.antennes * 14} ${hx + hs * 1.3} ${hy - hs * .9 - c.antennes * 12}" stroke="${rgb(C.sombre)}" stroke-width="1.5" fill="none"/>`);
+  if (traits.includes('crocs-allonges')) E.push(`<line x1="${hx + hs * .5}" y1="${hy + hs * .3}" x2="${hx + hs * .5}" y2="${hy + hs * .3 + 6}" stroke="#f4f0e4" stroke-width="2"/>`);
+  E.push(`<circle cx="${hx + hs * .15}" cy="${hy - hs * .08}" r="${traits.includes('yeux-nocturnes') ? 3.4 : 2.2}" fill="${rgb(C.oeil)}"/>`);
+  return `<svg viewBox="0 0 170 90" width="170" height="90">${E.join('')}</svg>`;
+}
+function carteCorps(t) {
+  const c = OrvaneCorps.normaliser(t.plan.corps), dom = (() => { const n = {}; for (const p of t.phenotypes) for (const id of p.traits) n[id] = (n[id] || 0) + p.frequence; return Object.keys(n).filter(k => n[k] >= .5); })();
+  const par = t.parent && inst().taxons.find(z => z.id === t.parent), ecart = par?.plan?.corps ? OrvaneCorps.distance(c, par.plan.corps) : null;
+  const pastille = v => `<i style="display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;background:rgb(${v.join(',')})"></i>`;
+  return `<div class="carte"><h2>Silhouette</h2><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">${croquis(c, dom)}${par?.plan?.corps ? `<div class="sourd" style="font-size:11px;text-align:center">${croquis(par.plan.corps)}<br>son parent</div>` : ''}
+    <div style="flex:1;min-width:200px"><div>${OrvaneCorps.decrire(c)}</div><div class="sourd" style="font-size:12px;margin-top:4px">robe ${pastille(c.couleurs.robe)} sombre ${pastille(c.couleurs.sombre)} ventre ${pastille(c.couleurs.ventre)} œil ${pastille(c.couleurs.oeil)}${dom.length ? ' · traits portés par la majorité : ' + dom.join(', ') : ''}${ecart != null ? ` · écart au parent ${ecart}` : ''}</div></div></div></div>`;
+}
 function dessinerTaxons() {
   const I = inst(), cat = { ...(OrvaneCatalogue?.TRAITS || {}), ...(I.catalogue?.traits || {}) };
   $('#listeTaxons').innerHTML = I.taxons.map(t => `<button class="puce ${t.id === taxonChoisi ? 'on' : ''}" data-t="${t.id}" style="${t.id === taxonChoisi ? '' : 'border-color:' + couleur(t.id)}">${t.nom || t.id}${t.eteint ? ' †' : ''}</button>`).join('');
   $$('[data-t]').forEach(b => b.onclick = () => { taxonChoisi = b.dataset.t; dessinerTaxons(); });
   const t = I.taxons.find(z => z.id === taxonChoisi); if (!t) { $('#fiche').innerHTML = ''; return; }
-  const p = t.plan, expo = profil ? (() => { try { return OrvaneTampon.exposer(t, profil, cat); } catch (e) { return null; } })() : null;
+  const p = t.plan, expo = profil ? (() => { try { return OrvaneTampon.exposer(t, profil, cat, null, OrvaneTampon.referenceDe ? OrvaneTampon.referenceDe(t.id, I, gen0) : null); } catch (e) { return null; } })() : null;
   const statut = { croissance: 'vert', stable: 'sourd', declin: 'rouge', menace: 'rouge', eteint: 'rouge' }[t.statut] || 'sourd';
   let html = `<div class="carte"><h2>${t.nom || t.id} <span class="sourd" style="text-transform:none;letter-spacing:0">· ${t.id}</span></h2>
     <span class="stat">statut <b class="${statut}">${t.statut}</b></span><span class="stat">apparu <b>c${t.apparu}</b></span>${t.parent ? `<span class="stat">issu de <b>${t.parent}</b></span>` : ''}${t.eteint ? `<span class="stat">éteint <b>c${t.eteint}</b></span>` : ''}
@@ -204,7 +254,14 @@ function dessinerTaxons() {
     <tr><th>longévité</th><td class="n">${p.longevite} c.</td><th>maturité</th><td class="n">${p.maturite} c.</td><th>portée</th><td class="n">${p.portee ?? '—'}</td></tr>
     <tr><th>sociabilité</th><td class="n">${p.sociabilite}</td><th>tempérament</th><td class="n">${p.temperament}</td><th>perception</th><td class="n">${p.perception ?? '—'}</td></tr></table>
     ${p.niche ? `<div class="sourd" style="font-size:12px;margin-top:6px">niche : ${AXES.map(a => `${a} ${p.niche[a]}`).join(' · ')} · tolérance ${p.tolerance || .35}</div>` : ''}</div>`;
-  html += `<div class="carte"><h2>Populations</h2><table><tr><th>biome</th><th class="n">effectif</th><th class="n">tendance</th><th class="n">part due aux pressions</th><th class="n">depuis</th></tr>${t.populations.map(q => `<tr><td>${q.biome}</td><td class="n">${q.effectif}</td><td class="n ${q.tendance > .02 ? 'vert' : q.tendance < -.02 ? 'rouge' : ''}">${q.tendance > 0 ? '+' : ''}${Math.round(q.tendance * 100)} %</td><td class="n">${q.pression != null ? pct(q.pression) : '—'}</td><td class="n">c${q.depuis ?? t.apparu}</td></tr>`).join('')}</table></div>`;
+  if (p.corps && globalThis.OrvaneCorps) html += carteCorps(t);
+  html += `<div class="carte"><h2>Populations</h2><table><tr><th>biome</th><th class="n">effectif</th><th class="n">tendance</th><th class="n">morts : joueurs</th><th class="n">morts : prédateurs</th><th class="n">satiété</th><th class="n">épidémie</th><th class="n">depuis</th></tr>${t.populations.map(q => `<tr><td>${q.biome}</td><td class="n">${q.effectif}</td><td class="n ${q.tendance > .02 ? 'vert' : q.tendance < -.02 ? 'rouge' : ''}">${q.tendance > 0 ? '+' : ''}${Math.round(q.tendance * 100)} %</td><td class="n">${q.pression != null ? pct(q.pression) : '—'}</td><td class="n">${q.predation != null ? pct(q.predation) : '—'}</td><td class="n ${q.satiete != null && q.satiete < .4 ? 'rouge' : ''}">${q.satiete != null ? pct(q.satiete) : '—'}</td><td class="n ${q.maladie ? 'rouge' : ''}">${q.maladie ? `${pct(q.maladie.part || 0)} des morts · ${q.maladie.reste} c.` : '—'}</td><td class="n">c${q.depuis ?? t.apparu}</td></tr>`).join('')}</table>
+    <div class="sourd" style="font-size:12px;margin-top:6px">satiété : pour un prédateur ou un omnivore, à quel point les proies suffisent (sous 40 %, il a faim : il meurt plus, naît moins, s'en va)</div></div>`;
+  // les traits continus (docs/8) : moyenne de chaque population en écarts-types de la génération 0, et ce que ça fait sur le plan
+  const QC = { ...(OrvaneCatalogue?.QUANT || {}), ...(I.catalogue?.quantitatifs || {}) }, popQ = t.populations.filter(q => q.quant);
+  if (popQ.length) { const ks = Object.keys(popQ[0].quant), sur = (k, m) => { const d = QC[k]; if (!d) return ''; return d.mode === 'log' ? `${m >= 0 ? '+' : ''}${((Math.exp(d.echelle * m) - 1) * 100).toFixed(1)} %` : `${m >= 0 ? '+' : ''}${(d.echelle * m).toFixed(2)}`; };
+    html += `<div class="carte"><h2>Traits continus</h2><table><tr><th>biome</th>${ks.map(k => `<th class="n">${k}</th>`).join('')}<th class="n">h² (taille)</th></tr>${popQ.map(q => `<tr><td>${q.biome}</td>${ks.map(k => { const x = q.quant[k]; return `<td class="n" title="${sur(k, x.m)} sur le plan">${x.m >= 0 ? '+' : ''}${x.m.toFixed(2)} σ</td>`; }).join('')}<td class="n">${(q.quant.taille ? q.quant.taille.g / q.quant.taille.v : 0).toFixed(2)}</td></tr>`).join('')}</table>
+    <div class="sourd" style="font-size:12px;margin-top:6px">moyenne de chaque population en écarts-types naturels de la génération 0 (survoler : ce que ça fait sur le plan) ; la prédation, les joueurs, les naissances et l'optimum du biome la déplacent</div></div>`; }
   html += `<div class="carte"><h2>Phénotypes</h2><table><tr><th>phénotype</th><th class="n">réel</th>${expo ? '<th class="n">exposé au jeu</th>' : ''}<th class="n">coût</th><th class="n">sélection</th><th>traits</th></tr>${t.phenotypes.map(q => `<tr><td><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${couleur(t.id + '/' + q.id)};margin-right:6px"></i>${q.id}</td><td class="n">${pct(q.frequence)}</td>${expo ? `<td class="n or">${pct(expo[q.id] ?? 0)}</td>` : ''}<td class="n">${q.cout_total ?? 0}</td><td class="n ${q.selection > 0 ? 'vert' : q.selection < 0 ? 'rouge' : ''}">${q.selection != null ? (q.selection > 0 ? '+' : '') + (q.selection * 100).toFixed(1) : '—'}</td><td>${q.traits.join(', ') || '<span class="sourd">plan de base</span>'}</td></tr>`).join('')}</table>
     ${expo ? '' : '<div class="sourd" style="font-size:12px;margin-top:6px">chargez un profil (onglet Pressions) pour voir les fréquences exposées au jeu</div>'}
     <canvas id="cPh" height="200" style="margin-top:10px"></canvas></div>`;
@@ -217,7 +274,9 @@ function dessinerTaxons() {
 
 // --- Lignées ---
 function dessinerArbre() {
-  const I = inst(), c = $('#cArbre'), [x, w, h] = toile(c), T = I.taxons, c0 = Math.min(...T.map(t => t.apparu), H[0].cycle.n), c1 = I.cycle.n;
+  const I = inst(), c = $('#cArbre'), T = I.taxons, c0 = Math.min(...T.map(t => t.apparu), H[0].cycle.n), c1 = I.cycle.n;
+  c.setAttribute('height', Math.max(360, 18 * T.length + 40));   // une ligne par lignée, quel que soit leur nombre
+  const [x, w, h] = toile(c);
   const enfants = id => T.filter(t => t.parent === id), racines = T.filter(t => !t.parent || !T.some(z => z.id === t.parent));
   const lignes = []; (function poser(liste, prof) { for (const t of liste) { t._y = lignes.length; lignes.push(t); poser(enfants(t.id), prof + 1); } })(racines, 0);
   const m = { g: 10, d: 10, h: 14, b: 22 }, X = n => m.g + (w - m.g - m.d) * (n - c0) / Math.max(1, c1 - c0), Y = i => m.h + (h - m.h - m.b) * (i + .5) / Math.max(1, lignes.length);
@@ -229,6 +288,38 @@ function dessinerArbre() {
     const lib = `${t.nom || t.id}  ·  ${t.populations.reduce((a, p) => a + p.effectif, 0)}`, droite = x0 > w * .6;   // près du bord droit, l'étiquette passe à gauche
     x.fillStyle = '#e6e9f0'; x.textAlign = droite ? 'right' : 'left'; x.fillText(lib, droite ? x1 - 4 : x0 + 6, y - 7); x.textAlign = 'center'; }
   for (const t of T) delete t._y;
+}
+
+// --- Chaîne alimentaire ---
+let biomeChaine = null;
+function dessinerChaine() {
+  const I = inst(); if (!I.biomes.some(b => b.id === biomeChaine)) biomeChaine = I.biomes[0].id;
+  $('#chaineBiomes').innerHTML = I.biomes.map(b => `<button class="puce ${b.id === biomeChaine ? 'on' : ''}" data-b="${b.id}">${b.nom || b.id}</button>`).join('');
+  $$('[data-b]').forEach(x => x.onclick = () => { biomeChaine = x.dataset.b; dessinerChaine(); });
+  const c = $('#cChaine'), [x, w, h] = toile(c), m = { g: 40, d: 20, h: 24, b: 30 };
+  const N = []; for (const t of I.taxons) { if (t.eteint) continue; const p = t.populations.find(q => q.biome === biomeChaine); if (!p || p.effectif < 1) continue;
+    N.push({ t, p, masse: t.plan.masse_kg || 1, bio: p.effectif * (t.plan.masse_kg || 1), niv: { herbivore: 0, filtreur: 0, detritivore: .2, omnivore: 1, carnivore: 2 }[t.plan.regime] ?? 1 }); }
+  if (!N.length) { x.fillStyle = '#8a94a8'; x.fillText('personne ne vit ici', m.g, 40); return; }
+  const lm = N.map(n => Math.log10(n.masse)), l0 = Math.min(...lm) - .15, l1 = Math.max(...lm) + .15, bmax = Math.max(...N.map(n => n.bio));
+  // on étale un peu les nœuds d'un même niveau pour qu'ils ne se couvrent pas
+  N.forEach((n, i) => { n.x = m.g + (w - m.g - m.d) * (lm[i] - l0) / (l1 - l0); n.y = h - m.b - (h - m.h - m.b) * (n.niv / 2) - (n.niv === 1 ? 0 : 0); n.r = 5 + 22 * Math.sqrt(n.bio / bmax); });
+  for (let it = 0; it < 40; it++) for (const a of N) for (const b of N) { if (a === b || a.niv !== b.niv) continue; const d = Math.hypot(a.x - b.x, a.y - b.y), min = a.r + b.r + 4; if (d < min && d > 0) { const k = (min - d) / 2; a.y -= Math.sign(b.y - a.y || 1) * k * .6; b.y += Math.sign(b.y - a.y || 1) * k * .6; a.x -= (b.x - a.x) / d * k * .2; b.x += (b.x - a.x) / d * k * .2; } }
+  for (const n of N) n.y = Math.max(m.h + n.r, Math.min(h - m.b - n.r, n.y));
+  // les flèches : pour chaque prédateur, l'appétence × la biomasse de chaque proie, les trois premières
+  x.lineCap = 'round';
+  for (const p of N) { if (!['carnivore', 'omnivore'].includes(p.t.plan.regime)) continue;
+    const proies = N.filter(q => q !== p).map(q => ({ q, w: Orvane.appetence(p.t.plan, q.t.plan) * q.bio })).filter(e => e.w > 0).sort((a, b) => b.w - a.w);
+    const tot = proies.reduce((s, e) => s + e.w, 0); if (!tot) continue;
+    for (const e of proies.slice(0, 3)) { const part = e.w / tot, dx = e.q.x - p.x, dy = e.q.y - p.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+      const x0 = p.x + ux * p.r, y0 = p.y + uy * p.r, x1 = e.q.x - ux * (e.q.r + 6), y1 = e.q.y - uy * (e.q.r + 6);
+      x.strokeStyle = couleur(p.t.id) + 'aa'; x.lineWidth = 1 + 5 * part; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke();
+      x.fillStyle = couleur(p.t.id); x.beginPath(); x.moveTo(x1 + ux * 6, y1 + uy * 6); x.lineTo(x1 - uy * 4, y1 + ux * 4); x.lineTo(x1 + uy * 4, y1 - ux * 4); x.closePath(); x.fill(); } }
+  // les nœuds
+  for (const n of N) { x.beginPath(); x.arc(n.x, n.y, n.r, 0, 7); x.fillStyle = couleur(n.t.id); x.fill();
+    if (n.p.satiete != null) { x.beginPath(); x.arc(n.x, n.y, n.r + 3, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * n.p.satiete); x.strokeStyle = n.p.satiete < .4 ? '#f07a7a' : '#7ad28f'; x.lineWidth = 2.5; x.stroke(); }
+    const dy = (N.indexOf(n) % 2) * 24;   // une étiquette sur deux est décalée : elles se chevauchent moins
+    x.fillStyle = '#e6e9f0'; x.textAlign = 'center'; x.fillText(`${n.t.nom || n.t.id}`, n.x, n.y + n.r + 13 + dy); x.fillStyle = '#8a94a8'; x.fillText(`${n.masse} kg · ${n.p.effectif}`, n.x, n.y + n.r + 25 + dy); }
+  x.fillStyle = '#8a94a8'; x.textAlign = 'left'; x.fillText('herbivores', 4, h - m.b + 4); x.fillText('carnivores', 4, m.h + 4); x.fillText('omnivores', 4, (h - m.b + m.h) / 2 + 4);
 }
 
 // --- Journal ---
@@ -248,7 +339,7 @@ function dessinerPressions() {
 }
 
 function tout() { if (!H.length) return; const on = $$('section').find(s => s.classList.contains('on')).id;
-  ({ 's-monde': dessinerMonde, 's-taxons': dessinerTaxons, 's-lignees': dessinerArbre, 's-journal': dessinerJournal, 's-pressions': dessinerPressions })[on](); }
+  ({ 's-monde': dessinerMonde, 's-taxons': dessinerTaxons, 's-lignees': dessinerArbre, 's-chaine': dessinerChaine, 's-journal': dessinerJournal, 's-pressions': dessinerPressions })[on](); }
 addEventListener('resize', tout);
 if (typeof Orvane === 'undefined') msg('moteur introuvable : ouvrir ce fichier depuis le dossier du dépôt (../moteur, ../tampon)');
 else { const id = new URLSearchParams(location.search).get('monde'); if (id) monde(id); else exemple(); }
