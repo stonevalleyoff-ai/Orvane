@@ -155,7 +155,7 @@ const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAl
 const ESC = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const COUL = ['#e0a54a', '#82b9cb', '#8fcf8a', '#e58a73', '#b9a2e0', '#d8c36a', '#6fc7b8', '#e59ab9', '#a9c46f', '#8fa0e0', '#c9a27a', '#7fd1a0'];
 const AXES = ['temperature', 'humidite', 'altitude', 'lumiere', 'couvert'];
-const MONDES_CONNUS = [{ id: 'sv-1', nom: 'Monde de Stone Valley' }, { id: 'genese-7', nom: 'Monde né d\'Orvane' }];
+const MONDES_CONNUS = [{ id: 'orvane', nom: 'Le monde d\'Orvane' }, { id: 'sv-1', nom: 'Monde de Stone Valley' }, { id: 'genese-7', nom: 'Monde né d\'Orvane' }];
 // l'état de la page : l'histoire (un instantané par cycle), ce qui vient du monde publié, ce que fait la personne
 const E = { H: [], publies: 0, source: null, gen0: null, profil: null, lot: null, tampon: {}, pressions: null, mondes: MONDES_CONNUS,
   vue: 'vue', espece: null, ouverte: false, filtre: 'toutes', tri: 'effectif', recherche: '', biome: null, journal: 'tous', cache: new Set(), enCours: false, arret: false };
@@ -175,7 +175,7 @@ const STATUT = { croissance: ['en croissance', 'vif'], stable: ['stable', ''], d
 const REGIME = { herbivore: 'herbivore', omnivore: 'omnivore', carnivore: 'carnivore', filtreur: 'filtreur', detritivore: 'détritivore' };
 const EVT = { apparition: ['apparition', 'apparitions'], extinction: ['extinction', 'extinctions'], separation: ['nouvelle lignée', 'nouvelles lignées'], migration: ['population installée ailleurs', 'populations installées ailleurs'],
   effondrement: ['effondrement', 'effondrements'], explosion: ['explosion démographique', 'explosions démographiques'], nouveau_trait: ['trait nouveau', 'traits nouveaux'],
-  epidemie: ['épidémie', 'épidémies'], remission: ['épidémie éteinte', 'épidémies éteintes'], catastrophe: ['catastrophe', 'catastrophes'] };
+  epidemie: ['épidémie', 'épidémies'], remission: ['épidémie éteinte', 'épidémies éteintes'], catastrophe: ['catastrophe', 'catastrophes'], hybridation: ['zone hybride', 'zones hybrides'], mefiance: ['méfiance', 'méfiances'] };
 const evtNom = (type, n = 1) => (EVT[type] || [type, type])[n > 1 ? 1 : 0];
 const bandeau = (html, cls = '') => { $('#bandeau').innerHTML = html ? `<p class="${cls}">${html}</p>` : ''; };
 
@@ -206,7 +206,10 @@ async function monde(id) {
   $('#contenu').innerHTML = '<p class="vide">Chargement du monde…</p>';
   try {
     const courant = await json(`../mondes/${encodeURIComponent(id)}/instantane.json`);
-    const [hist, profil, gen0] = await Promise.all([json(`../mondes/${id}/historique.json`).catch(() => []), json(`../mondes/${id}/profil.json`).catch(() => null), json(`../mondes/${id}/generation-0.json`).catch(() => null)]);
+    const [hist, P, gen0, jeux] = await Promise.all([json(`../mondes/${id}/historique.json`).catch(() => []), json(`../mondes/${id}/profil.json`).catch(() => null), json(`../mondes/${id}/generation-0.json`).catch(() => null), json(`../mondes/${id}/jeux.json`).catch(() => [])]);
+    // un monde pour tous les jeux : « dans le jeu », c'est ce qu'en montre le premier jeu branché (jeux.json)
+    const J = Array.isArray(jeux) ? jeux.find(j => j.actif !== false && j.exposition && Object.keys(j.exposition).length) : null;
+    const profil = P && !P.exposition && J ? { ...P, exposition: J.exposition, jeu: J.nom || J.id } : P;
     installer([...hist.filter(h => h.cycle.n < courant.cycle.n), courant], { id, nom: courant.monde.nom || id, publie: true }, gen0, profil);
   } catch (e) {
     $('#contenu').innerHTML = `<p class="vide">Le monde « ${ESC(id)} » ne s'ouvre pas (${ESC(e.message)}). Vérifiez qu'il est publié dans <code>mondes/${ESC(id)}/</code>, ou choisissez-en un autre en haut.</p>`;
@@ -344,11 +347,21 @@ function fiche() {
   h += `<h2>Où elle vit</h2><div class="defile"><table><tr><th>biome</th><th class="n">bêtes</th><th class="n">sur le cycle</th><th class="n">morts dues aux joueurs</th><th class="n">aux prédateurs</th><th class="n">satiété</th><th>épidémie</th></tr>
     ${t.populations.slice().sort((a, b) => b.effectif - a.effectif).map(q => `<tr><td>${ESC(nomBiome(q.biome))}</td><td class="n">${nb(q.effectif)}</td><td class="n">${tend(q.tendance)}</td><td class="n">${pct(q.pression)}</td><td class="n">${pct(q.predation)}</td><td class="n ${q.satiete != null && q.satiete < .4 ? 'declin' : ''}">${pct(q.satiete)}</td><td class="${q.maladie ? 'declin' : 'sourd'}">${q.maladie ? `${pct(q.maladie.part || 0)} des morts, encore ${q.maladie.reste} cycles` : '—'}</td></tr>`).join('')}</table></div>
     ${t.populations.some(q => q.satiete != null) ? '<p class="note">La satiété dit si les proies suffisent à un prédateur : sous 40 %, il a faim, naît moins, meurt plus et s\'en va.</p>' : ''}`;
+  // l'isolement et les hybrides (docs/10)
+  const isol = t.populations.filter(q => q.flux != null || q.divergence != null || q.hybride);
+  if (isol.length && (t.populations.length > 1 || isol.some(q => q.hybride))) h += `<h2>Isolement et hybrides</h2><div class="defile"><table><tr><th>biome</th><th class="n">immigrants par cycle</th><th class="n">écart au reste de l'espèce</th><th>se croise avec</th></tr>
+    ${isol.map(q => { const o = q.hybride && I.taxons.find(z => z.id === q.hybride.avec); return `<tr><td>${ESC(nomBiome(q.biome))}</td><td class="n">${q.flux != null ? pct(q.flux) : '—'}</td><td class="n ${q.divergence >= .3 ? 'ambre' : ''}">${q.divergence != null ? fx(q.divergence, 3) : '—'}</td><td>${q.hybride ? `${o ? `<button class="lien" data-esp="${ESC(o.id)}" style="padding:0"><i>${ESC(nomEsp(o))}</i></button>` : ESC(q.hybride.avec)} <span class="sourd">${pct(q.hybride.part)} des naissances, isolement ${fx(q.hybride.isolement)}</span>` : '<span class="sourd">—</span>'}</td></tr>`; }).join('')}</table></div>
+    <p class="note">Une population qui ne reçoit presque plus d'immigrants diverge ; au-delà de 0,3 d'écart, elle peut devenir une lignée. Deux lignées apparentées qui partagent un biome se croisent d'autant plus qu'elles sont peu isolées ; leurs hybrides, moins viables, mêlent les gènes des deux.</p>`;
+  // ce que les populations ont appris des joueurs (docs/12)
+  const appris = t.populations.filter(q => q.mefiance || q.habituation), XM = E.profil?.exposition?.mefiance || {};
+  if (appris.length) h += `<h2>Méfiance et habituation</h2><div class="defile"><table><tr><th>biome</th><th class="n">méfiance</th><th class="n">habituation</th><th class="n">distance de fuite</th></tr>
+    ${appris.map(q => { const f = (XM.fuite ?? 2.2) ** (q.mefiance || 0) * (XM.habitude ?? .5) ** (q.habituation || 0); return `<tr><td>${ESC(nomBiome(q.biome))}</td><td class="n ${q.mefiance >= .5 ? 'declin' : ''}">${q.mefiance ? pct(q.mefiance) : '—'}</td><td class="n">${q.habituation ? pct(q.habituation) : '—'}</td><td class="n ${f > 1.05 ? 'ambre' : ''}">× ${fx(f, 2)}</td></tr>`; }).join('')}</table></div>
+    <p class="note">Des rencontres qui finissent mal (une bête tuée, une bête capturée) rendent une population méfiante ; des rencontres sans suite l'habituent. La méfiance retombe de moitié en 6 cycles, l'habituation en 15. Le jeu en fait une distance de fuite${XM.rendue === false ? ' (ce monde ne la montre pas)' : ''}.</p>`;
   // les phénotypes
   const expo = E.profil ? (() => { try { return OrvaneTampon.exposer(t, E.profil, cat, null, OrvaneTampon.referenceDe ? OrvaneTampon.referenceDe(t.id, I, E.gen0) : null); } catch (e) { return null; } })() : null;
   h += `<h2>Ce qui se voit</h2><div class="defile"><table><tr><th>phénotype</th><th class="n">part réelle</th>${expo ? '<th class="n">dans le jeu</th>' : ''}<th class="n">coût</th><th class="n">sur le cycle</th></tr>
     ${t.phenotypes.map(q => `<tr><td><span class="pt" style="background:${couleur(t.id + '/' + q.id)};margin-right:6px"></span>${q.traits.length ? ESC(q.traits.join(' + ')) : '<span class="sourd">plan de base</span>'}</td><td class="n">${pct(q.frequence)}</td>${expo ? `<td class="n ambre">${pct(expo[q.id] ?? 0)}</td>` : ''}<td class="n sourd">${q.cout_total ? '−' + Math.round(q.cout_total * 100) + ' %' : '—'}</td><td class="n ${q.selection > 0 ? 'vif' : q.selection < 0 ? 'declin' : 'sourd'}">${q.selection ? (q.selection > 0 ? '+' : '−') + Math.abs(q.selection * 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' pt' : '—'}</td></tr>`).join('')}</table></div>
-    <p class="note">Le coût est ce que ses traits retirent à la reproduction.${expo ? ' « Dans le jeu » : ce que le profil du jeu en montre.' : ''}</p>
+    <p class="note">Le coût est ce que ses traits retirent à la reproduction.${expo ? ` « Dans le jeu » : ce qu'en montre ${ESC(E.profil.jeu || 'le jeu')}.` : ''}</p>
     ${E.H.length >= 3 ? '<canvas id="cPh" height="170"></canvas>' : ''}`;
   // l'hérédité (docs/9)
   const W = effectif(t) || 1, A = {}; for (const q of t.populations) for (const [id, f] of Object.entries(q.alleles || {})) A[id] = (A[id] || 0) + f * q.effectif / W;
@@ -366,6 +379,12 @@ function fiche() {
   const traits = [...new Set(t.phenotypes.flatMap(q => q.traits))];
   if (traits.length) h += `<h2>Les traits portés</h2>${traits.map(id => { const c = cat[id]; if (!c) return `<div class="trait"><b>${ESC(id)}</b><p>hors catalogue</p></div>`;
     return `<div class="trait"><b>${ESC(id)}</b> <span class="sourd">· ${ESC(c.organe || c.domaine)}</span><p>${ESC(c.effet || '')}${c.cout ? ` Coûte ${Math.round(c.cout * 100)} % de la reproduction.` : ''}</p>${c.conduite?.presage ? `<p>Avant d'agir : <span class="presage">${ESC(c.conduite.presage)}</span>.</p>` : ''}</div>`; }).join('')}`;
+  // les organes (docs/11) : à leur place, à leur taille, et ce qu'ils prêtent aux jeux
+  const OG = t.plan.corps && globalThis.OrvaneCorps ? OrvaneCorps.normaliser(t.plan.corps).organes : [], KO = { ...(globalThis.OrvaneCorps?.ORGANES_CAT || {}), ...(I.catalogue?.organes || {}) };
+  const PL = { tete: 'tête', dos: 'dos', flancs: 'flancs', queue: 'queue', avant: 'avant' };
+  if (OG.length) h += `<h2>Les organes</h2><div class="defile"><table><tr><th>organe</th><th>place</th><th class="n">taille</th><th>fonction</th><th>dans un jeu</th></tr>
+    ${OG.map(o => { const k = KO[o.type] || {}, c = k.conduite; return `<tr><td>${ESC(o.nombre > 1 ? o.nombre + ' ' + (k.mot?.[1] || o.type) : k.mot?.[0] || o.type)}</td><td class="sourd">${ESC(PL[o.place] || o.place)}</td><td class="n">${fx(o.taille, 2)}</td><td class="sourd">${ESC(k.fonction || '')}</td><td>${c && o.taille >= .3 ? `${ESC(c.type)}${c.presage ? ` · <span class="presage">${ESC(c.presage)}</span>` : ''}` : '<span class="sourd">—</span>'}</td></tr>`; }).join('')}</table></div>
+    <p class="note">Un organe neuf est une innovation rare, à la séparation d'une lignée ; sa taille dérive ensuite, et il se perd sous 0,2. La conduite qu'il prête à un jeu est d'autant plus forte qu'il est grand.</p>`;
   if (enfants.length) h += `<h2>Ses lignées filles</h2><ul class="classement">${enfants.map(z => `<li><button data-esp="${ESC(z.id)}"><span class="pt" style="background:${couleur(z.id)}"></span><span class="nom">${ESC(nomEsp(z))}</span><span></span><span class="chiffre">${z.eteint ? '<small class="declin">éteinte</small>' : nb(effectif(z))}</span></button></li>`).join('')}</ul>`;
   el.innerHTML = h;
   $('#retour').onclick = () => { E.ouverte = false; vueEspeces(); adresse(); };
@@ -380,23 +399,40 @@ function croquis(c, traits = []) {
   if (c.forme === 'serpent') { let d = ''; for (let i = 0; i <= 12; i++) { const x = 20 + i * 9, y = sol - 8 - Math.sin(i * .9) * 5; d += (i ? 'L' : 'M') + x + ' ' + y; }
     E2.push(`<path d="${d}" stroke="${rgb(C.robe)}" stroke-width="${Th * .8}" fill="none" stroke-linecap="round"/>`, `<circle cx="132" cy="${sol - 12}" r="${Th * .55}" fill="${rgb(C.robe)}"/>`, `<circle cx="136" cy="${sol - 14}" r="2" fill="${rgb(C.oeil)}"/>`);
     return `<svg viewBox="0 0 170 90" width="170" height="90" aria-hidden="true">${E2.join('')}</svg>`; }
-  if (c.queue > .08) { const L = (.06 + c.queue * .42) * k; E2.push(`<path d="M${xr + 4} ${cy - Th * .1} Q${xr - L * .5} ${cy - Th * .2 - (traits.includes('queue-prehensile') ? L * .4 : 0)} ${xr - L} ${cy + (bip ? 4 : -L * .25)}" stroke="${rgb(C.robe)}" stroke-width="${Th * .35}" fill="none" stroke-linecap="round"/>`); }
+  const og = (ty, pl) => c.organes.find(o => o.type === ty && (!pl || o.place === pl)), tl = (ty, pl) => (og(ty, pl) || {}).taille || 0, acc = rgb(OrvaneCorps.tourner(C.robe, 150));
+  let qx = xr + 2, qy = cy;                                           // le bout de la queue (là où vont massue, aiguillon, panache)
+  if (c.queue > .08) { const L = (.06 + c.queue * .42) * k; qx = xr - L; qy = cy + (bip ? 4 : -L * .25); E2.push(`<path d="M${xr + 4} ${cy - Th * .1} Q${xr - L * .5} ${cy - Th * .2 - (traits.includes('queue-prehensile') ? L * .4 : 0)} ${qx} ${qy}" stroke="${rgb(C.robe)}" stroke-width="${Th * .35}" fill="none" stroke-linecap="round"/>`); }
+  if (og('massue')) E2.push(`<ellipse cx="${qx}" cy="${qy}" rx="${4 + tl('massue') * 6}" ry="${3.5 + tl('massue') * 5}" fill="${rgb(C.sombre)}"/>`);
+  if (og('aiguillon')) E2.push(`<path d="M${qx} ${qy} Q${qx - 4} ${qy - 8 - tl('aiguillon') * 10} ${qx + 6 + tl('aiguillon') * 6} ${qy - 10 - tl('aiguillon') * 12}" stroke="#3c2834" stroke-width="2.5" fill="none" stroke-linecap="round"/>`);
+  if (og('panache')) E2.push(`<path d="M${qx + 2} ${qy} L${qx - 8 - tl('panache') * 12} ${qy - 6 - tl('panache') * 8} L${qx - 6 - tl('panache') * 10} ${qy + 5}Z" fill="${acc}"/>`);
+  if (og('epines', 'queue')) for (const d of [-3, 3]) E2.push(`<line x1="${qx}" y1="${qy}" x2="${qx + d}" y2="${qy - 6 - tl('epines', 'queue') * 6}" stroke="#e8dcc0" stroke-width="1.6"/>`);
   const paires = Math.max(1, c.pattes / 2);
   for (let i = 0; i < paires && c.pattes; i++) { const x = bip ? cx - 4 + i * 6 : xa - 6 - (Lt - 12) * i / Math.max(1, paires - 1);
     E2.push(`<line x1="${x}" y1="${cy + Th * .3}" x2="${x + (c.forme === 'hexapode' ? (i % 2 ? -6 : 6) : 0)}" y2="${sol}" stroke="${rgb(C.sombre)}" stroke-width="${c.forme === 'hexapode' ? 2.5 : 4}"/>`); }
   if (c.ailes > .3) E2.push(`<path d="M${xa - Lt * .35} ${cy - Th * .3} L${xr - 6} ${cy - Th - c.ailes * 26} L${xr + 6} ${cy - Th * .2}Z" fill="${rgb(C.sombre)}" opacity=".85"/>`);
   E2.push(`<ellipse cx="${cx}" cy="${cy}" rx="${Lt / 2 + 3}" ry="${Th / 2 + 1}" fill="${rgb(C.robe)}"/>`, `<ellipse cx="${cx + 2}" cy="${cy + Th * .3}" rx="${Lt * .4}" ry="${Th * .18}" fill="${rgb(C.ventre)}"/>`);
   if (c.carapace > .3) E2.push(`<path d="M${xr + 3} ${cy - 2} Q${cx} ${cy - Th * .9 - c.carapace * 6} ${xa - 3} ${cy - 2}Z" fill="${rgb(C.sombre)}"/>`);
+  const dos = cy - Th / 2 - (c.carapace > .3 ? 3 + c.carapace * 3 : 0);   // (§215) ce qui pousse sur le dos, les flancs, à l'avant
+  if (og('plaques')) { const n = 3 + Math.round(tl('plaques') * 3), h = 5 + tl('plaques') * 10; for (let i = 0; i < n; i++) { const x = xr + 6 + (Lt - 12) * (i + .5) / n, hh = h * (.7 + .3 * Math.sin(Math.PI * (i + .5) / n)); E2.push(`<path d="M${x - 4} ${dos + 1} L${x} ${dos - hh} L${x + 4} ${dos + 1}Z" fill="${acc}"/>`); } }
+  if (og('crete', 'dos')) E2.push(`<path d="M${xr + 6} ${dos + 1} Q${cx} ${dos - 4 - tl('crete', 'dos') * 10} ${xa - 4} ${dos + 1}Z" fill="${acc}"/>`);
+  if (og('nageoires')) E2.push(`<path d="M${cx - 8} ${dos + 1} L${cx - 2} ${dos - 6 - tl('nageoires') * 10} L${cx + 6} ${dos + 1}Z" fill="${rgb(C.sombre)}"/>`, `<path d="M${xa - 8} ${cy + 2} L${xa - 18} ${cy + 8 + tl('nageoires') * 6} L${xa - 4} ${cy + 5}Z" fill="${rgb(C.sombre)}"/>`);
+  for (const pl of ['dos', 'flancs']) if (og('epines', pl)) { const n = 4 + Math.round(tl('epines', pl) * 3), l = 4 + tl('epines', pl) * 7, y0 = pl === 'dos' ? dos + 1 : cy;
+    for (let i = 0; i < n; i++) { const x = xr + 6 + (Lt - 12) * (i + .5) / n; E2.push(`<line x1="${x}" y1="${y0}" x2="${x - 2}" y2="${y0 - l}" stroke="#e8dcc0" stroke-width="1.6"/>`); } }
+  if (og('pinces')) { const l = 8 + tl('pinces') * 14, y = cy + Th * .25; E2.push(`<line x1="${xa - 4}" y1="${y}" x2="${xa + l}" y2="${y}" stroke="${rgb(C.sombre)}" stroke-width="3"/>`, `<path d="M${xa + l} ${y} l5 -4 M${xa + l} ${y} l5 3" stroke="${rgb(C.sombre)}" stroke-width="2.5" fill="none"/>`); }
   if (c.motif === 'rayures' || traits.includes('coloration-aposematique')) for (let i = 0; i < 4; i++) E2.push(`<line x1="${xr + 8 + i * Lt / 5}" y1="${cy - Th / 2}" x2="${xr + 6 + i * Lt / 5}" y2="${cy + Th / 4}" stroke="${traits.includes('coloration-aposematique') ? '#e8bc2a' : rgb(C.sombre)}" stroke-width="3"/>`);
   if (c.motif === 'taches') for (let i = 0; i < 4; i++) E2.push(`<circle cx="${xr + 8 + i * Lt / 4.5}" cy="${cy - Th * .15 + (i % 2) * 4}" r="2.5" fill="${rgb(C.sombre)}"/>`);
   if (c.motif === 'bandes') E2.push(`<line x1="${xr + 4}" y1="${cy - Th * .3}" x2="${xa - 4}" y2="${cy - Th * .3}" stroke="${rgb(C.sombre)}" stroke-width="3"/>`);
   const hs = (.09 + c.tete * .09) * k, nl = c.cou * .3 * k, hx = xa + nl * .55 + hs * .3, hy = cy - Th * .15 - nl * .8 - (bip ? 8 : 0);
   if (nl > 3) E2.push(`<line x1="${xa - 4}" y1="${cy - Th * .1}" x2="${hx - hs * .3}" y2="${hy}" stroke="${rgb(C.robe)}" stroke-width="${Th * .45}" stroke-linecap="round"/>`);
   if (c.museau > .12) E2.push(`<rect x="${hx + hs * .3}" y="${hy - hs * .1}" width="${(.03 + c.museau * .13) * k}" height="${hs * .45}" rx="2" fill="${c.forme === 'oiseau' ? '#d6ac5c' : rgb(C.robe)}"/>`);
+  if (og('collerette')) E2.push(`<ellipse cx="${hx - hs * .45}" cy="${hy}" rx="${hs * (.35 + tl('collerette') * .3)}" ry="${hs * (.8 + tl('collerette') * .8)}" fill="${acc}"/>`);
   E2.push(`<circle cx="${hx}" cy="${hy}" r="${hs / 2}" fill="${rgb(C.robe)}"/>`);
+  if (og('trompe')) E2.push(`<path d="M${hx + hs * .4} ${hy} Q${hx + hs * .9 + tl('trompe') * 8} ${hy + 4} ${hx + hs * .7} ${hy + hs * .5 + tl('trompe') * 22}" stroke="${rgb(C.robe)}" stroke-width="${hs * .3}" fill="none" stroke-linecap="round"/>`);
+  if (og('defenses')) E2.push(`<path d="M${hx + hs * .35} ${hy + hs * .25} Q${hx + hs * .8 + tl('defenses') * 10} ${hy + hs * .6} ${hx + hs * .9 + tl('defenses') * 14} ${hy - tl('defenses') * 6}" stroke="#f4f0e4" stroke-width="2.6" fill="none" stroke-linecap="round"/>`);
   if (c.oreilles > .25) E2.push(`<path d="M${hx - hs * .3} ${hy - hs * .3} L${hx - hs * .55} ${hy - hs * .5 - c.oreilles * 14} L${hx - hs * .05} ${hy - hs * .4}Z" fill="${rgb(C.robe)}"/>`);
-  if (c.cornes > .25) E2.push(`<path d="M${hx - hs * .1} ${hy - hs * .4} Q${hx - hs * .2} ${hy - hs - c.cornes * 16} ${hx - hs * .9} ${hy - hs * .7 - c.cornes * 18}" stroke="#e8dcc0" stroke-width="3" fill="none"/>`);
-  if (c.crete > .25) E2.push(`<path d="M${hx - hs * .6} ${hy - hs * .35} Q${hx - hs * .1} ${hy - hs * .5 - c.crete * 14} ${hx + hs * .3} ${hy - hs * .4}Z" fill="${rgb(OrvaneCorps.tourner(C.robe, 150))}"/>`);
+  if (c.cornes > .25 && og('cornes')?.nombre === 1) E2.push(`<path d="M${hx + hs * .3} ${hy - hs * .3} L${hx + hs * .45} ${hy - hs * .5 - c.cornes * 16} L${hx + hs * .6} ${hy - hs * .25}Z" fill="#e8dcc0"/>`);
+  else if (c.cornes > .25) E2.push(`<path d="M${hx - hs * .1} ${hy - hs * .4} Q${hx - hs * .2} ${hy - hs - c.cornes * 16} ${hx - hs * .9} ${hy - hs * .7 - c.cornes * 18}" stroke="#e8dcc0" stroke-width="3" fill="none"/>`);
+  if (tl('crete', 'tete') > .25) E2.push(`<path d="M${hx - hs * .6} ${hy - hs * .35} Q${hx - hs * .1} ${hy - hs * .5 - tl('crete', 'tete') * 14} ${hx + hs * .3} ${hy - hs * .4}Z" fill="${rgb(OrvaneCorps.tourner(C.robe, 150))}"/>`);
   if (c.antennes > .25) E2.push(`<path d="M${hx + hs * .1} ${hy - hs * .4} Q${hx + hs * .5} ${hy - hs - c.antennes * 14} ${hx + hs * 1.3} ${hy - hs * .9 - c.antennes * 12}" stroke="${rgb(C.sombre)}" stroke-width="1.5" fill="none"/>`);
   if (traits.includes('crocs-allonges')) E2.push(`<line x1="${hx + hs * .5}" y1="${hy + hs * .3}" x2="${hx + hs * .5}" y2="${hy + hs * .3 + 6}" stroke="#f4f0e4" stroke-width="2"/>`);
   E2.push(`<circle cx="${hx + hs * .15}" cy="${hy - hs * .08}" r="${traits.includes('yeux-nocturnes') ? 3.4 : 2.2}" fill="${rgb(C.oeil)}"/>`);
@@ -502,7 +538,8 @@ function vueSimuler() {
   if (!P || !P.taxons || !Object.keys(P.taxons).length) $('#vuePressions').innerHTML = '<p class="vide">Aucune pression au dernier cycle simulé.</p>';
   else { let h = '<div class="defile"><table><tr><th>espèce</th><th>biome</th><th>phénotype</th><th class="n">retirées</th></tr>';
     for (const [tid, Bs] of Object.entries(P.taxons)) for (const [bid, O] of Object.entries(Bs)) { for (const [k, v] of Object.entries(O.retrait || {})) h += `<tr><td>${ESC(nomEsp(inst().taxons.find(t => t.id === tid)) || tid)}</td><td>${ESC(nomBiome(bid))}</td><td>${k === '*' ? '<span class="sourd">toutes</span>' : ESC(k)}</td><td class="n ${v > 0 ? 'declin' : 'vif'}">${v > 0 ? '−' : '+'}${Math.abs(v).toFixed(1)}</td></tr>`;
-      for (const d of O.deplacement || []) h += `<tr><td>${ESC(tid)}</td><td>${ESC(nomBiome(bid))}</td><td class="sourd">emportées vers ${ESC(nomBiome(d.vers))}</td><td class="n">${d.n}</td></tr>`; }
+      for (const d of O.deplacement || []) h += `<tr><td>${ESC(tid)}</td><td>${ESC(nomBiome(bid))}</td><td class="sourd">emportées vers ${ESC(nomBiome(d.vers))}</td><td class="n">${d.n}</td></tr>`;
+      if (O.contact) h += `<tr><td>${ESC(nomEsp(inst().taxons.find(t => t.id === tid)) || tid)}</td><td>${ESC(nomBiome(bid))}</td><td class="sourd">contacts : ${fx(O.contact.rencontres, 0)} rencontres, ${fx(O.contact.danger, 1)} qui finissent mal${O.contact.aide ? `, ${fx(O.contact.aide, 0)} aides` : ''} (docs/12)</td><td class="n">—</td></tr>`; }
     $('#vuePressions').innerHTML = h + '</table></div>'; }
 }
 async function simuler(n) {

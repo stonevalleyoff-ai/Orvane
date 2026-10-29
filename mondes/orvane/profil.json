@@ -1,0 +1,27 @@
+{
+  "orvane": "0.1",
+  "monde": {
+    "id": "orvane",
+    "graine": 1,
+    "cycle": "24h",
+    "amorce": "mondes/orvane/amorce.json",
+    "rodage": 100,
+    "annee": 120,
+    "historique": 20,
+    "pressions": {
+      "url": "https://rospodujiyltmxitykwc.supabase.co",
+      "cle": "sb_publishable_F98uYIaPrLTjhj3n7QiBOg_SOtFynn8",
+      "fonction": "orvane_lire_lots",
+      "jeux": "orvane_lire_jeux",
+      "secret": "ORVANE_LECTURE_SECRET"
+    }
+  },
+  "influence": {
+    "poids": { "prelevement": 1, "capture": 1, "liberation": -1, "nourrissage": -0.2, "deplacement": 1, "habitat_perdu": 1, "habitat_gagne": -1 },
+    "denormaliser": true,
+    "exposition_ref": 60,
+    "plafonds": { "par_compte_cycle": 30, "part_max_compte": 0.15, "part_max_jeu": 0.5, "part_max_population": 0.2 },
+    "memoire_cycles": 5,
+    "pseudo_comptes": 20
+  }
+}

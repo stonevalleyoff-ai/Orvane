@@ -1,0 +1,545 @@
+[
+ {
+  "id": "banquise",
+  "nom": "Banquise",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.02,
+   "humidite": 0.3,
+   "altitude": 0.05,
+   "lumiere": 0.7,
+   "couvert": 0
+  },
+  "capacite": 8000,
+  "voisins": [
+   "toundra",
+   "mer-froide"
+  ],
+  "saisons": {
+   "temperature": 0.2,
+   "lumiere": 0.25
+  }
+ },
+ {
+  "id": "toundra",
+  "nom": "Toundra",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.12,
+   "humidite": 0.45,
+   "altitude": 0.25,
+   "lumiere": 0.6,
+   "couvert": 0.05
+  },
+  "capacite": 150000,
+  "voisins": [
+   "banquise",
+   "taiga",
+   "desert-froid",
+   "sommets",
+   "cote",
+   "lac"
+  ],
+  "saisons": {
+   "temperature": 0.2,
+   "lumiere": 0.2,
+   "capacite": 0.4
+  }
+ },
+ {
+  "id": "taiga",
+  "nom": "Taïga",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.25,
+   "humidite": 0.6,
+   "altitude": 0.3,
+   "lumiere": 0.45,
+   "couvert": 0.75
+  },
+  "capacite": 700000,
+  "voisins": [
+   "toundra",
+   "foret",
+   "montagne",
+   "lac",
+   "riviere"
+  ],
+  "saisons": {
+   "temperature": 0.2,
+   "lumiere": 0.15,
+   "capacite": 0.35
+  }
+ },
+ {
+  "id": "steppe",
+  "nom": "Steppe",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.45,
+   "humidite": 0.25,
+   "altitude": 0.4,
+   "lumiere": 0.9,
+   "couvert": 0.1
+  },
+  "capacite": 600000,
+  "voisins": [
+   "prairie",
+   "desert-froid",
+   "savane",
+   "desert",
+   "montagne"
+  ]
+ },
+ {
+  "id": "prairie",
+  "nom": "Prairie",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.55,
+   "humidite": 0.5,
+   "altitude": 0.25,
+   "lumiere": 0.85,
+   "couvert": 0.15
+  },
+  "capacite": 2000000,
+  "voisins": [
+   "steppe",
+   "foret",
+   "marais",
+   "riviere",
+   "maquis",
+   "cote",
+   "savane"
+  ]
+ },
+ {
+  "id": "foret",
+  "nom": "Forêt",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.5,
+   "humidite": 0.65,
+   "altitude": 0.3,
+   "lumiere": 0.45,
+   "couvert": 0.85
+  },
+  "capacite": 1300000,
+  "voisins": [
+   "taiga",
+   "prairie",
+   "montagne",
+   "grotte",
+   "riviere",
+   "lac",
+   "marais"
+  ]
+ },
+ {
+  "id": "jungle",
+  "nom": "Jungle",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.88,
+   "humidite": 0.95,
+   "altitude": 0.15,
+   "lumiere": 0.3,
+   "couvert": 0.95
+  },
+  "capacite": 2500000,
+  "voisins": [
+   "savane",
+   "mangrove",
+   "riviere",
+   "marais",
+   "volcan"
+  ],
+  "saisons": {
+   "temperature": 0.03,
+   "lumiere": 0.03,
+   "humidite": 0.06,
+   "capacite": 0.08
+  }
+ },
+ {
+  "id": "savane",
+  "nom": "Savane",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.8,
+   "humidite": 0.35,
+   "altitude": 0.3,
+   "lumiere": 0.95,
+   "couvert": 0.25
+  },
+  "capacite": 1600000,
+  "voisins": [
+   "steppe",
+   "prairie",
+   "jungle",
+   "desert",
+   "maquis"
+  ],
+  "saisons": {
+   "temperature": 0.05,
+   "humidite": 0.15,
+   "capacite": 0.3
+  }
+ },
+ {
+  "id": "desert",
+  "nom": "Désert",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.95,
+   "humidite": 0.05,
+   "altitude": 0.3,
+   "lumiere": 1,
+   "couvert": 0.02
+  },
+  "capacite": 30000,
+  "voisins": [
+   "steppe",
+   "savane",
+   "maquis",
+   "volcan",
+   "cote"
+  ],
+  "saisons": {
+   "temperature": 0.1,
+   "capacite": 0.15
+  }
+ },
+ {
+  "id": "desert-froid",
+  "nom": "Désert froid",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.3,
+   "humidite": 0.1,
+   "altitude": 0.6,
+   "lumiere": 0.9,
+   "couvert": 0.02
+  },
+  "capacite": 20000,
+  "voisins": [
+   "toundra",
+   "steppe",
+   "montagne",
+   "sommets"
+  ],
+  "saisons": {
+   "temperature": 0.2
+  }
+ },
+ {
+  "id": "maquis",
+  "nom": "Maquis",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.7,
+   "humidite": 0.3,
+   "altitude": 0.35,
+   "lumiere": 0.85,
+   "couvert": 0.45
+  },
+  "capacite": 400000,
+  "voisins": [
+   "prairie",
+   "savane",
+   "desert",
+   "cote",
+   "montagne"
+  ]
+ },
+ {
+  "id": "montagne",
+  "nom": "Montagne",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.3,
+   "humidite": 0.5,
+   "altitude": 0.75,
+   "lumiere": 0.7,
+   "couvert": 0.35
+  },
+  "capacite": 250000,
+  "voisins": [
+   "taiga",
+   "foret",
+   "steppe",
+   "desert-froid",
+   "maquis",
+   "sommets",
+   "volcan",
+   "grotte",
+   "lac",
+   "riviere"
+  ]
+ },
+ {
+  "id": "sommets",
+  "nom": "Sommets",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.08,
+   "humidite": 0.4,
+   "altitude": 0.97,
+   "lumiere": 0.85,
+   "couvert": 0.03
+  },
+  "capacite": 10000,
+  "voisins": [
+   "toundra",
+   "desert-froid",
+   "montagne",
+   "volcan"
+  ],
+  "saisons": {
+   "temperature": 0.15
+  }
+ },
+ {
+  "id": "volcan",
+  "nom": "Volcan",
+  "milieu": "terrestre",
+  "axes": {
+   "temperature": 0.9,
+   "humidite": 0.15,
+   "altitude": 0.7,
+   "lumiere": 0.7,
+   "couvert": 0.03
+  },
+  "capacite": 5000,
+  "voisins": [
+   "jungle",
+   "desert",
+   "montagne",
+   "sommets",
+   "grotte"
+  ],
+  "saisons": false
+ },
+ {
+  "id": "grotte",
+  "nom": "Grotte",
+  "milieu": "souterrain",
+  "axes": {
+   "temperature": 0.45,
+   "humidite": 0.75,
+   "altitude": 0.3,
+   "lumiere": 0.02,
+   "couvert": 1
+  },
+  "capacite": 15000,
+  "voisins": [
+   "foret",
+   "montagne",
+   "volcan"
+  ],
+  "saisons": false
+ },
+ {
+  "id": "marais",
+  "nom": "Marais",
+  "milieu": "amphibie",
+  "axes": {
+   "temperature": 0.55,
+   "humidite": 0.95,
+   "altitude": 0.1,
+   "lumiere": 0.5,
+   "couvert": 0.55
+  },
+  "capacite": 500000,
+  "voisins": [
+   "prairie",
+   "foret",
+   "jungle",
+   "mangrove",
+   "lac",
+   "riviere"
+  ]
+ },
+ {
+  "id": "mangrove",
+  "nom": "Mangrove",
+  "milieu": "amphibie",
+  "axes": {
+   "temperature": 0.85,
+   "humidite": 0.95,
+   "altitude": 0.03,
+   "lumiere": 0.55,
+   "couvert": 0.7
+  },
+  "capacite": 600000,
+  "voisins": [
+   "jungle",
+   "marais",
+   "cote",
+   "recif"
+  ],
+  "saisons": {
+   "temperature": 0.03,
+   "lumiere": 0.03,
+   "capacite": 0.08
+  }
+ },
+ {
+  "id": "cote",
+  "nom": "Côte",
+  "milieu": "amphibie",
+  "axes": {
+   "temperature": 0.55,
+   "humidite": 0.7,
+   "altitude": 0.03,
+   "lumiere": 0.9,
+   "couvert": 0.1
+  },
+  "capacite": 120000,
+  "voisins": [
+   "toundra",
+   "prairie",
+   "desert",
+   "maquis",
+   "mangrove",
+   "riviere",
+   "recif",
+   "large",
+   "mer-froide"
+  ]
+ },
+ {
+  "id": "lac",
+  "nom": "Lac",
+  "milieu": "aquatique",
+  "axes": {
+   "temperature": 0.5,
+   "humidite": 1,
+   "altitude": 0.25,
+   "lumiere": 0.6,
+   "couvert": 0.1
+  },
+  "capacite": 400000,
+  "voisins": [
+   "toundra",
+   "taiga",
+   "foret",
+   "montagne",
+   "marais",
+   "riviere"
+  ]
+ },
+ {
+  "id": "riviere",
+  "nom": "Rivière",
+  "milieu": "aquatique",
+  "axes": {
+   "temperature": 0.5,
+   "humidite": 1,
+   "altitude": 0.35,
+   "lumiere": 0.7,
+   "couvert": 0.2
+  },
+  "capacite": 300000,
+  "voisins": [
+   "taiga",
+   "prairie",
+   "foret",
+   "jungle",
+   "montagne",
+   "marais",
+   "lac",
+   "cote"
+  ]
+ },
+ {
+  "id": "recif",
+  "nom": "Récif",
+  "milieu": "marin",
+  "axes": {
+   "temperature": 0.85,
+   "humidite": 1,
+   "altitude": 0.02,
+   "lumiere": 0.85,
+   "couvert": 0.5
+  },
+  "capacite": 1500000,
+  "voisins": [
+   "mangrove",
+   "cote",
+   "large"
+  ],
+  "saisons": {
+   "temperature": 0.03,
+   "lumiere": 0.03,
+   "capacite": 0.08
+  }
+ },
+ {
+  "id": "large",
+  "nom": "Haute mer",
+  "milieu": "marin",
+  "axes": {
+   "temperature": 0.5,
+   "humidite": 1,
+   "altitude": 0,
+   "lumiere": 0.75,
+   "couvert": 0.02
+  },
+  "capacite": 1200000,
+  "voisins": [
+   "cote",
+   "recif",
+   "mer-froide",
+   "abysses"
+  ],
+  "saisons": {
+   "temperature": 0.06,
+   "humidite": 0,
+   "capacite": 0.15
+  }
+ },
+ {
+  "id": "mer-froide",
+  "nom": "Mer froide",
+  "milieu": "marin",
+  "axes": {
+   "temperature": 0.12,
+   "humidite": 1,
+   "altitude": 0,
+   "lumiere": 0.5,
+   "couvert": 0.05
+  },
+  "capacite": 900000,
+  "voisins": [
+   "banquise",
+   "cote",
+   "large",
+   "abysses"
+  ],
+  "saisons": {
+   "temperature": 0.08,
+   "lumiere": 0.25,
+   "humidite": 0,
+   "capacite": 0.4
+  }
+ },
+ {
+  "id": "abysses",
+  "nom": "Abysses",
+  "milieu": "marin",
+  "axes": {
+   "temperature": 0.1,
+   "humidite": 1,
+   "altitude": 0,
+   "lumiere": 0,
+   "couvert": 0.1
+  },
+  "capacite": 60000,
+  "voisins": [
+   "large",
+   "mer-froide"
+  ],
+  "saisons": false
+ }
+]

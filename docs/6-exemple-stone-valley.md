@@ -18,7 +18,7 @@ Stone Valley est un jeu d'îles en un seul `index.html` (isométrie + 1re person
 | `orvaneVariante(sp, r)` | dans `tirerVariante` | tire un phénotype en mode relatif (les taux du jeu × l'écart depuis la génération 0, glissant du cycle d'avant à celui-ci), le rend en `robe\|taille-ornement` ; `undefined` si l'espèce est inconnue d'Orvane |
 | `orvaneEvenement(action, b, cause)` | dans `mourirBete` et `lier` | note un prélèvement (si la cause est le joueur) ou une capture, avec le phénotype retrouvé depuis la variante |
 | `orvaneLot()` | — | le lot accumulé |
-| `orvaneEnvoyer(rpc, compte)` | après une sauvegarde réussie | une fois par demi-heure au plus : pousse le lot vers `vp_orvane_pression`, ne retire que ce qui est parti |
+| `orvaneEnvoyer(rpc, compte)` | après une sauvegarde réussie | une fois par demi-heure au plus : pousse le lot vers `orvane_deposer` (le Supabase d'Orvane, `ORVANE_DEPOT`), 400 événements à la fois, ne retire que ce qui est parti |
 
 Les rencontres sont relevées toutes les dix secondes : une bête sauvage à moins de douze pas, une fois par bête.
 

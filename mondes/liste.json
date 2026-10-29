@@ -1,4 +1,5 @@
 [
- { "id": "sv-1", "nom": "Monde de Stone Valley", "jeu": "Stone Valley" },
- { "id": "genese-7", "nom": "Monde né d'Orvane", "jeu": "aucun : une genèse à observer" }
+ { "id": "orvane", "nom": "Le monde d'Orvane", "jeu": "tous : Stone Valley pour commencer" },
+ { "id": "sv-1", "nom": "Monde de Stone Valley", "jeu": "Stone Valley, jusqu’au monde d’Orvane (archivé)" },
+ { "id": "genese-7", "nom": "Monde né d'Orvane", "jeu": "aucun : une genèse à observer (archivée)" }
 ]

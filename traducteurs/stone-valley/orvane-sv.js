@@ -11,10 +11,12 @@
 //                                 née d'une mère connue, elle lui ressemble (§213, hérédité mendélienne) ;
 //  - orvaneEvenement(action, b, cause)  dans mourirBete() ('prelevement') et lier() ('capture') ;
 //  - orvaneLot()                  le lot de pressions accumulé (schemas/pression.schema.json) ;
-//  - orvaneEnvoyer(rpc, compte)   après une sauvegarde réussie : pousse le lot vers Supabase (vp_orvane_pression),
+//  - orvaneEnvoyer(rpc, compte)   après une sauvegarde réussie : pousse le lot vers le Supabase d'Orvane (orvane_deposer,
+//                                 avec la clé du jeu : ORVANE_DEPOT), sinon par le rpc du jeu (vp_orvane_pression, sv-1) ;
 //                                 une fois par demi-heure au plus (48 dépôts par jour, c'est la limite du serveur).
 // Les rencontres (l'exposition) sont relevées toutes les dix secondes : une bête sauvage à moins de douze pas.
-// Tout ce qui est propre au jeu est dans correspondance.js ; tout ce qui est réglage est dans profil.json.
+// Tout ce qui est propre au jeu est dans correspondance.js ; le réglage vient du monde (profil.json) et de jeux.json, où
+// le monde publie ce que chaque jeu sait en montrer (hebergement/LISEZ-MOI.md ; Corr.EXPOSITION tant qu'il n'est pas arrivé).
 // Rien ne casse si Orvane est injoignable : sans instantané, le jeu reste exactement ce qu'il était.
 //
 // LES LIGNÉES (§210). Un taxon d'Orvane qui n'est pas une espèce du jeu (« crapaud.tourbiere », né d'une séparation, ou
@@ -29,9 +31,10 @@
 // est rendue par son parent (specById la résout à la demande).
 (function (racine) {
 'use strict';
-// d'où viennent instantane.json, generation-0.json et profil.json : un dossier à côté du jeu, ou le monde publié par
-// le dépôt Orvane (GitHub Pages sert avec CORS *) — poser ORVANE_CHEMIN avant de charger ce script pour le changer
-const CLE = 'stone_valley:orvane', CHEMIN = racine.ORVANE_CHEMIN || 'orvane/';
+// d'où viennent instantane.json, generation-0.json, profil.json et jeux.json : un dossier à côté du jeu, ou le monde publié
+// par le dépôt Orvane (GitHub Pages sert avec CORS *) — poser ORVANE_CHEMIN avant de charger ce script pour le changer.
+// ORVANE_DEPOT = { url, cle, jeu } : le Supabase d'Orvane, sa clé publique, la clé publique du jeu (orvane_inscrire_jeu)
+const CLE = 'stone_valley:orvane', CHEMIN = racine.ORVANE_CHEMIN || 'orvane/', JEU = 'stone-valley', LOT_MAX = 400;
 // les morts qui comptent comme prélèvements du joueur : ses armes, ses sorts, ses tours, ses compagnes.
 // Pas « faim », pas « proie » (une bête de l'île qui en tue une autre : Orvane simule déjà la prédation), pas « défense ».
 const CAUSES_JOUEUR = new Set(['chassé', 'flèche', 'combat', 'piétiné', 'explosé', 'tour', 'satellite', 'brisé', 'tir', 'bêta', 'compagne']);
@@ -42,25 +45,51 @@ const S = { courant: null, gen0: null, profil: null, monde: null, lot: {}, lotQ:
   lignees: {}, poids0: null, cap0: null, vus: new WeakSet(), compte: null, pret: false, qIle: {} };
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v)), r2 = v => Math.round(v * 100) / 100;
 
-// --- mémoire locale (l'instantané, la génération 0, les lignées et le lot survivent à la fermeture) ---
-function lire() { try { const m = JSON.parse(localStorage.getItem(CLE) || '{}'); S.courant = m.courant || null; S.gen0 = m.gen0 || null; S.profil = m.profil || null;
-  S.monde = m.monde || null; S.lot = m.lot || {}; S.depuis = m.depuis || null; S.dernierEnvoi = m.dernierEnvoi || 0; S.lignees = m.lignees || {}; S.lotQ = m.lotQ || {}; } catch (e) { } }
-function ecrire() { try { localStorage.setItem(CLE, JSON.stringify({ courant: S.courant, gen0: S.gen0, profil: S.profil, monde: S.monde, lot: S.lot, depuis: S.depuis,
+// --- mémoire locale (les lignées et le lot survivent à la fermeture ; l'instantané et la génération 0, eux, vont dans le
+// cache du navigateur : un monde de cent lignées pèse deux mégaoctets, de quoi remplir le stockage local où le jeu sauve).
+// Le stockage local en garde un abrégé (qui vit où, combien), assez pour peupler la première île avant que le monde arrive ---
+const CACHE_MONDE = 'stone-valley:orvane-monde';
+const abreger = I => I && { monde: I.monde, cycle: { n: I.cycle?.n }, abrege: true,
+  taxons: I.taxons.map(t => ({ id: t.id, parent: t.parent, eteint: t.eteint, plan: { regime: Tampon?.regimeDe ? Tampon.regimeDe(t, I.catalogue?.traits) : t.plan?.regime }, populations: t.populations.map(p => ({ biome: p.biome, effectif: p.effectif })) })) };
+function lire() { try { const m = JSON.parse(localStorage.getItem(CLE) || '{}'); S.courant = m.courant || null; S.gen0 = m.gen0 || null; S.profil = m.profil || null; S.abrege = m.abrege || null;
+  S.monde = m.monde || null; S.lot = m.lot || {}; S.depuis = m.depuis || null; S.dernierEnvoi = m.dernierEnvoi || 0; S.lignees = m.lignees || {}; S.lotQ = m.lotQ || {}; } catch (e) { }
+  carte(); }
+// les biomes du monde décident de la carte des sols du jeu (sv-1 a les siens ; le monde d'Orvane, les siens : Corr.choisirCarte)
+function carte() { const I = S.courant || S.abrege?.courant; if (I && Corr.choisirCarte) Corr.choisirCarte(I.biomes?.length ? I.biomes.map(b => b.id) : I.taxons.flatMap(t => t.populations.map(p => p.biome))); }
+function ecrire() { if (S.courant && !S.courant.abrege) S.abrege = { courant: abreger(S.courant), gen0: abreger(S.gen0) };
+  try { localStorage.setItem(CLE, JSON.stringify({ abrege: S.abrege, profil: S.profil, monde: S.monde, lot: S.lot, depuis: S.depuis,
   dernierEnvoi: S.dernierEnvoi, lignees: S.lignees, lotQ: S.lotQ })); } catch (e) { } }
 // l'identité d'un monde : son id et sa naissance (un monde refait de zéro garde son id, pas sa date)
 const identite = inst => inst?.monde ? inst.monde.id + '|' + (inst.monde.ne || inst.monde.graine) : null;
 async function charger() {
   lire();
-  const prendre = async f => { try { const r = await fetch(CHEMIN + f, { cache: 'no-cache' }); return r.ok ? await r.json() : null; } catch (e) { return null; } };
-  const [inst, profil] = await Promise.all([prendre('instantane.json'), prendre('profil.json')]);
-  if (profil) S.profil = profil;
+  // un fichier du monde : du réseau (et on le garde), sinon du cache (hors ligne, le dernier monde reçu)
+  const cache = async () => { try { return typeof caches !== 'undefined' ? await caches.open(CACHE_MONDE) : null; } catch (e) { return null; } };
+  const prendre = async f => {
+    try { const r = await fetch(CHEMIN + f, { cache: 'no-cache' }); if (r.ok) { const j = await r.json();
+      try { const c = await cache(); if (c && typeof Response !== 'undefined') await c.put(CHEMIN + f, new Response(JSON.stringify(j), { headers: { 'Content-Type': 'application/json' } })); } catch (e) { }
+      return j; } } catch (e) { }
+    try { const c = await cache(), r = c && await c.match(CHEMIN + f); return r ? await r.json() : null; } catch (e) { return null; } };
+  const [inst, profil, jeux] = await Promise.all([prendre('instantane.json'), prendre('profil.json'), prendre('jeux.json')]);
+  // le réglage : le profil du monde, et ce que le jeu en montre (jeux.json, sinon Corr.EXPOSITION ; un monde fait pour le jeu
+  // comme sv-1 porte encore le sien)
+  const X = (Array.isArray(jeux) ? jeux : []).find(j => j.id === JEU)?.exposition;
+  if (profil) S.profil = { ...profil, exposition: X && Object.keys(X).length ? X : profil.exposition || Corr.EXPOSITION };
+  else if (S.profil && !S.profil.exposition) S.profil.exposition = Corr.EXPOSITION;
   if (inst) {
     const id = identite(inst);
     if (id !== S.monde) { S.monde = id; S.courant = null; S.gen0 = null; }             // un autre monde, ou le même refait : on repart de sa génération 0
     if (!S.courant || inst.cycle.n > S.courant.cycle.n) S.courant = inst;
   }
   if (S.courant && !S.gen0) S.gen0 = await prendre('generation-0.json') || S.courant;   // faute de génération 0, le premier instantané vu
-  ecrire(); inscrireLignees();
+  if (S.courant) S.abrege = null;
+  carte(); inscrireLignees(); ecrire();                                        // (les fiches des lignées d'abord : elles se gardent, l'instantané non)
+  // l'île a été peuplée avant que le monde n'arrive (ou d'après un autre monde) : ses comptes se refont ; si c'était un autre
+  // monde, ce que la graine met sur l'île aussi (les bêtes déjà là restent, les suivantes suivent le monde)
+  if (S.applique && S.courant && S.applique !== identite(S.courant) + '|' + S.courant.cycle.n) {
+    const autre = !S.applique.startsWith(identite(S.courant) + '|');
+    try { orvaneAppliquer(); if (autre && typeof tirerBestiaire === 'function' && typeof especesIle !== 'undefined') especesIle = tirerBestiaire(); } catch (e) { }
+  }
 }
 
 // --- le temps : l'avancement entre le cycle d'avant (joint à l'instantané) et celui-ci ---
@@ -73,13 +102,16 @@ function avancement() {
 const mele = (a, b, k) => a + (b - a) * k;
 
 // --- les taxons ---
+// le régime de fait (Tampon.regimeDe) : un carnivore qui digère aussi les plantes est rendu en omnivore
+const regime = t => Tampon?.regimeDe ? Tampon.regimeDe(t, (S.courant || S.gen0)?.catalogue?.traits) : t?.plan?.regime;
 const taxon = (inst, tid) => inst?.taxons.find(x => x.id === tid) || null;
 function effectifSur(inst, tid, biomes) { const t = taxon(inst, tid); if (!t || t.eteint) return 0; return t.populations.filter(p => biomes.has(p.biome)).reduce((a, p) => a + p.effectif, 0); }
-function biomesIle() {
+function solsIle() {   // les sols de l'île, numéros du jeu
   let rares = []; try { rares = typeof RaresIle !== 'undefined' ? RaresIle : []; } catch (e) { }
   if (!rares.length) try { rares = typeof biomesGraine === 'function' && typeof SEED !== 'undefined' ? biomesGraine(SEED) : []; } catch (e) { }
-  return new Set([...COMMUNS, ...rares].map(Corr.biomeOrvane).filter(Boolean));
+  return [...COMMUNS, ...rares];
 }
+function biomesIle() { return new Set(solsIle().map(Corr.biomeOrvane).filter(Boolean)); }
 const especeJeu = id => { try { const sp = typeof specById !== 'undefined' && Object.prototype.hasOwnProperty.call(specById, id) ? specById[id] : null; return sp && !sp.orvane ? sp : null; } catch (e) { return null; } };
 // le plus proche ancêtre d'un taxon qui est une espèce du jeu (pas une lignée) : par les parents d'Orvane, ou par l'identifiant
 function ancetreJeu(tid) {
@@ -99,13 +131,13 @@ function nomJeu(nom, id) {
 // les traits que porte au moins la moitié de la lignée : ils font partie de son allure
 function traitsDominants(t) { const c = {}; for (const p of t.phenotypes) for (const id of p.traits) c[id] = (c[id] || 0) + p.frequence; return Object.keys(c).filter(k => c[k] >= .5); }
 function definir(t) {
-  const anc = ancetreJeu(t.id), baseId = anc || Corr.gabaritDe(t.plan), base = especeJeu(baseId); if (!base) return null;
+  const anc = ancetreJeu(t.id), baseId = anc || Corr.gabaritDe({ ...t.plan, regime: regime(t) }), base = especeJeu(baseId); if (!base) return null;
   const ref = anc ? taxon(S.gen0, anc) || taxon(S.courant, anc) : null;
   const corpsBase = ref?.plan?.corps ? Corps.normaliser(ref.plan.corps) : Corr.corpsDe(base);
   const corps = t.plan.corps && Corps ? Corps.normaliser(t.plan.corps) : null;
   const ailes = c => (c?.ailes || 0) >= .5;
   const genere = !!corps && (!anc || corps.forme !== corpsBase.forme || corps.pattes !== corpsBase.pattes || ailes(corps) !== ailes(corpsBase) || Corps.distance(corps, corpsBase) >= SEUIL_CORPS);
-  const bio = [...new Set(t.populations.filter(p => p.effectif >= 1).map(p => Corr.biomeSV(p.biome)).filter(Boolean))];
+  const bio = [...new Set(t.populations.filter(p => p.effectif >= 1).flatMap(p => Corr.biomesSV ? Corr.biomesSV(p.biome) : [Corr.biomeSV(p.biome)]).filter(Boolean))];
   return { id: t.id, nom: nomJeu(t.nom, t.id), base: baseId, gabarit: !anc, genere, corps, traits: traitsDominants(t), bio,
     masse: t.plan.masse_kg, masseRef: ref?.plan?.masse_kg || 25 * base.sz ** 3, vit: t.plan.vitesse_rel, vitRef: ref?.plan?.vitesse_rel || base.spd * 2,
     nocturne: t.plan.activite === 'nocturne', locomotion: t.plan.locomotion || [], vu: Date.now() };
@@ -190,19 +222,32 @@ function orvaneEspeces() {
 // tous ceux qui ont le même instantané). Une espèce s'efface d'une île quand son effectif sur ses sols tombe sous
 // seuil_extinction_jeu ET sous seuil_extinction_part de ce qu'il était à la génération 0. Une lignée prend la part
 // de son ancêtre à proportion de ses effectifs ; une lignée sans ancêtre, la part d'une espèce moyenne.
+// Bestiaire d'Orvane (profil.exposition.bestiaire = 'orvane', §217) : la faune du jeu (Corr.FAUNE) absente du monde cède
+// sa place. Ce qu'elle aurait eu sur l'île (ses comptes et ses poids, régime par régime) se partage entre les lignées sans
+// ancêtre du jeu du même régime, à proportion de leurs effectifs sur l'île ; le tout suit l'effectif du régime depuis la
+// génération 0 (jusqu'au double). Autant de bêtes qu'avant, la même part d'herbivores, d'omnivores et de carnivores.
 function orvaneAppliquer() {
   if (typeof SPEC === 'undefined' || typeof POIDS_ESPECE === 'undefined') return;
-  S.qIle = {};                                                        // les traits continus se relisent pour chaque île
+  if (S.courant || !S.abrege?.courant) return appliquerIle();
+  S.courant = S.abrege.courant; const g = S.gen0; S.gen0 = g || S.abrege.gen0;       // le monde n'est pas encore là : son abrégé
+  try { appliquerIle(); } finally { S.courant = null; S.gen0 = g; }
+}
+function appliquerIle() {
+  S.qIle = {}; S.hybIle = {}; S.mefIle = {};                                         // les traits continus et les zones hybrides se relisent pour chaque île
   if (!S.poids0) { S.poids0 = { ...POIDS_ESPECE }; S.cap0 = Object.fromEntries(SPEC.filter(sp => !sp.orvane).map(sp => [sp.id, sp.cap])); }
   for (const sp of SPEC) {                                            // tout reprend sa valeur d'avant, à chaque île
     if (sp.orvane) { sp.cap = 0; delete POIDS_ESPECE[sp.id]; completer(sp); continue; }
     if (sp.id in S.cap0) sp.cap = S.cap0[sp.id];
     if (sp.id in S.poids0) POIDS_ESPECE[sp.id] = S.poids0[sp.id];
   }
+  S.applique = S.courant && S.gen0 ? identite(S.courant) + '|' + S.courant.cycle.n : 'aucun';   // d'après quel monde l'île est peuplée
   if (!S.courant || !S.gen0) return;                                 // rien reçu : le jeu reste tel quel
   const ile = biomesIle(), X = S.profil?.exposition || {}, seuil = X.seuil_extinction_jeu ?? 0, part = X.seuil_extinction_part ?? .25;
   const moyen = (() => { const v = S.gen0.taxons.map(t => effectifSur(S.gen0, t.id, ile)).filter(x => x > 0); return v.length ? v.reduce((a, x) => a + x, 0) / v.length : 0; })();
+  const ORV = X.bestiaire === 'orvane' ? bestiaireOrvane(ile) : null;
   for (const sp of SPEC) {
+    if (ORV && ORV.retire(sp)) { sp.cap = 0; delete POIDS_ESPECE[sp.id]; continue; }
+    if (ORV && sp.orvane?.gabarit) { const r = ORV.part(sp); if (!r) { sp.cap = 0; delete POIDS_ESPECE[sp.id]; } else { sp.cap = r.cap; POIDS_ESPECE[sp.id] = r.poids; } continue; }
     const tid = taxonDe(sp); if (!tid) continue;
     const L = sp.orvane, baseId = L ? L.base : sp.id;
     let ref = L && L.gabarit ? moyen : effectifSur(S.gen0, baseId, ile);
@@ -214,6 +259,28 @@ function orvaneAppliquer() {
     sp.cap = Math.max(1, Math.round(cap0 * Math.min(2, ratio)));
     if (poids0 != null) POIDS_ESPECE[sp.id] = +(poids0 * Math.min(3, ratio)).toFixed(4);
   }
+}
+
+// le bestiaire d'Orvane sur une île : les parts de la faune du jeu qui s'efface, et leur partage entre les lignées
+function bestiaireOrvane(ile) {
+  const sols = new Set(solsIle());
+  const groupe = t => Corr.GROUPE[regime(t)] || 'omnivore', absente = id => !Corr.FAUNE[id] ? false : !(taxon(S.courant, id) && !taxon(S.courant, id).eteint);
+  const parts = {}, ref = {}, maintenant = {};
+  for (const t of S.gen0.taxons) if (!Corr.FAUNE[t.id]) ref[groupe(t)] = (ref[groupe(t)] || 0) + effectifSur(S.gen0, t.id, ile);
+  for (const sp of SPEC) if (sp.orvane?.gabarit) { const t = taxon(S.courant, sp.orvane.taxon); if (!t || t.eteint) continue;
+    const e = effectifSur(S.courant, t.id, ile); if (e > 0) { parts[sp.id] = { g: groupe(t), e }; maintenant[groupe(t)] = (maintenant[groupe(t)] || 0) + e; } }
+  // ce que la faune du jeu qui s'efface aurait eu sur l'île, régime par régime (les Doux à part : voir plus bas)
+  const budgetDe = garderDoux => { const B = {}; for (const sp of SPEC) if (!sp.orvane && absente(sp.id) && !(garderDoux && sp.fam === 'doux') && (sp.bio || []).some(b => sols.has(b))) {
+    const x = B[Corr.GROUPE[Corr.FAUNE[sp.id]]] ??= { cap: 0, poids: 0 }; x.cap += S.cap0[sp.id] ?? sp.cap ?? 0; x.poids += S.poids0[sp.id] ?? 0; } return B; };
+  const partDe = (sp, B) => {
+    const p = parts[sp.id], b = p && B[p.g]; if (!p || !b || !(b.cap > 0)) return null;
+    const k = Math.min(2, ref[p.g] > 0 ? maintenant[p.g] / ref[p.g] : 1) * p.e / maintenant[p.g], c = b.cap * k;
+    return c >= .3 ? { cap: Math.max(1, Math.round(c)), poids: +(b.poids * k).toFixed(4) } : null;   // trop rare pour se montrer sur l'île
+  };
+  // les premières îles ne reçoivent que des Doux : si aucune lignée paisible ne peut s'y montrer, les Doux du jeu restent
+  let budget = budgetDe(false); const douxIci = SPEC.some(sp => sp.orvane?.gabarit && sp.fam === 'doux' && partDe(sp, budget));
+  if (!douxIci) budget = budgetDe(true);
+  return { retire: sp => !sp.orvane && absente(sp.id) && (douxIci || sp.fam !== 'doux'), part: sp => partDe(sp, budget) };
 }
 
 // === Orvane → jeu : la naissance d'une bête ===
@@ -267,9 +334,49 @@ function orvaneNaissance(b, mere) {
   if (D && D.sp === b.sp) { b.phen = D.ph; b.traits = D.traits; }   // (b.phen : b.ph est la phase de la foulée, dans le jeu)
   const deMere = D && D.sp === b.sp && D.Gs && mere && mere.sp === b.sp && mere.phen && !mere.dead;
   if (deMere) heriter(b, mere, D, cat);
-  const c = Corr.conduitesDe(b.traits || [], cat, loco); if (c.length) b.conduites = c; else delete b.conduites;
+  if (D && D.sp === b.sp) hybrider(b, cat);
+  const c = Corr.conduitesDe(b.traits || [], cat, loco, organesDe(b.sp), S.courant?.catalogue?.organes); if (c.length) b.conduites = c; else delete b.conduites;
   tirerQuant(b, deMere ? mere : null);
+  apprisFuite(b);
 }
+// === la méfiance et l'habituation (§216, docs/12) : ce que la population a appris des joueurs, là où naît la bête ===
+// Une population méfiante fuit de plus loin (× fuite à méfiance 1, 2,2 par défaut), une population habituée laisse
+// approcher (× habitude à habituation 1, 0,5) ; cela s'ajoute à l'audace de la bête (b.fq). Le profil peut l'éteindre
+// (exposition.mefiance.rendue = false) ou régler les deux facteurs.
+function apprisDe(sp, bid) {
+  const tid = taxonDe(sp); if (!tid || !S.courant) return null;
+  const k = tid + '|' + (bid || ''); S.mefIle ??= {}; if (k in S.mefIle) return S.mefIle[k];
+  const t = taxon(S.courant, tid), ici = t?.populations.find(p => p.biome === bid), ile = biomesIle();
+  let m = 0, h = 0, W = 0;
+  for (const p of ici ? [ici] : (t?.populations || []).filter(p => ile.has(p.biome))) { W += p.effectif; m += p.effectif * (p.mefiance || 0); h += p.effectif * (p.habituation || 0); }
+  return S.mefIle[k] = W > 0 && (m > 0 || h > 0) ? { m: m / W, h: h / W } : null;
+}
+function apprisFuite(b) {
+  const X = S.profil?.exposition?.mefiance || {}; delete b.mef; if (X.rendue === false || b.tame) return;
+  const A = apprisDe(b.sp, biomeDe(b)); if (!A) return;
+  const f = Math.pow(X.fuite ?? 2.2, A.m) * Math.pow(X.habitude ?? .5, A.h);
+  b.fq = Math.round(clamp((b.fq || 1) * f, .3, 3) * 1000) / 1000; b.mef = { m: r2(A.m), h: r2(A.h) };
+}
+// === les zones hybrides (§214, docs/10) : sur une île où la population se croise avec une lignée apparentée, une part des
+// bêtes a un père de l'autre lignée — elle le dit, et tient de lui la moitié de ses traits non rendus (ses conduites) ===
+function zoneHybride(sp) {
+  const tid = taxonDe(sp); if (!tid || !S.courant) return null;
+  S.hybIle ??= {}; if (tid in S.hybIle) return S.hybIle[tid];
+  const t = taxon(S.courant, tid), ile = biomesIle(), parts = {}; let W = 0;
+  for (const p of t?.populations || []) if (ile.has(p.biome)) { W += p.effectif; if (p.hybride) parts[p.hybride.avec] = (parts[p.hybride.avec] || 0) + p.effectif * p.hybride.part; }
+  const best = Object.entries(parts).sort((a, b) => b[1] - a[1])[0];
+  return S.hybIle[tid] = best && W > 0 ? { avec: best[0], part: best[1] / W } : null;
+}
+function hybrider(b, cat) {
+  const Z = zoneHybride(b.sp); if (!Z || !(Math.random() < Z.part)) return;
+  b.hybride = Z.avec;
+  const tB = taxon(S.courant, Z.avec); if (!tB || !Tampon.partsRelatif || !S.profil) return;
+  const M = Tampon.partsRelatif(tB, S.profil, Tampon.referenceDe(Z.avec, S.courant, S.gen0)).M, tot = Object.values(M).reduce((a, x) => a + Math.max(0, x), 0);
+  const a = tot > 0 ? tirer(Object.entries(M).filter(([, p]) => p > 0), Math.random() * tot) : '';
+  const porte = new Set(b.traits || []); for (const id of a ? a.split('+') : []) if (Math.random() < .5) porte.add(id);
+  b.traits = Tampon.exprimer([...porte], cat);
+}
+const nomTaxon = id => { try { if (typeof specById !== 'undefined' && specById[id]?.n) return specById[id].n; } catch (e) { } return taxon(S.courant, id)?.nom || id; };
 // === l'hérédité (§213, docs/9) : un petit né d'une mère connue lui ressemble ===
 // Chaque trait se tire sachant ce que montre la mère, le père pris au hasard dans la population (Hardy-Weinberg ; la
 // dominance est au catalogue). Une mère dorée (récessif) n'a de petits dorés que si le père porte l'allèle ; une mère
@@ -314,14 +421,18 @@ function tirerQuant(b, mere) {
 // ce que le panneau de la bête désignée en dit : une bête hors du commun parmi les siennes (une compagne : pour son
 // espèce) ; une population de l'île qui a changé depuis la génération 0
 function quantMots(b) {
-  const L = [], s = b && b.qs; if (!s) return L;
+  const L = b && b.hybride ? ['hybride, père ' + nomTaxon(b.hybride).toLowerCase()] : [], s = b && b.qs;
+  if (b && b.mef && !b.tame) { if (b.mef.m >= .3) L.push(b.mef.m >= .6 ? 'fuit les chasseurs : on la chasse ici' : 'se méfie des chasseurs'); else if (b.mef.h >= .3) L.push('habituée aux passants'); }   // (§216)
+  if (!s) return L;
   const Q = loiQ(b.sp);
   for (const [k, v] of Object.entries(s)) { const J = Corr.QUANT_JEU?.[k], ref = b.tame ? 0 : Q?.[k]?.d ?? 0; if (J && Math.abs(v - ref) >= 1.3) L.push(v > ref ? J.haut : J.bas); }
   if (Q && !b.tame) for (const k of S.profil?.exposition?.quantitatifs?.rendus || []) { const J = Corr.QUANT_JEU?.[k], d = Q[k]?.d; if (J && Math.abs(d) >= .6 && L.length < 3) L.push(J.ici[d > 0 ? 0 : 1]); }
   return L.slice(0, 3);
 }
 // les conduites d'un phénotype connu (une compagne qu'on recharge)
-function conduitesPour(sp, traits) { return Corr.conduitesDe(traits || [], S.courant?.catalogue?.traits || {}, sp?.orvane?.locomotion); }
+function conduitesPour(sp, traits) { return Corr.conduitesDe(traits || [], S.courant?.catalogue?.traits || {}, sp?.orvane?.locomotion, organesDe(sp), S.courant?.catalogue?.organes); }
+// les organes d'une lignée (une espèce du jeu garde ses conduites à elle : seules les lignées nées dans Orvane en tirent des siens)
+const organesDe = sp => sp?.orvane?.corps && Corps?.normaliser ? Corps.normaliser(sp.orvane.corps).organes : [];
 
 // === jeu → Orvane : les pressions ===
 function phenotypeDe(t, variante) {
@@ -356,23 +467,31 @@ function releverRencontres() {
   for (const b of beasts) { if (b.tame || b.dead || S.vus.has(b)) continue; if (Math.hypot(b.x - P.x, b.y - P.y) > RAYON_RENCONTRE) continue; S.vus.add(b); if (noter('rencontre', b, null)) n++; }
   if (n) ecrire();
 }
-function orvaneLot() {
-  const ev = []; for (const [cle, n] of Object.entries(S.lot)) { const [taxon, phenotype, biome, action, vers] = cle.split('|'); const e = { taxon, biome, action, n }; if (phenotype) e.phenotype = phenotype; if (vers) e.vers = vers;
+function orvaneLot(cles) {
+  const ev = []; for (const cle of cles || Object.keys(S.lot)) { const n = S.lot[cle]; if (!n) continue; const [taxon, phenotype, biome, action, vers] = cle.split('|'); const e = { taxon, biome, action, n }; if (phenotype) e.phenotype = phenotype; if (vers) e.vers = vers;
     const A = S.lotQ[cle]; if (A && A.n > 0) { e.q = {}; for (const [k, s] of Object.entries(A.s)) e.q[k] = r2(s / A.n); }
     ev.push(e); }
   if (!ev.length) return null;
   let zone; try { zone = typeof SEED !== 'undefined' ? 'ile:' + SEED : undefined; } catch (e) { }
-  return { orvane: S.courant?.orvane || '0.1', monde: S.courant?.monde?.id || 'sv-1', instantane: S.courant?.cycle?.n ?? 0,
-    source: { jeu: 'stone-valley', compte: S.compte || 'anonyme', zone }, periode: { debut: S.depuis || new Date().toISOString(), fin: new Date().toISOString() }, evenements: ev };
+  return { orvane: S.courant?.orvane || '0.1', monde: S.courant?.monde?.id || 'orvane', instantane: S.courant?.cycle?.n ?? 0,
+    source: { jeu: JEU, compte: S.compte || 'anonyme', zone }, periode: { debut: S.depuis || new Date().toISOString(), fin: new Date().toISOString() }, evenements: ev };
 }
-// une fois par demi-heure au plus ; on ne retire du lot que ce qui est parti (le serveur peut refuser : trop de dépôts)
+// le dépôt dans le Supabase d'Orvane : sa clé publique (apikey) et celle du jeu (p_cle) ; le compte y est pseudonymisé
+async function deposer(D, lot) {
+  const r = await fetch(D.url.replace(/\/$/, '') + '/rest/v1/rpc/orvane_deposer', { method: 'POST', headers: { apikey: D.cle, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_cle: D.jeu, p_compte: S.compte || 'anonyme', p_lot: lot }) });
+  if (!r.ok) throw new Error('Orvane ' + r.status); return r.json();
+}
+// une fois par demi-heure au plus ; on ne retire du lot que ce qui est parti (le serveur peut refuser : trop de dépôts), et
+// LOT_MAX événements à la fois (le serveur en prend 500) : le reste part la fois suivante
 async function orvaneEnvoyer(rpc, compte, forcer) {
   if (compte) S.compte = 'h:' + hachage(String(compte));
-  const lot = orvaneLot(); if (!lot || typeof rpc !== 'function' || S.envoi) return false;
+  const D = racine.ORVANE_DEPOT, direct = !!(D && D.url && D.cle && D.jeu);
+  const cles = Object.keys(S.lot).slice(0, LOT_MAX), lot = orvaneLot(cles); if (!lot || (!direct && typeof rpc !== 'function') || S.envoi) return false;
   if (!forcer && Date.now() - S.dernierEnvoi < ENVOI_MIN) return false;
-  const parti = { ...S.lot }, partiQ = JSON.parse(JSON.stringify(S.lotQ)); S.envoi = true;
+  const parti = Object.fromEntries(cles.map(k => [k, S.lot[k]])), partiQ = JSON.parse(JSON.stringify(Object.fromEntries(cles.filter(k => S.lotQ[k]).map(k => [k, S.lotQ[k]])))); S.envoi = true;
   try {
-    const r = await rpc('vp_orvane_pression', { p_lot: lot });
+    const r = direct ? await deposer(D, lot) : await rpc('vp_orvane_pression', { p_lot: lot });
     if (r && r.ok) {
       for (const [k, n] of Object.entries(parti)) { const reste = (S.lot[k] || 0) - n; if (reste > 0) S.lot[k] = reste; else delete S.lot[k]; }
       for (const [k, A] of Object.entries(partiQ)) { const C = S.lotQ[k]; if (!C) continue; C.n -= A.n;
@@ -389,7 +508,7 @@ const hachage = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (Mat
 // --- mise en place ---
 racine.orvaneEspeces = orvaneEspeces; racine.orvaneAppliquer = orvaneAppliquer; racine.orvaneVariante = orvaneVariante; racine.orvaneEvenement = orvaneEvenement;
 racine.orvaneLot = orvaneLot; racine.orvaneEnvoyer = orvaneEnvoyer; racine.orvaneNaissance = orvaneNaissance;
-racine.OrvaneSV = { S, conduitesPour, loiQ, tirerQuant, quantMots, heriter, charger, avancement, effectifSur, biomesIle, releverRencontres, inscrireLignees, definir, enregistrer, especeDeSecours, ancetreJeu, nomJeu, CAUSES_JOUEUR, SEUIL_CORPS };
+racine.OrvaneSV = { S, conduitesPour, loiQ, tirerQuant, quantMots, apprisDe, apprisFuite, heriter, zoneHybride, hybrider, charger, avancement, effectifSur, biomesIle, releverRencontres, inscrireLignees, definir, enregistrer, especeDeSecours, ancetreJeu, nomJeu, CAUSES_JOUEUR, SEUIL_CORPS };
 lire();
 if (typeof window !== 'undefined' && typeof fetch === 'function') { charger(); setInterval(releverRencontres, PERIODE_RENCONTRE); }
 })(globalThis);

@@ -6,7 +6,7 @@ Trois objets suffisent à brancher un jeu. Orvane ne connaît aucun jeu ; le jeu
 | --- | --- | --- | --- |
 | **instantané** | Orvane → jeu | le moteur, une fois par cycle | `instantane.schema.json` |
 | **pression** | jeu → Orvane | le traducteur, par lot (à la sauvegarde, à la déconnexion…) | `pression.schema.json` |
-| **profil** | réglage du tampon | l'auteur du jeu, une fois | `profil.schema.json` |
+| **profil** | réglage du tampon | Orvane, un par monde (l'influence) ; l'auteur du jeu, une fois (son exposition, par `orvane_regler_jeu`) | `profil.schema.json` |
 
 ## Ce que le jeu lit dans un instantané
 
@@ -26,6 +26,6 @@ Des comptes bruts, jamais interprétés : rencontres, prélèvements, captures, 
 
 ## Le profil
 
-Un monde par jeu. Le profil règle l'**exposition** (compression des fréquences, propagation étalée, inertie, traits que le jeu sait rendre, seuil sous lequel le jeu cesse de faire apparaître un taxon) et l'**influence** (poids des actions, plafonds, mémoire).
+Le profil d'un monde règle l'**influence** (comment les lots de tous les jeux pèsent) ; l'**exposition**, elle, est propre à chaque jeu (envoyée par `orvane_regler_jeu`, publiée dans `jeux.json`) et suit le même schéma (`profil.schema.json`, `exposition`). Un profil de monde fait pour un seul jeu (sv-1) porte encore la sienne. L'exposition, ce sont la compression des fréquences, la propagation étalée, l'inertie, les traits que le jeu sait rendre, le seuil sous lequel le jeu cesse de faire apparaître un taxon ; l'influence, les poids des actions, les plafonds, la mémoire.
 
 Les exemples de `exemples/` décrivent le crapaud buffle de Stone Valley : 20 % de cracheurs dans Orvane, exposés à 2 % dans le jeu, une population de marais en déclin sous la chasse, et une lignée de ruisseau qui vient de s'en séparer.

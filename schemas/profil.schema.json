@@ -1,14 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://orvane/schemas/profil.schema.json",
-  "title": "Orvane — profil d'un jeu (réglage du tampon)",
-  "description": "Un fichier par jeu, donc par monde. Il règle le tampon dans les deux sens : comment Orvane est exposé au jeu, et comment les actes des joueurs pèsent sur Orvane. Rien ici ne touche à la biologie elle-même.",
+  "title": "Orvane — profil d'un monde (réglage du tampon)",
+  "description": "Un fichier par monde. Il règle le tampon dans le sens jeu → Orvane : comment les actes des joueurs de tous les jeux branchés pèsent sur le monde. Ce que chaque jeu montre du monde (exposition) est réglé par le jeu lui-même dans le Supabase d'Orvane (orvane_regler_jeu, hebergement/LISEZ-MOI.md) et publié dans jeux.json ; l'exposition d'un profil de monde ne sert plus qu'aux lots sans jeu (et aux mondes d'avant, comme sv-1). Rien ici ne touche à la biologie elle-même.",
   "type": "object",
   "required": [
     "orvane",
-    "jeu",
     "monde",
-    "exposition",
     "influence"
   ],
   "additionalProperties": false,
@@ -17,7 +15,8 @@
       "type": "string"
     },
     "jeu": {
-      "type": "string"
+      "type": "string",
+      "description": "Le jeu pour lequel le monde a été fait (mondes d'avant, comme sv-1). Un monde universel n'en a pas."
     },
     "monde": {
       "type": "object",
@@ -68,7 +67,7 @@
         },
         "pressions": {
           "type": "object",
-          "description": "Où l'action nocturne lit les lots de pressions de ce monde : le projet Supabase du jeu (url), sa clé PUBLIQUE (cle), la fonction de lecture (orvane_lire_lots) et le NOM de la variable d'environnement qui porte le secret de lecture d'Orvane. Le secret lui-même n'est jamais dans le profil.",
+          "description": "Où l'action nocturne lit les lots de pressions de ce monde : le Supabase d'Orvane (url), sa clé PUBLIQUE (cle), la fonction de lecture des lots (orvane_lire_lots), celle des jeux (jeux : orvane_lire_jeux) et le NOM de la variable d'environnement qui porte le secret de lecture d'Orvane. Le secret lui-même n'est jamais dans le profil.",
           "properties": {
             "url": {
               "type": "string"
@@ -81,6 +80,10 @@
             },
             "secret": {
               "type": "string"
+            },
+            "jeux": {
+              "type": "string",
+              "description": "La fonction qui liste les jeux et leur exposition (orvane_lire_jeux). Sans elle, les lots sont lus avec l'exposition du profil."
             }
           },
           "required": [
@@ -93,7 +96,7 @@
     },
     "exposition": {
       "type": "object",
-      "description": "Sens Orvane → jeu.",
+      "description": "Sens Orvane → jeu. Le même objet est l'exposition d'un jeu, envoyée par orvane_regler_jeu.",
       "required": [
         "compression",
         "propagation_cycles"
@@ -224,6 +227,36 @@
               "description": "Part de la variation individuelle montrée. 0 : toutes les bêtes d’une population ont l’allure de sa moyenne (seul l’écart depuis la génération 0 se voit ; le jour un ne change rien). 1 : toute la variation naturelle."
             }
           }
+        },
+        "mefiance": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "La méfiance et l'habituation (docs/12) : comment le jeu rend ce qu'une population a appris des joueurs. La distance de fuite est multipliée par fuite^méfiance × habitude^habituation.",
+          "properties": {
+            "rendue": {
+              "type": "boolean",
+              "description": "false : le jeu ne le montre pas (Orvane le tient quand même)."
+            },
+            "fuite": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 5,
+              "description": "Le facteur de la distance de fuite à méfiance 1 (2,2 par défaut)."
+            },
+            "habitude": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 1,
+              "description": "Le facteur à habituation 1 (0,5 par défaut)."
+            }
+          }
+        },
+        "bestiaire": {
+          "enum": [
+            "jeu",
+            "orvane"
+          ],
+          "description": "Qui peuple les îles : « jeu » (par défaut) — la faune du jeu, suivie par Orvane, et les lignées qui en descendent ; « orvane » — la faune du jeu qu'Orvane ne simule pas dans ce monde (un monde né de la genèse) cède sa place aux lignées du monde, régime par régime, autant de bêtes qu'avant (traducteur de Stone Valley, §217)."
         }
       }
     },
@@ -275,6 +308,12 @@
               "minimum": 0,
               "maximum": 1,
               "description": "Part maximale d'une population qu'un cycle de pressions peut retirer (empêche une extinction en un cycle)."
+            },
+            "part_max_jeu": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Part maximale de la pression totale d'un taxon venant d'un seul jeu, quand plusieurs jeux en montrent le taxon (comptée avant ce plafond, comme part_max_compte) : un jeu de mille joueurs ne fait pas seul l'histoire d'une espèce."
             }
           }
         },

@@ -6,12 +6,13 @@
 //                                   « relatif » : les taux propres du jeu, multipliés par l'écart depuis la génération 0
 //                                   (ref) — le jour un, rien ne change. (Le lissage entre deux instantanés est du côté du
 //                                   traducteur : il interpole ce que lui renvoie exposer() sur propagation_cycles.)
-//  - agreger(lots, inst, profil, etat) : jeu → Orvane. Des lots de pressions bruts (schemas/pression.schema.json)
-//                                   deviennent les pressions du moteur :
+//  - agreger(lots, inst, profil, etat, gen0, jeux) : jeu → Orvane. Des lots de pressions bruts (schemas/pression.schema.json),
+//                                   venus de tous les jeux branchés sur le monde, deviennent les pressions du moteur. Chaque lot
+//                                   est lu avec l'exposition de SON jeu (jeux : { id: { exposition } }, hebergement/LISEZ-MOI.md) :
 //      1. rapporter l'activité d'un compte à une activité normale (exposition_ref rencontres par cycle) ;
 //      2. dénormaliser : les prélèvements par phénotype sont redistribués selon les fréquences RÉELLES, à taux
 //         par tête constant (une variante montrée à 2 % mais réelle à 20 % voit ses pertes ×10) ;
-//      3. plafonner : par compte, part maximale d'un seul compte, part maximale d'une population ;
+//      3. plafonner : par compte, part maximale d'un seul compte, d'un seul jeu, part maximale d'une population ;
 //      4. lisser sur memoire_cycles (moyenne mobile exponentielle, gardée dans « etat »).
 //      Les traits continus (docs/8) : le z moyen des bêtes retirées (événements « q »), pondéré et lissé de même.
 //  - quantDe(taxon, biomes, ref) : Orvane → jeu, la loi d'où tirer chaque bête pour les traits continus.
@@ -144,24 +145,41 @@ function exprimer(porte, cat) {
   return garde.sort();
 }
 
-// jeu → Orvane (gen0 : la génération 0 du monde, pour le mode relatif)
-function agreger(lots, inst, profil, etat = {}, gen0 = null) {
-  const relatif = profil.exposition.mode === 'relatif';
+// le régime de fait d'une lignée : celui de son plan, sauf si la moitié d'elle au moins porte un trait qui en impose un autre
+// (estomac-large : un carnivore qui digère aussi les plantes est un omnivore). C'est lui que les jeux montrent.
+function regimeDe(t, cat) {
+  const c = {}; for (const p of t?.phenotypes || []) for (const id of p.traits || []) c[id] = (c[id] || 0) + (p.frequence || 0);
+  let r = t?.plan?.regime; for (const [id, f] of Object.entries(c)) if (f >= .5 && cat?.[id]?.fixe?.regime) r = cat[id].fixe.regime; return r;
+}
+// Chaque jeu montre le monde à sa façon : le tampon lit ses lots avec SON exposition (orvane_regler_jeu, hebergement/LISEZ-MOI.md). Un lot
+// sans jeu connu prend celle du profil du monde, sinon l'exposition neutre : tout est montré tel quel, rien n'est redressé.
+const NEUTRE = { mode: 'compression', compression: { defaut: 1 }, propagation_cycles: 1 };
+function vueJeu(profil, jeux, jeu) {
+  const X = jeux?.[jeu]?.exposition, E = X && Object.keys(X).length ? X : profil.exposition || NEUTRE;
+  return { ...profil, exposition: E.mode === 'relatif' || E.compression ? E : { ...E, compression: NEUTRE.compression } };
+}
+// jeu → Orvane (gen0 : la génération 0 du monde, pour le mode relatif ; jeux : l'exposition de chaque jeu)
+function agreger(lots, inst, profil, etat = {}, gen0 = null, jeux = null) {
   const I = profil.influence, poids = I.poids || {}, cat = inst.catalogue?.traits || {};
   const taxons = Object.fromEntries(inst.taxons.map(t => [t.id, t]));
-  const parCompte = {};        // compte → taxon → biome → { retrait: {pheno|'*': n}, deplacement: [], rencontres }
+  const parCompte = {}, jeuDe = {}, vues = {};   // jeuDe : compte → son jeu ; vues : jeu → le profil vu par ce jeu
+  // parCompte : compte → taxon → biome → { retrait: {pheno|'*': n}, deplacement: [], rencontres, danger, aide }
   const Q = {};                // taxon → biome → trait → { s: Σ poids × z, w: Σ poids } : la valeur des bêtes retirées
   const biomes = {};           // biome → { habitat }
   let nombre = 0;
   for (const lot of lots) {
-    if (lot.monde !== inst.monde.id) continue;
-    const C = parCompte[lot.source.compte] ??= {};
+    if (lot.monde !== inst.monde.id || lot.source?.compte == null) continue;
+    const C = parCompte[lot.source.compte] ??= {}; jeuDe[lot.source.compte] ??= lot.jeu ?? lot.source.jeu ?? null;
     for (const e of lot.evenements) {
       nombre++;
       if (e.action === 'habitat_perdu' || e.action === 'habitat_gagne') { (biomes[e.biome] ??= { habitat: 0 }).habitat += e.n * (poids[e.action] ?? (e.action === 'habitat_perdu' ? 5 : -5)) * -1; continue; }
       if (!taxons[e.taxon]) continue;
-      const T = (C[e.taxon] ??= {})[e.biome] ??= { retrait: {}, brut: {}, deplacement: [], rencontres: 0 };
+      const T = (C[e.taxon] ??= {})[e.biome] ??= { retrait: {}, brut: {}, deplacement: [], rencontres: 0, danger: 0, aide: 0 };
       if (e.action === 'rencontre') { T.rencontres += e.n; continue; }
+      // ce que les bêtes vivent des joueurs (docs/12) : une mort ou une capture finit mal (la capture moitié moins : la bête
+      // est emmenée, pas tuée sous les yeux des autres) ; nourrir, relâcher, aide
+      if (e.action === 'prelevement') T.danger += e.n; else if (e.action === 'capture') T.danger += .5 * e.n;
+      else if (e.action === 'nourrissage' || e.action === 'liberation') T.aide += e.n;
       if (e.action === 'deplacement') { T.deplacement.push({ vers: e.vers, n: e.n * (poids.deplacement ?? 1) }); continue; }
       const w = poids[e.action]; if (w == null || !w) continue;
       const k = e.phenotype || '*'; T.brut[k] = (T.brut[k] || 0) + e.n * w * (e.age === 'adulte' ? 1.2 : e.age === 'jeune' ? .8 : 1);
@@ -171,18 +189,19 @@ function agreger(lots, inst, profil, etat = {}, gen0 = null) {
   }
   // par compte : activité, dénormalisation, plafond par compte
   for (const [compte, C] of Object.entries(parCompte)) for (const [tid, Bs] of Object.entries(C)) {
-    const t = taxons[tid]; let totalCompte = 0;
+    const t = taxons[tid], P = vues[jeuDe[compte]] ??= vueJeu(profil, jeux, jeuDe[compte]), relatif = P.exposition.mode === 'relatif'; let totalCompte = 0;
     for (const [bid, T] of Object.entries(Bs)) {
       const act = I.exposition_ref && T.rencontres > I.exposition_ref ? I.exposition_ref / T.rencontres : 1;
       const brut = T.brut, parPheno = Object.keys(brut).filter(k => k !== '*');
       if (I.denormaliser !== false && parPheno.length) {
-        const expo = relatif ? exposer(t, profil, cat, null, referenceDe(tid, inst, gen0)) : exposer(t, profil, cat, bid), total = parPheno.reduce((a, k) => a + brut[k], 0), L = I.pseudo_comptes ?? 20;
+        const expo = relatif ? exposer(t, P, cat, null, referenceDe(tid, inst, gen0)) : exposer(t, P, cat, bid), total = parPheno.reduce((a, k) => a + brut[k], 0), L = I.pseudo_comptes ?? 20;
         const w = {}; let z = 0;                       // taux par tête observé (lissé par L prélèvements fictifs) × fréquence réelle
         for (const p of t.phenotypes) { const fr = (relatif ? null : p.frequence_par_biome?.[bid]) ?? p.frequence, ex = expo[p.id] || 0;
           const taux = ex > 0 ? ((brut[p.id] || 0) + L * ex) / (ex * (total + L)) : (brut[p.id] ? 1 : 0); w[p.id] = taux * fr; z += w[p.id]; }
         for (const p of t.phenotypes) if (z > 0 && w[p.id]) T.retrait[p.id] = total * w[p.id] / z * act;
       } else for (const k of parPheno) T.retrait[k] = brut[k] * act;
       if (brut['*']) T.retrait['*'] = brut['*'] * act;
+      T.contact = { rencontres: T.rencontres * act, danger: T.danger * act, aide: T.aide * act };   // un compte qui court partout ne pèse pas plus qu'un autre
       totalCompte += Object.values(T.retrait).reduce((a, x) => a + Math.max(0, x), 0);
     }
     const cap = I.plafonds.par_compte_cycle;
@@ -194,10 +213,17 @@ function agreger(lots, inst, profil, etat = {}, gen0 = null) {
     const contrib = Object.entries(parCompte).filter(([, C]) => C[tid]).map(([c, C]) => [c, Object.values(C[tid]).reduce((a, T) => a + Object.values(T.retrait).reduce((x, y) => x + Math.max(0, y), 0), 0)]);
     const total = contrib.reduce((a, [, v]) => a + v, 0), part = I.plafonds.part_max_compte, fact = {};
     for (const [c, v] of contrib) fact[c] = part != null && contrib.length > 1 && v > part * total ? part * total / v : 1;
+    // la part maximale d'un seul jeu : un jeu de mille joueurs ne fait pas seul l'histoire d'une espèce que d'autres jeux montrent
+    const pj = I.plafonds.part_max_jeu, parJeu = {};
+    if (pj != null) { for (const [c, v] of contrib) parJeu[jeuDe[c]] = (parJeu[jeuDe[c]] || 0) + v * fact[c];
+      const tj = Object.values(parJeu).reduce((a, x) => a + x, 0);
+      if (Object.keys(parJeu).length > 1) for (const [c] of contrib) { const vj = parJeu[jeuDe[c]]; if (vj > pj * tj) fact[c] *= pj * tj / vj; } }
     for (const [c, C] of Object.entries(parCompte)) if (C[tid]) for (const [bid, T] of Object.entries(C[tid])) {
       const O = (out[tid] ??= {})[bid] ??= { retrait: {}, deplacement: [] };
       for (const k in T.retrait) O.retrait[k] = (O.retrait[k] || 0) + T.retrait[k] * (T.retrait[k] > 0 ? fact[c] : 1);
       O.deplacement.push(...T.deplacement);
+      if (T.contact && (T.contact.rencontres || T.contact.danger || T.contact.aide)) { const K = O.contact ??= { rencontres: 0, danger: 0, aide: 0 };
+        for (const k in K) K[k] = +(K[k] + T.contact[k]).toFixed(2); }
     }
   }
   // part maximale d'une population retirée en un cycle
@@ -230,6 +256,6 @@ function agreger(lots, inst, profil, etat = {}, gen0 = null) {
   return { pressions: { taxons: out, biomes, nombre }, etat: { lisse, lisseQ } };
 }
 
-const API = { exposer, exposerRelatif, partsRelatif, nonRendus, referenceDe, signature, quantDe, sachantMere, exprimer, agreger, compression };
+const API = { regimeDe, vueJeu, NEUTRE, exposer, exposerRelatif, partsRelatif, nonRendus, referenceDe, signature, quantDe, sachantMere, exprimer, agreger, compression };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else racine.OrvaneTampon = API;
 })(globalThis);

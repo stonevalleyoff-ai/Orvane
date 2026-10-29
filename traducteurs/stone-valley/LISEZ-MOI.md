@@ -3,14 +3,15 @@
 L'exemple de bout en bout : comment un jeu existant se branche sur Orvane sans qu'Orvane sache rien de lui.
 
 ```
-correspondance.js          ce que le traducteur sait du jeu : biomes ↔ axes, taxon ↔ espèce, trait ↔ variante,
-                           silhouette de chaque espèce (corpsDe), gabarits pour une lignée sans ancêtre
+correspondance.js          ce que le traducteur sait du jeu : biomes ↔ axes (et ↔ biomes du monde d'Orvane), taxon ↔ espèce,
+                           trait ↔ variante, silhouette de chaque espèce (corpsDe), gabarits pour une lignée sans ancêtre,
+                           ce que le jeu sait montrer (EXPOSITION)
 orvane-sv.js               le traducteur : les fonctions que le jeu appelle si elles existent
-profil.json                le réglage du tampon pour ce jeu (monde sv-1, mode relatif)
+profil.json                le réglage du tampon du monde sv-1 (archivé), mode relatif
 generer-generation-0.js    amorce un monde Orvane depuis le bestiaire du jeu (lit index.html)
 generation-0.json          l'amorce : 30 taxons, 16 biomes, ~100 000 individus (le monde publié en part après rodage)
 banc.js                    le banc d'essai : le traducteur dans un bac à sable qui imite le jeu
-supabase.sql               la table et la fonction qui reçoivent les lots de pressions
+supabase.sql               la table et la fonction qui recevaient les lots de pressions de sv-1, dans le Supabase du jeu
 ```
 
 Le jeu charge aussi `moteur/corps.js` (copié en `orvane/corps.js`) et `tampon/tampon.js`. Le corps construit d'une lignée est dessiné par le jeu lui-même (`lignees.js` dans Stone Valley) : c'est du rendu, pas de la traduction.
@@ -34,6 +35,14 @@ Les fiches des lignées sont gardées en mémoire locale : une compagne liée ga
 
 **L'hérédité (§213 du jeu, docs/9).** Une bête née d'une mère connue (`orvaneNaissance(b, mere)`) tire sa robe, sa forme (les mêmes cornes que sa mère), ses conduites et ses traits continus sachant ceux de la mère (`Tampon.sachantMere`, `Tampon.exprimer`, la dominance au catalogue). Sur toutes les mères, les taux ne bougent pas. Le phénotype de la bête est en `b.phen` (`b.ph` est, dans le jeu, la phase de sa foulée).
 
+**Les hybrides (§214 du jeu, docs/10).** Sur une île où la population se croise avec une lignée apparentée (`hybride` dans l'instantané), une part des bêtes naît hybride (`zoneHybride`, `hybrider`) : `b.hybride` nomme la lignée du père, la bête tient de lui la moitié de ses traits non rendus, et le panneau le dit.
+
+**Les organes (§215 du jeu, docs/11).** Une lignée née dans Orvane tire aussi des conduites de ses organes (`plan.corps.organes`, lus dans `catalogue.organes` de l'instantané) : des cornes, des défenses ou une massue la font charger, un aiguillon piquer, des plaques ou des épines encaisser, des pinces mordre. La force suit la taille de l'organe, et le nom du panneau vient de l'organe (« à massue »). `lignees.js` dessine chaque organe à sa place. Une espèce du jeu garde ses conduites à elle.
+
+**La méfiance (§216 du jeu, docs/12).** À la naissance, `apprisFuite(b)` lit la méfiance et l'habituation de la population du biome où naît la bête, et multiplie son facteur de fuite (`b.fq`) par `fuite^méfiance × habitude^habituation` (profil, `exposition.mefiance` ; 2,2 et 0,5 par défaut). Le panneau le dit (« se méfie des chasseurs », « habituée aux passants »). Les rencontres, prélèvements et captures que le jeu envoie déjà suffisent à la nourrir.
+
+**Le bestiaire d'Orvane (§217 du jeu).** Dans un monde né de la genèse (le monde d'Orvane), aucune des trente espèces de la faune du jeu (`Corr.FAUNE`) n'existe. Avec `exposition.bestiaire = 'orvane'` au profil, `orvaneAppliquer` les retire des îles et partage ce qu'elles y auraient eu, comptes et poids, régime par régime, entre les lignées du monde, à proportion de leurs effectifs sur l'île (`bestiaireOrvane`). L'île garde autant de bêtes qu'avant et la même part d'herbivores, d'omnivores et de carnivores. Chaque lignée se conduit comme son gabarit (un herbivore paisible comme le cotonnier, un Doux ; sinon brouteur, glaneur, traqueur) et a son corps construit. Une île où aucune lignée paisible ne peut se montrer garde les Doux du jeu (les premières îles n'ont que des Doux). Les automates, les boss et les villageois ne changent pas. Sans ce réglage, la faune du jeu reste telle quelle.
+
 **Jeu → Orvane.** `orvaneEvenement('prelevement', b, cause)` dans `mourirBete()` : comptent les armes, les sorts, les tours et les **compagnes** du joueur ; pas la faim, pas la cause `proie` (une bête de l'île qui en tue une autre : Orvane simule déjà la prédation). `orvaneEvenement('capture', b)` dans `lier()`, et les rencontres relevées toutes les dix secondes (une bête sauvage à moins de douze pas, comptée une fois). Le biome noté est celui de la bête. Le tout s'accumule en un lot (`orvaneLot()`), gardé en `localStorage`, poussé par `orvaneEnvoyer(rpc, Compte.uid)` après une sauvegarde réussie — **une fois par demi-heure au plus** (le serveur en accepte 48 par jour) ; un refus garde le lot, une panne réessaie dans cinq minutes.
 
 **Un monde refait de zéro.** L'identité d'un monde, c'est son id et sa naissance (`monde.ne`, posée par le premier cycle). Si le monde publié change de naissance, le traducteur repart de sa nouvelle génération 0, même si son numéro de cycle est plus petit.
@@ -42,12 +51,13 @@ Les fiches des lignées sont gardées en mémoire locale : une compagne liée ga
 
 ## Brancher dans index.html
 
-Déposer à côté du jeu : `lignees.js`, `conduites.js` et le dossier `orvane/` (`corps.js`, `tampon.js`, `correspondance.js`, `orvane-sv.js`). Les trois fichiers du monde (`instantane.json` publié chaque nuit, `generation-0.json`, `profil.json`) sont lus depuis le dépôt Orvane (voir `hebergement/`). Puis, dans `index.html` (tous gardés par `typeof … === 'function'`) :
+Déposer à côté du jeu : `lignees.js`, `conduites.js` et le dossier `orvane/` (`corps.js`, `tampon.js`, `correspondance.js`, `orvane-sv.js`). Les fichiers du monde (`instantane.json` publié chaque nuit, `generation-0.json`, `profil.json`, `jeux.json`) sont lus depuis le dépôt Orvane (voir `hebergement/`). Puis, dans `index.html` (tous gardés par `typeof … === 'function'`) :
 
 1. Les scripts, avec les autres (`donjon.js`…) :
    ```html
    <script src="lignees.js"></script><script src="conduites.js"></script>
-   <script>ORVANE_CHEMIN = 'https://<compte>.github.io/orvane/mondes/sv-1/';</script>
+   <script>ORVANE_CHEMIN = 'https://<compte>.github.io/orvane/mondes/orvane/';
+   ORVANE_DEPOT = { url: 'https://<projet>.supabase.co', cle: '<clé publique du projet>', jeu: '<clé du jeu>' };</script>
    <script src="orvane/corps.js"></script><script src="orvane/tampon.js"></script><script src="orvane/correspondance.js"></script><script src="orvane/orvane-sv.js"></script>
    ```
 2. Une fois les fiches posées, après `for (const sp of SPEC) if (automate(sp)) sp.bio.push(15, 16);` : `if (typeof orvaneEspeces === 'function') orvaneEspeces();`
@@ -60,7 +70,9 @@ Déposer à côté du jeu : `lignees.js`, `conduites.js` et le dossier `orvane/`
 9. Les conduites (§211, `conduites.js`) : `orvaneNaissance(b)` après chaque `tirerVariante` d'une naissance ; dans `majBete`, la vue (`conduitesVue`), la conduite qui s'impose avant le choix de l'état (`conduitesBete`), l'allure (`conduitesVit`) ; `conduitesDur` dans `robuste`, `conduitesBlesse` dans `blesseParJoueur`, `conduitesCoup` dans `porterCoup`, `conduitesOs` dans `foeBones`, `orvaneImpact` dans `eclaterSpore`, `orvaneStatuts` dans les statuts, `orvaneCibleDit` dans le panneau de la bête désignée, `orvaneCarnet` dans le carnet, `conduitesPhoto`/`conduitesRelire` dans la sauvegarde.
 10. Les traits continus (§212) : `b.tq` dans `rayonCorps`, `hautCorps` et `echB` ; `b.fq` dans `rayonEveil` (`menaceEtProie`) et `rayonPeurJoueur` ; `b.vq` passe par `conduitesVit` ; les mots par `orvaneCibleDit` ; la taille propre part en coop (`faune.js`, `tq`).
 
-Côté Supabase : exécuter `supabase.sql` — la table `orvane_pressions`, accessible seulement par deux fonctions : `vp_orvane_pression` (le jeu dépose) et `orvane_lire_lots` (Orvane lit, avec son secret de lecture, les comptes pseudonymisés). L'action d'Orvane n'a jamais la clé de service du jeu.
+Côté Supabase : rien dans celui du jeu. Le jeu est inscrit dans le Supabase d'Orvane (`hebergement/supabase.sql`) : sa clé va dans `ORVANE_DEPOT.jeu`, et `orvaneEnvoyer` dépose ses lots par `orvane_deposer` (400 événements à la fois au plus ; le reste part la fois suivante). Sans `ORVANE_DEPOT`, il passe encore par le `rpc` du jeu (`vp_orvane_pression`, la table `orvane_pressions` de `supabase.sql`), comme pour sv-1.
+
+**Le monde d'Orvane.** Le jeu n'y a pas ses biomes : chaque sol du jeu en a un autre là-bas (`BIOMES_SV[k].u` : le rivage est la côte, le bois la forêt, la tourbière le marais, la sylve fongique la jungle, les terres creuses la grotte…). `Corr.choisirCarte` prend, à chaque instantané, la carte qui ressemble au monde (sv-1 garde la sienne). Ce que le jeu montre du monde vient de `jeux.json`, que le monde publie d'après le Supabase d'Orvane, et c'est la même exposition que le tampon utilise pour lire ses lots ; tant que `jeux.json` n'est pas arrivé, `Corr.EXPOSITION` (les deux doivent rester d'accord : la changer ici, c'est la régler là-bas avec `orvane_regler_jeu`).
 
 Sans instantané servi, rien ne change : le jeu reste ce qu'il était. Le premier lancement d'un appareil applique le monde à partir de l'île suivante (l'instantané arrive pendant que la première se peuple).
 
@@ -71,7 +83,7 @@ node generer-generation-0.js <stonevalley>/index.html     # régénère l'amorce
 node banc.js <stonevalley>/index.html                      # le banc : TOUT PASSE attendu
 ```
 
-Le banc charge le traducteur dans un contexte où `SPEC`, `specById`, `POIDS_ESPECE`, `RARES`, `beasts`, `localStorage` et `fetch` sont des doublures, et vérifie : le jour un ne change rien (poids, comptes, taux de variantes) ; après vingt cycles de chasse par dix comptes, poids et caps suivent, les espèces rares ne sont pas rayées ; deux lignées (l'une rendue par son parent, l'autre construite) prennent nom, taille, sols, couleurs et prédateurs ; `specById` résout une lignée inconnue ; les causes comptent comme il faut ; le lot est valide, part une fois par demi-heure, survit à un refus ; il repasse dans le moteur ; un monde refait de zéro est repris ; les conduites sortent à leur fréquence réelle ; et la génétique continue : jour un inchangé, une chasse des plus grands fait rapetisser la population, le jeu le montre, le lot rapporte la taille exacte des bêtes prises ; et la reproduction sexuée : les albinos abattus reviennent par les porteurs cachés, la robe dorée gagne par le choix du partenaire, un petit tient de sa mère sans que les taux bougent.
+Le banc charge le traducteur dans un contexte où `SPEC`, `specById`, `POIDS_ESPECE`, `RARES`, `beasts`, `localStorage` et `fetch` sont des doublures, et vérifie : le jour un ne change rien (poids, comptes, taux de variantes) ; après vingt cycles de chasse par dix comptes, poids et caps suivent, les espèces rares ne sont pas rayées ; deux lignées (l'une rendue par son parent, l'autre construite) prennent nom, taille, sols, couleurs et prédateurs ; `specById` résout une lignée inconnue ; les causes comptent comme il faut ; le lot est valide, part une fois par demi-heure, survit à un refus ; il repasse dans le moteur ; un monde refait de zéro est repris ; les conduites sortent à leur fréquence réelle ; et la génétique continue : jour un inchangé, une chasse des plus grands fait rapetisser la population, le jeu le montre, le lot rapporte la taille exacte des bêtes prises ; et la reproduction sexuée : les albinos abattus reviennent par les porteurs cachés, la robe dorée tient contre son coût par le choix du partenaire, un petit tient de sa mère sans que les taux bougent ; l'isolement reproductif, la zone hybride et l'introgression, et les bêtes hybrides sur l'île ; et les organes : une silhouette d'avant se lit en organes, un organe neuf reste rare, l'instantané porte leur catalogue, le jeu en tire des conduites à la force de leur taille, et chaque organe se dessine sur chaque forme de corps ; et la méfiance : rien le jour un, cinq soirs de chasse la font monter et elle retombe de moitié en six cycles, des rencontres sans suite habituent, l'audace tempère, le tampon compte les contacts, et sur l'île la distance de fuite suit ; et le bestiaire d'Orvane : sur un monde de genèse, la faune du jeu s'efface et les lignées prennent sa place, autant de bêtes, régime par régime.
 
 ## Ce que l'exemple apprend
 

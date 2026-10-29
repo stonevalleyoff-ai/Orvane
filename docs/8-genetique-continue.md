@@ -38,7 +38,7 @@ L'échelle de temps vient d'elle-même : la part de nouveau-nés du cycle. Une b
 
 Et en retour, les moyennes pèsent sur l'écologie : une population plus audacieuse fait plus de petits et se fait plus manger ; une population qui s'est rapprochée de son optimum fait un peu plus de petits (l'adaptation rachète une part de ce que coûte un biome loin de la niche). **Le jour un, tous ces facteurs valent exactement 1** : un monde sans traits continus et le même monde avec donnent les mêmes effectifs au premier cycle.
 
-Ordres de grandeur (banc : `traducteurs/stone-valley/banc.js`, section 7) : sans pression particulière, une moyenne bouge de quelques centièmes d'écart-type en trente cycles. Dix joueurs qui prennent chacun huit des plus grands brouteurs d'une prairie par cycle font baisser sa taille de 0,4 écart-type en trente cycles (2 % de longueur) ; prélever 8 % de la population à chaque cycle, de 1,7 écart-type en quarante ; arrêter la chasse ne la fait remonter que lentement (des centaines de cycles) — comme les poissons pêchés trop gros.
+Ordres de grandeur (banc : `traducteurs/stone-valley/banc.js`, section 7) : sans pression particulière, une moyenne bouge de quelques centièmes d'écart-type en trente cycles. Dix joueurs qui prennent chacun huit des plus grands brouteurs d'une prairie par cycle font baisser sa taille d'un tiers d'écart-type en trente cycles (1,7 % de longueur ; banc de stabilité : la réponse suit h² × S à quelques pour cent près, docs/13) ; prélever 8 % de la population à chaque cycle, de 1,7 écart-type en quarante ; arrêter la chasse ne la fait remonter que lentement (des centaines de cycles) — comme les poissons pêchés trop gros.
 
 ## Côté jeu : une valeur par bête
 

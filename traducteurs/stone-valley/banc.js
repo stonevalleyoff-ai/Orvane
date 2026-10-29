@@ -10,7 +10,8 @@
 // 5. un monde refait de zéro (même id, autre naissance) : le traducteur repart de sa nouvelle génération 0 ;
 // 6. les conduites (§211) : phénotype exact à la naissance, conduites à leur fréquence réelle, robes au taux du jeu ;
 // 7. la génétique continue (§212) : jour un inchangé, chasse des grands → la population rapetisse, le jeu le montre, le lot le rapporte ;
-// 8. la reproduction sexuée (§213) : réservoir récessif, choix du partenaire, un petit tient de sa mère sans changer les taux.
+// 8. la reproduction sexuée (§213) : réservoir récessif, choix du partenaire, un petit tient de sa mère sans changer les taux ;
+// 9. l'isolement et les hybrides (§214) : isolement reproductif, écart génétique, zone hybride et introgression, hybrides dans le jeu.
 'use strict';
 const fs = require('fs'), vm = require('vm'), path = require('path');
 if (!process.argv[2]) { console.error('usage : node banc.js <chemin/vers/stonevalley/index.html>'); process.exit(2); }
@@ -21,6 +22,7 @@ const lireJ = f => JSON.parse(fs.readFileSync(f, 'utf8'));
 const gen0 = fs.existsSync(racine('mondes/sv-1/generation-0.json')) ? lireJ(racine('mondes/sv-1/generation-0.json')) : lireJ(ici('generation-0.json'));
 const profil = lireJ(ici('profil.json'));
 let ok = true; const verif = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if (!cond) ok = false; };
+const pct = v => v == null ? '?' : (v * 100).toFixed(2).replace('.', ',') + ' %';
 
 // --- le bac à sable : les fiches du jeu, et des doublures pour le reste ---
 const src = fs.readFileSync(process.argv[2], 'utf8');
@@ -237,10 +239,14 @@ const sp = id => SPEC.find(s => s.id === id);
       I = Orvane.cycle(I, k < 15 ? pr : {}); if (k === 14) var fChasse = fr(I, 'brouteur', 'albinisme'); }
     const fApres = fr(I, 'brouteur', 'albinisme');
     verif(fChasse < f0 / 5 && fApres > fChasse * 3, `albinisme récessif : ${(f0 * 100).toFixed(2)} % → ${(fChasse * 100).toFixed(2)} % après 15 cycles d'abattage → ${(fApres * 100).toFixed(2)} % trente cycles plus tard (les porteurs cachés)`);
-    // le choix du partenaire : la robe dorée (attrait 1,6) gagne contre son coût en survie
-    const essai = at => { Orvane.REGLES.sexe.attrait = at; let J = gen0; for (let k = 0; k < 120; k++) J = Orvane.cycle(J, {}); Orvane.REGLES.sexe.attrait = 1; return fr(J, 'crapaud', 'robe-doree'); };
-    const sans = essai(0), avec = essai(1);
-    verif(avec > sans * 1.2, `choix du partenaire : la robe dorée du crapaud, ${(fr(gen0, 'crapaud', 'robe-doree') * 100).toFixed(2)} % → ${(avec * 100).toFixed(2)} % en 120 cycles (${(sans * 100).toFixed(2)} % si les partenaires ne choisissent pas)`);
+    // le choix du partenaire : la robe dorée (attrait 1,6) gagne contre son coût en survie. On la suit dans la population
+    // de la tourbière (430 crapauds), trente cycles, avec et sans choix, sur trois graines : sur cent cycles, la dérive d'une
+    // si petite population l'emporte (une histoire de plus ou de moins, et le résultat s'inverse)
+    const pD = I => I.taxons.find(x => x.id === 'crapaud').populations.find(p => p.biome === 'tourbiere').alleles['robe-doree'];
+    const essai = (at, d) => { Orvane.REGLES.sexe.attrait = at; let J = { ...gen0, monde: { ...gen0.monde, graine: gen0.monde.graine + d } };
+      for (let k = 0; k < 30; k++) J = Orvane.cycle(J, {}); Orvane.REGLES.sexe.attrait = 1; return pD(J); };
+    const paires = [0, 1, 2].map(d => [essai(0, d), essai(1, d)]), p0 = pD(gen0), moy = k => paires.reduce((a, x) => a + x[k], 0) / 3;
+    verif(paires.every(([sans, avec]) => avec > sans * 1.004), `choix du partenaire : à la tourbière, l'allèle de la robe dorée passe de ${pct(p0)} à ${pct(moy(1))} en 30 cycles, ${pct(moy(0))} si les partenaires ne choisissent pas ; plus haut avec le choix sur chacune des trois graines`);
     // dans le jeu : un petit tient de sa mère, et les taux d'ensemble ne bougent pas
     const c8 = bac2({ 'orvane/instantane.json': gen0, 'orvane/generation-0.json': gen0, 'orvane/profil.json': profil });
     await c8.OrvaneSV.charger(); c8.orvaneEspeces(); c8.orvaneAppliquer();
@@ -258,6 +264,173 @@ const sp = id => SPEC.find(s => s.id === id);
     const xs = Mq.map(m => m.q.taille), ys = Pq.map(p => p.q.taille), mx = xs.reduce((s, x) => s + x, 0) / xs.length, my = ys.reduce((s, x) => s + x, 0) / ys.length;
     const pente = xs.reduce((s, x, i) => s + (x - mx) * (ys[i] - my), 0) / xs.reduce((s, x) => s + (x - mx) ** 2, 0), h2 = Lq.taille.g / Lq.taille.v;
     verif(Math.abs(pente - h2 / 2) < .05, `la taille d'un petit suit celle de sa mère : pente ${pente.toFixed(2)} (h²/2 = ${(h2 / 2).toFixed(2)})`);
+  }
+
+  // === 9. l'isolement et les hybrides (§214, docs/10) ===
+  console.log('\n9. l\'isolement et les hybrides');
+  { const T = new Map(gen0.taxons.map(t => [t.id, t])), br = T.get('brouteur'), n0 = gen0.cycle.n;
+    const fille = JSON.parse(JSON.stringify(br)); fille.id = 'brouteur.lande'; fille.nom = 'Brouteur de lande'; fille.parent = 'brouteur'; fille.apparu = n0 - 40;
+    fille.plan = { ...br.plan, masse_kg: br.plan.masse_kg * 1.1, corps: Corps.normaliser({ ...br.plan.corps, long: Math.min(1, br.plan.corps.long + .04) }) };
+    const T2 = new Map([...T, [fille.id, fille]]), iso = n => Orvane.isolement(br, fille, T2, n);
+    verif(Orvane.isolement(br, br, T2, n0) === 0 && Orvane.isolement(br, T.get('traqueur'), T2, n0) === 1 && iso(n0) < iso(n0 + 400) && iso(n0 + 400) < 1,
+      `isolement reproductif : 0 avec soi, 1 avec une espèce sans parenté, ${iso(n0).toFixed(2)} pour une lignée fille de 40 cycles, ${iso(n0 + 400).toFixed(2)} 400 cycles plus tard`);
+    const a = { albinisme: .1, melanisme: .02 };
+    verif(Orvane.divergence(a, null, a, null) === 0 && Orvane.divergence(a, null, { albinisme: .6 }, null) > .1, 'l\'écart génétique est nul entre deux populations identiques, net entre deux qui ont divergé');
+    // une lignée fille retrouve sa mère dans la prairie : zone hybride, et ses gènes passent chez la mère
+    const g = JSON.parse(JSON.stringify(gen0)), pm = g.taxons.find(t => t.id === 'brouteur').populations.find(p => p.biome === 'prairie'), pf = JSON.parse(JSON.stringify(pm));
+    pf.effectif = Math.round(pm.effectif * .6); pf.alleles = Object.fromEntries(Object.entries(pf.alleles || {}).map(([k, v]) => [k, Math.min(.9, v * 6)])); pf.depuis = fille.apparu;
+    g.taxons.push({ ...fille, populations: [pf] });
+    const ecart = I => Orvane.divergence(I.taxons.find(t => t.id === 'brouteur').populations.find(p => p.biome === 'prairie').alleles, null, I.taxons.find(t => t.id === 'brouteur.lande').populations.find(p => p.biome === 'prairie').alleles, null);
+    let Ia = g, Ib = g; for (let k = 0; k < 30; k++) { Ia = Orvane.cycle(Ia, {}); Ib = Orvane.cycle(Ib, {}, { hybride: false }); }
+    const z = Ia.taxons.find(t => t.id === 'brouteur').populations.find(p => p.biome === 'prairie').hybride;
+    verif(z && z.avec === 'brouteur.lande' && z.part > .005 && ecart(Ia) < ecart(Ib), `zone hybride : ${pct(z?.part)} des naissances de la mère ont un père de la lignée fille (isolement ${z?.isolement}) ; écart génétique ${ecart(Ia).toFixed(3)} contre ${ecart(Ib).toFixed(3)} sans croisements`);
+    // dans le jeu : sur l'île, une part des brouteurs naît hybride, et le dit
+    const c9 = bac2({ 'orvane/instantane.json': Ia, 'orvane/generation-0.json': gen0, 'orvane/profil.json': profil });
+    await c9.OrvaneSV.charger(); c9.orvaneEspeces(); c9.orvaneAppliquer();
+    const Z = c9.OrvaneSV.zoneHybride(sp('brouteur')), N = 20000;
+    let h = 0, mot = ''; for (let i = 0; i < N; i++) { const b = { sp: sp('brouteur'), x: 1, y: 1 }; b.variante = c9.orvaneVariante(b.sp, Math.random); c9.orvaneNaissance(b); if (b.hybride) { h++; mot ||= c9.OrvaneSV.quantMots(b)[0]; } }
+    verif(Z && Math.abs(h / N - Z.part) < Math.max(.002, Z.part * .2) && /hybride/.test(mot), `sur une île à prairie, ${pct(h / N)} des brouteurs naissent hybrides (la zone en annonce ${pct(Z?.part)}) ; le panneau dit « ${mot} »`);
+  }
+
+  // === 10. les organes (§215, docs/11) ===
+  console.log('\n10. les organes');
+  { const C = Corps.normaliser({ forme: 'quadrupede', cornes: .5, carapace: .1, crete: .3 });
+    verif(C.organes.length === 2 && C.organes.some(o => o.type === 'cornes' && o.taille === .5 && o.nombre === 2) && C.cornes === .5 && C.carapace === 0,
+      `un corps d'avant se lit en organes : ${C.organes.map(o => o.type + ' ' + o.taille).join(', ')} (la carapace à 0,1 n'en était pas une)`);
+    let g = 11; const R = () => { g = (Math.imul(g, 1664525) + 1013904223) >>> 0; return g / 4294967296; };
+    const nu = Corps.normaliser({ forme: 'quadrupede' }), N = 4000, vus = {}; let neuf = 0;
+    for (let i = 0; i < N; i++) { const d = Corps.deriver(nu, { regime: 'herbivore', locomotion: ['marche'] }, { axes: {}, milieu: 'terre' }, R); if (d.organes.length) { neuf++; for (const o of d.organes) vus[o.type] = (vus[o.type] || 0) + 1; } }
+    const eau = {}; for (let i = 0; i < N; i++) for (const o of Corps.deriver(nu, { regime: 'carnivore', locomotion: ['nage'] }, { axes: {}, milieu: 'aquatique' }, R).organes) eau[o.type] = (eau[o.type] || 0) + 1;
+    const top = O => Object.entries(O).sort((a, b) => b[1] - a[1])[0]?.[0];
+    verif(neuf / N > .03 && neuf / N < .1 && Object.keys(vus).length >= 8 && top(eau) === 'nageoires',
+      `un organe neuf reste rare : ${pct(neuf / N)} des séparations en font naître un, de ${Object.keys(vus).length} types ; dans l'eau, ce sont d'abord des ${top(eau)}`);
+    const M = Corps.normaliser({ forme: 'quadrupede', queue: .6, organes: [{ type: 'massue', taille: .8, forme: 'cloutee' }, { type: 'cornes', taille: .5, nombre: 1, forme: 'droites' }] }), D = Corps.decrire(M);
+    verif(/massue clout/.test(D) && /une corne/.test(D) && Corps.distance(M, M) === 0 && Corps.distance(M, nu) > Corps.distance(Corps.normaliser({ forme: 'quadrupede', queue: .6 }), nu),
+      `« ${D} » ; deux corps qui diffèrent par leurs organes s'écartent`);
+    // l'instantané porte le catalogue des organes ; le jeu y lit leurs conduites, à la force de leur taille
+    const I1 = Orvane.cycle(gen0, {}), K = I1.catalogue.organes;
+    const types = new Set(I1.taxons.flatMap(t => t.plan.corps ? Corps.normaliser(t.plan.corps).organes.map(o => o.type) : []));
+    verif(K && Object.keys(K).length >= 15 && [...types].every(x => K[x]), `l'instantané porte catalogue.organes (${Object.keys(K || {}).length} types) ; tous les organes des lignées y sont`);
+    const c10 = bac2({ 'orvane/instantane.json': I1, 'orvane/generation-0.json': gen0, 'orvane/profil.json': profil });
+    await c10.OrvaneSV.charger(); c10.orvaneEspeces(); c10.orvaneAppliquer();
+    const lignee = (org) => ({ id: 'essai', orvane: { corps: { forme: 'quadrupede', queue: .6, organes: org }, locomotion: ['marche'] } });
+    const cd = c10.OrvaneSV.conduitesPour(lignee([{ type: 'massue', taille: .8 }, { type: 'aiguillon', taille: .5 }, { type: 'plaques', taille: .25 }]), []);
+    const petite = c10.OrvaneSV.conduitesPour(lignee([{ type: 'massue', taille: .35 }]), []).find(x => x.id === 'charge');
+    const ch = cd.find(x => x.id === 'charge'), sansOrganes = SPEC.filter(s => !s.orvane).every(s => !c10.OrvaneSV.conduitesPour(s, []).some(x => x.organe));
+    verif(ch && ch.organe === 'massue' && ch.force > petite.force && cd.some(x => x.id === 'dard' && x.effet === 'venin') && !cd.some(x => x.organe === 'plaques') && sansOrganes,
+      `une massue fait charger (force ${ch?.force}, ${petite?.force} si elle est petite), un aiguillon pique ; des plaques trop petites ne font rien ; une espèce du jeu n'en tire rien`);
+    const I2 = JSON.parse(JSON.stringify(I1)); I2.catalogue.organes.massue.conduite.force = 2; delete I2.catalogue.organes.aiguillon.conduite;
+    const c10b = bac2({ 'orvane/instantane.json': I2, 'orvane/generation-0.json': gen0, 'orvane/profil.json': profil });
+    await c10b.OrvaneSV.charger(); c10b.orvaneEspeces(); c10b.orvaneAppliquer();
+    const cd2 = c10b.OrvaneSV.conduitesPour(lignee([{ type: 'massue', taille: .8 }, { type: 'aiguillon', taille: .5 }]), []);
+    verif(cd2.find(x => x.id === 'charge')?.force > ch.force && !cd2.some(x => x.id === 'dard'), 'le jeu lit les conduites des organes dans l\'instantané : changer le catalogue suffit');
+    // le dessin : chaque organe, à chaque forme de corps, sans valeur perdue
+    const lg = vm.createContext({ t: 3, echB: () => 1, Math, Number, Array, Object, Set, OrvaneCorps: Corps });
+    vm.runInContext(fs.readFileSync(path.join(path.dirname(process.argv[2]), 'lignees.js'), 'utf8'), lg);
+    let faux = 0, boites = 0;
+    for (const forme of Corps.FORMES) {
+      const org = Object.entries(Corps.ORGANES_CAT).map(([type, T], i) => ({ type, taille: .4 + (i % 4) * .15, place: T.places[i % T.places.length], forme: T.formes[i % T.formes.length], nombre: T.nombre[i % 2] }));
+      const spx = { id: 'dessin-' + forme, shell: [150, 120, 90], dark: [90, 70, 50], oeil: [20, 20, 20], orvane: { corps: Corps.normaliser({ forme, organes: org }), traits: [] } };
+      const f = { sp: spx, x: 0, y: 0, etat: 'errer', ph: 1 }; for (let i = 0; i < 3; i++) { lg.t += .1; f.x += .05; for (const o of lg.osOrvane(f)) { boites++; for (const v of [...o.a, ...o.b, o.w, o.h, ...o.c]) if (!Number.isFinite(v)) faux++; } }
+      const fin = (...v) => { if (!v.flat().every(Number.isFinite)) faux++; };
+      lg.dessinOrvane({ disque: fin, ligne: fin, net: fin }, spx);
+    }
+    verif(!faux && boites > 500, `les ${Object.keys(Corps.ORGANES_CAT).length} organes se dessinent sur les ${Corps.FORMES.length} formes de corps (${boites} boîtes, aucune valeur perdue)`);
+  }
+
+  // === 11. la méfiance et l'habituation (§216, docs/12) ===
+  console.log('\n11. la méfiance et l\'habituation');
+  { const I0 = Orvane.cycle(gen0, {}), sans = I0.taxons.every(t => t.populations.every(p => p.mefiance == null && p.habituation == null));
+    verif(sans, 'le jour un : sans contact avec les joueurs, aucune population n\'a rien appris');
+    // la boucle entière : des lots de jeu, le tampon, le moteur
+    const lotDe = (c, R, D) => ({ monde: gen0.monde.id, source: { compte: c }, evenements: [{ taxon: 'crapaud', biome: 'tourbiere', action: 'rencontre', n: R }, ...(D ? [{ taxon: 'crapaud', phenotype: 'base', biome: 'tourbiere', action: 'prelevement', n: D }] : [])] });
+    const popC = I => I.taxons.find(t => t.id === 'crapaud').populations.find(p => p.biome === 'tourbiere');
+    let I = gen0, et = {}, evts = [];
+    for (let k = 0; k < 5; k++) { const r = Tampon.agreger([lotDe('a', 30, 6)], I, profil, et, gen0); et = r.etat; I = Orvane.cycle(I, r.pressions); evts.push(...I.evenements.filter(e => e.type === 'mefiance')); }
+    const mC = popC(I).mefiance || 0;
+    for (let k = 0; k < 6; k++) I = Orvane.cycle(I, {});
+    const mA = popC(I).mefiance || 0;
+    verif(mC > .5 && evts.length === 1 && Math.abs(mA / mC - .5) < .05, `cinq soirs de chasse (6 crapauds pris pour 30 rencontres) : méfiance ${mC.toFixed(2)}, un événement ; six cycles sans joueurs : ${mA.toFixed(2)} (la moitié)`);
+    let J = gen0, et2 = {}; for (let k = 0; k < 8; k++) { const r = Tampon.agreger([lotDe('a', 40, 0)], J, profil, et2, gen0); et2 = r.etat; J = Orvane.cycle(J, r.pressions); }
+    const hJ = popC(J).habituation || 0, r1 = Tampon.agreger([lotDe('a', 20, 4)], J, profil, et2, gen0), J2 = Orvane.cycle(J, r1.pressions);
+    verif(hJ > .5 && !popC(J).mefiance && (popC(J2).habituation || 0) < hJ * .7, `huit soirs de rencontres sans suite : habituation ${hJ.toFixed(2)} ; une chasse la défait (${(popC(J2).habituation || 0).toFixed(2)})`);
+    const [mHardi] = Orvane.apprendre(0, 0, { rencontres: 30, danger: 6 }, 1.5), [mTimide] = Orvane.apprendre(0, 0, { rencontres: 30, danger: 6 }, -1.5);
+    verif(mHardi < mTimide, `la même chasse rend une population audacieuse moins méfiante (${mHardi.toFixed(2)}) qu'une timide (${mTimide.toFixed(2)})`);
+    const r2 = Tampon.agreger([lotDe('a', 30, 6), lotDe('b', 600, 20)], gen0, profil, {}, gen0).pressions.taxons.crapaud.tourbiere.contact;
+    verif(r2.rencontres === 90 && r2.danger === 8, `le tampon compte les contacts ; un compte qui court partout ne pèse pas plus qu'un autre (${r2.rencontres} rencontres, ${r2.danger} contacts qui finissent mal)`);
+    // dans le jeu : une population méfiante fuit de plus loin, une habituée laisse approcher
+    const essai = async (m, h, X) => { const G = JSON.parse(JSON.stringify(gen0)), q = popC(G); if (m) q.mefiance = m; if (h) q.habituation = h;
+      const P2 = X ? { ...profil, exposition: { ...profil.exposition, mefiance: X } } : profil;
+      const c = bac2({ 'orvane/instantane.json': G, 'orvane/generation-0.json': gen0, 'orvane/profil.json': P2 }); await c.OrvaneSV.charger(); c.orvaneEspeces(); c.orvaneAppliquer();
+      const B = Array.from({ length: 3000 }, () => { const x = { sp: sp('crapaud'), x: 3, y: 4 }; x.variante = c.orvaneVariante(x.sp, Math.random); c.orvaneNaissance(x); return x; });
+      return { f: B.reduce((a, x) => a + (x.fq || 1), 0) / B.length, mot: c.OrvaneSV.quantMots(B[0]).join(' · ') }; };
+    const T0 = await essai(0, 0), Tm = await essai(.6, 0), Th = await essai(0, .5), Toff = await essai(.6, 0, { rendue: false });
+    verif(Math.abs(Tm.f / T0.f - 2.2 ** .6) < .03 && Math.abs(Th.f / T0.f - .5 ** .5) < .02 && Math.abs(Toff.f - T0.f) < 1e-9 && /chasseurs/.test(Tm.mot) && /habitu/.test(Th.mot),
+      `sur l'île, méfiance 0,6 : les crapauds fuient de ${(Tm.f / T0.f).toFixed(2)} fois plus loin (« ${Tm.mot} ») ; habituation 0,5 : ${(Th.f / T0.f).toFixed(2)} fois (« ${Th.mot} ») ; le profil peut l'éteindre`);
+  }
+
+  // === 12. le bestiaire d'Orvane (§217) : un monde né de la genèse, sans la faune du jeu ===
+  console.log('\n12. le bestiaire d\'Orvane');
+  { const Gd = racine('mondes/genese-7'), G = lireJ(path.join(Gd, 'instantane.json')), G0 = lireJ(path.join(Gd, 'generation-0.json'));
+    const PG = { ...profil, exposition: { ...profil.exposition, bestiaire: 'orvane' } }, { FAUNE, GROUPE: GR } = require(ici('correspondance.js')), F = Object.keys(FAUNE);
+    const c12 = bac2({ 'orvane/instantane.json': G, 'orvane/generation-0.json': G0, 'orvane/profil.json': PG });
+    await c12.OrvaneSV.charger(); c12.orvaneEspeces(); c12.orvaneAppliquer();
+    const L = SPEC.filter(x => x.orvane && x.cap > 0), faune = SPEC.filter(x => !x.orvane && F.includes(x.id)), autres = SPEC.filter(x => !x.orvane && !F.includes(x.id));
+    const sols = new Set([1, 2, 3, 4, 5, 6, 7, 9]), avant = {};                  // les sols communs, et la tourbière (RaresIle)
+    for (const x of faune) if ((x.bio || []).some(b => sols.has(b))) avant[GR[FAUNE[x.id]]] = (avant[GR[FAUNE[x.id]]] || 0) + CAP0[x.id];
+    // (le régime de fait : dans genese-7, presque tous les carnivores digèrent aussi les plantes, estomac-large ; un groupe sans
+    // trois lignées sur l'île ne peut pas remplir sa part, et l'île a moins de chasseurs : c'est le monde)
+    const apres = {}, nL = {}; for (const x of L) { const g = GR[Tampon.regimeDe(G.taxons.find(t => t.id === x.orvane.taxon), G.catalogue?.traits)]; apres[g] = (apres[g] || 0) + x.cap; nL[g] = (nL[g] || 0) + 1; }
+    const somme = o => Object.values(o).reduce((a, v) => a + v, 0), proche = Object.keys(avant).every(g => ((apres[g] || 0) >= avant[g] * .5 || (nL[g] || 0) < 3) && (apres[g] || 0) <= avant[g] * 2.2 + L.length / 3);
+    const douxL = L.filter(x => x.fam === 'doux');
+    verif(douxL.length > 0, `${douxL.length} lignées paisibles y sont des Doux (gabarit cotonnier) : les premières îles en auront`);
+    verif(faune.every(x => x.cap === 0) && autres.every(x => x.cap === CAP0[x.id]) && L.length >= 10 && proche,
+      `sur une île à tourbière : la faune du jeu s'efface (${faune.length} espèces), les automates et les autres restent ; ${L.length} lignées prennent sa place, ${somme(apres)} bêtes au plus pour ${somme(avant)} (${Object.keys(avant).map(g => `${g} ${apres[g] || 0}/${avant[g]}`).join(', ')})`);
+    const c12b = bac2({ 'orvane/instantane.json': G, 'orvane/generation-0.json': G0, 'orvane/profil.json': profil });
+    await c12b.OrvaneSV.charger(); c12b.orvaneEspeces(); c12b.orvaneAppliquer();
+    verif(SPEC.filter(x => !x.orvane && F.includes(x.id)).every(x => x.cap === CAP0[x.id]), 'sans le réglage, un monde de genèse laisse la faune du jeu telle quelle (comme avant)');
+  }
+
+  // === 13. le monde d'Orvane : un monde pour tous les jeux (hebergement/LISEZ-MOI.md) ===
+  console.log('\n13. le monde d\'Orvane, où tous les jeux se branchent');
+  { const Ud = racine('mondes/orvane'), U = lireJ(path.join(Ud, 'instantane.json')), U0 = lireJ(path.join(Ud, 'generation-0.json')), PU = lireJ(path.join(Ud, 'profil.json'));
+    const { EXPOSITION } = require(ici('correspondance.js'));
+    // le tampon lit chaque lot avec l'exposition de son jeu
+    // (une variante minoritaire, de 2 à 30 % : c'est elle qu'un jeu montre plus rare qu'elle n'est)
+    const rare = x => x.phenotypes.slice(1).find(p => p.frequence > .02 && p.frequence < .3);
+    const t = U.taxons.find(x => !x.eteint && rare(x) && x.phenotypes[0].frequence > .3 && x.populations.some(p => p.effectif > 5000)), V = rare(t);
+    const b = t.populations.reduce((a, p) => p.effectif > a.effectif ? p : a).biome, v = V.id;
+    const lotDe = (jeu, compte, n = 10) => ({ orvane: '0.1', monde: U.monde.id, jeu, instantane: U.cycle.n, source: { compte }, evenements: [{ taxon: t.id, biome: b, action: 'rencontre', n: 40 },
+      { taxon: t.id, biome: b, action: 'prelevement', phenotype: t.phenotypes[0].id, n }, { taxon: t.id, biome: b, action: 'prelevement', phenotype: v, n }] });
+    const jeux = { a: { exposition: { mode: 'compression', compression: { defaut: .1 }, propagation_cycles: 1 } } };
+    const retraitDe = (lots, P = PU) => Tampon.agreger(lots, U, P, {}, U0, jeux).pressions.taxons[t.id]?.[b]?.retrait || {};
+    const A = retraitDe([lotDe('a', 'a:1')]), B = retraitDe([lotDe('b', 'b:1')]), part = R => (R[v] || 0) / ((R[v] || 0) + (R[t.phenotypes[0].id] || 0));
+    verif(Tampon.vueJeu(PU, jeux, 'a').exposition === jeux.a.exposition && Tampon.vueJeu(PU, jeux, 'inconnu').exposition === Tampon.NEUTRE,
+      'chaque jeu a sa vue du monde ; un jeu inconnu (ou un lot sans jeu) est lu tel quel');
+    verif(part(A) > part(B) * 1.5, `les mêmes prises, de deux jeux : la variante (${t.nom}, ${pct(V.frequence)} du taxon) pèse ${pct(part(A))} des pertes venues du jeu qui la montre dix fois moins, ${pct(part(B))} de celui qui montre tout`);
+    // la part maximale d'un seul jeu
+    const PJ = pj => ({ ...PU, influence: { ...PU.influence, memoire_cycles: 1, plafonds: { par_compte_cycle: null, part_max_compte: null, part_max_jeu: pj, part_max_population: null } } });
+    const lots9 = [...Array.from({ length: 9 }, (_, i) => lotDe('a', 'a:' + i)), lotDe('b', 'b:1')], somme = R => Object.values(R).reduce((x, y) => x + y, 0);
+    const libre = somme(retraitDe(lots9, PJ(null))), borne = somme(retraitDe(lots9, PJ(.5))), seulB = somme(retraitDe([lotDe('b', 'b:1')], PJ(.5)));
+    verif(Math.abs((borne - seulB) - .5 * libre) < .02 * libre, `un jeu de neuf joueurs face à un jeu d'un seul : sa part est ramenée de ${pct((libre - seulB) / libre)} à la moitié de la pression d'avant le plafond (part_max_jeu = 0,5)`);
+    // Stone Valley dans le monde d'Orvane : ses sols, son bestiaire, ses dépôts
+    const c13 = bac2({ 'orvane/instantane.json': U, 'orvane/generation-0.json': U0, 'orvane/profil.json': PU });
+    await c13.OrvaneSV.charger(); c13.orvaneEspeces(); c13.orvaneAppliquer();
+    const ile = [...c13.OrvaneSV.biomesIle()], L = SPEC.filter(x => x.orvane && x.cap > 0);
+    verif(ile.includes('marais') && ile.includes('foret') && ile.every(id => U.biomes.some(x => x.id === id)) && c13.OrvaneSV.S.profil.exposition.bestiaire === 'orvane',
+      `les sols de l'île sont des biomes du monde (${ile.join(', ')}) ; sans jeux.json, le jeu montre le monde à sa façon (Corr.EXPOSITION)`);
+    verif(L.length >= 10 && L.some(x => x.fam === 'doux') && SPEC.filter(x => !x.orvane && require(ici('correspondance.js')).FAUNE[x.id]).every(x => x.cap === 0),
+      `la faune du jeu cède sa place à ${L.length} lignées du monde, dont ${L.filter(x => x.fam === 'doux').length} Doux`);
+    const c13b = bac2({ 'orvane/instantane.json': U, 'orvane/generation-0.json': U0, 'orvane/profil.json': PU, 'orvane/jeux.json': [{ id: 'stone-valley', exposition: { ...EXPOSITION, bestiaire: 'jeu' } }] });
+    await c13b.OrvaneSV.charger();
+    verif(c13b.OrvaneSV.S.profil.exposition.bestiaire === 'jeu', 'avec jeux.json, le jeu prend l\'exposition que le tampon utilise');
+    const envois = []; c13.ORVANE_DEPOT = { url: 'https://orvane.exemple', cle: 'sb_publishable_x', jeu: 'orv_essai' };
+    c13.fetch = async (u, o) => { envois.push({ u, corps: JSON.parse(o.body), apikey: o.headers.apikey }); return { ok: true, json: async () => ({ ok: true }) }; };
+    const bete = L[0]; for (let i = 0; i < 450; i++) c13.OrvaneSV.S.lot[[bete.orvane.taxon, '', 'marais', 'rencontre', 'x' + i].join('|')] = 1;
+    const parti = await c13.orvaneEnvoyer(null, 'joueur-1', true), E = envois[0];
+    verif(parti && E && E.u === 'https://orvane.exemple/rest/v1/rpc/orvane_deposer' && E.apikey === 'sb_publishable_x' && E.corps.p_cle === 'orv_essai' && E.corps.p_lot.monde === U.monde.id
+      && E.corps.p_lot.evenements.length === 400 && Object.keys(c13.OrvaneSV.S.lot).length === 50,
+      `le lot part vers le Supabase d'Orvane avec la clé du jeu, 400 événements à la fois (${Object.keys(c13.OrvaneSV.S.lot).length} attendent le suivant)`);
   }
 
   console.log(ok ? '\nTOUT PASSE' : '\nÉCHECS'); process.exit(ok ? 0 : 1);

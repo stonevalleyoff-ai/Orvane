@@ -4,27 +4,35 @@
 (function (racine) {
 'use strict';
 // --- les biomes du jeu (index dans BIOME de index.html) décrits sur les cinq axes d'Orvane ---
+//     id : le biome du monde fait pour le jeu (sv-1) ; u : celui du monde d'Orvane, où tous les jeux se branchent (hebergement/LISEZ-MOI.md)
 //     temperature · humidite · altitude · lumiere · couvert, de 0 à 1 ; food : la richesse du sol, telle que le jeu la donne
 const BIOMES_SV = {
-  1:  { id: 'rivage',    nom: 'Rivage',             milieu: 'amphibie', axes: { temperature: .55, humidite: .6,  altitude: .05, lumiere: .9,  couvert: .1  }, food: .12, voisins: [2] },
-  2:  { id: 'prairie',   nom: 'Prairie',            milieu: 'terrestre', axes: { temperature: .55, humidite: .5,  altitude: .2,  lumiere: .9,  couvert: .3  }, food: 1,   voisins: [1, 3, 4, 9, 23] },
-  3:  { id: 'bois',      nom: 'Bois',               milieu: 'terrestre', axes: { temperature: .5,  humidite: .6,  altitude: .3,  lumiere: .4,  couvert: .9  }, food: .82, voisins: [2, 4, 9, 11, 23] },
-  4:  { id: 'lande',     nom: 'Lande',              milieu: 'terrestre', axes: { temperature: .5,  humidite: .3,  altitude: .4,  lumiere: .8,  couvert: .3  }, food: .38, voisins: [2, 3, 5, 10, 12, 19] },
-  5:  { id: 'falaise',   nom: 'Falaise',            milieu: 'terrestre', axes: { temperature: .45, humidite: .3,  altitude: .7,  lumiere: .8,  couvert: .1  }, food: .05, voisins: [4, 6] },
-  6:  { id: 'pierre',    nom: 'Pierre',             milieu: 'terrestre', axes: { temperature: .4,  humidite: .2,  altitude: .75, lumiere: .8,  couvert: .05 }, food: .08, voisins: [5, 7, 10, 12, 13] },
-  7:  { id: 'neige',     nom: 'Neige',              milieu: 'terrestre', axes: { temperature: .1,  humidite: .4,  altitude: .9,  lumiere: .9,  couvert: .05 }, food: .03, voisins: [6] },
-  9:  { id: 'tourbiere', nom: 'Tourbière',          milieu: 'amphibie', axes: { temperature: .5,  humidite: .95, altitude: .1,  lumiere: .6,  couvert: .5  }, food: .9,  voisins: [2, 3] },
-  10: { id: 'canyon',    nom: 'Canyon d\'ocre',     milieu: 'terrestre', axes: { temperature: .85, humidite: .1,  altitude: .4,  lumiere: 1,   couvert: .1  }, food: .22, voisins: [4, 6] },
-  11: { id: 'sylve',     nom: 'Sylve fongique',     milieu: 'terrestre', axes: { temperature: .55, humidite: .8,  altitude: .3,  lumiere: .2,  couvert: .95 }, food: .55, voisins: [3] },
-  12: { id: 'cristal',   nom: 'Champs de cristal',  milieu: 'terrestre', axes: { temperature: .4,  humidite: .3,  altitude: .6,  lumiere: .9,  couvert: .2  }, food: .12, voisins: [4, 6] },
-  13: { id: 'caldeira',  nom: 'Caldeira de cendre', milieu: 'terrestre', axes: { temperature: .95, humidite: .1,  altitude: .5,  lumiere: .7,  couvert: .05 }, food: .04, voisins: [6, 14] },
-  14: { id: 'braises',   nom: 'Braises',            milieu: 'terrestre', axes: { temperature: 1,   humidite: .05, altitude: .5,  lumiere: .7,  couvert: 0   }, food: .02, voisins: [13] },
-  19: { id: 'ossuaire',  nom: 'Ossuaire',           milieu: 'terrestre', axes: { temperature: .5,  humidite: .3,  altitude: .35, lumiere: .7,  couvert: .1  }, food: .08, voisins: [4, 20] },
-  20: { id: 'terres-creuses', nom: 'Terres creuses', milieu: 'terrestre', axes: { temperature: .4, humidite: .5,  altitude: .2,  lumiere: .2,  couvert: .3  }, food: .15, voisins: [19] },
-  23: { id: 'cerisaie',  nom: 'Cerisaie',           milieu: 'terrestre', axes: { temperature: .6,  humidite: .6,  altitude: .25, lumiere: .85, couvert: .7  }, food: .7,  voisins: [2, 3] },
+  1:  { id: 'rivage', u: 'cote',    nom: 'Rivage',             milieu: 'amphibie', axes: { temperature: .55, humidite: .6,  altitude: .05, lumiere: .9,  couvert: .1  }, food: .12, voisins: [2] },
+  2:  { id: 'prairie', u: 'prairie',   nom: 'Prairie',            milieu: 'terrestre', axes: { temperature: .55, humidite: .5,  altitude: .2,  lumiere: .9,  couvert: .3  }, food: 1,   voisins: [1, 3, 4, 9, 23] },
+  3:  { id: 'bois', u: 'foret',      nom: 'Bois',               milieu: 'terrestre', axes: { temperature: .5,  humidite: .6,  altitude: .3,  lumiere: .4,  couvert: .9  }, food: .82, voisins: [2, 4, 9, 11, 23] },
+  4:  { id: 'lande', u: 'steppe',     nom: 'Lande',              milieu: 'terrestre', axes: { temperature: .5,  humidite: .3,  altitude: .4,  lumiere: .8,  couvert: .3  }, food: .38, voisins: [2, 3, 5, 10, 12, 19] },
+  5:  { id: 'falaise', u: 'montagne',   nom: 'Falaise',            milieu: 'terrestre', axes: { temperature: .45, humidite: .3,  altitude: .7,  lumiere: .8,  couvert: .1  }, food: .05, voisins: [4, 6] },
+  6:  { id: 'pierre', u: 'desert-froid',    nom: 'Pierre',             milieu: 'terrestre', axes: { temperature: .4,  humidite: .2,  altitude: .75, lumiere: .8,  couvert: .05 }, food: .08, voisins: [5, 7, 10, 12, 13] },
+  7:  { id: 'neige', u: 'sommets',     nom: 'Neige',              milieu: 'terrestre', axes: { temperature: .1,  humidite: .4,  altitude: .9,  lumiere: .9,  couvert: .05 }, food: .03, voisins: [6] },
+  9:  { id: 'tourbiere', u: 'marais', nom: 'Tourbière',          milieu: 'amphibie', axes: { temperature: .5,  humidite: .95, altitude: .1,  lumiere: .6,  couvert: .5  }, food: .9,  voisins: [2, 3] },
+  10: { id: 'canyon', u: 'desert',    nom: 'Canyon d\'ocre',     milieu: 'terrestre', axes: { temperature: .85, humidite: .1,  altitude: .4,  lumiere: 1,   couvert: .1  }, food: .22, voisins: [4, 6] },
+  11: { id: 'sylve', u: 'jungle',     nom: 'Sylve fongique',     milieu: 'terrestre', axes: { temperature: .55, humidite: .8,  altitude: .3,  lumiere: .2,  couvert: .95 }, food: .55, voisins: [3] },
+  12: { id: 'cristal', u: 'montagne',   nom: 'Champs de cristal',  milieu: 'terrestre', axes: { temperature: .4,  humidite: .3,  altitude: .6,  lumiere: .9,  couvert: .2  }, food: .12, voisins: [4, 6] },
+  13: { id: 'caldeira', u: 'volcan',  nom: 'Caldeira de cendre', milieu: 'terrestre', axes: { temperature: .95, humidite: .1,  altitude: .5,  lumiere: .7,  couvert: .05 }, food: .04, voisins: [6, 14] },
+  14: { id: 'braises', u: 'volcan',   nom: 'Braises',            milieu: 'terrestre', axes: { temperature: 1,   humidite: .05, altitude: .5,  lumiere: .7,  couvert: 0   }, food: .02, voisins: [13] },
+  19: { id: 'ossuaire', u: 'savane',  nom: 'Ossuaire',           milieu: 'terrestre', axes: { temperature: .5,  humidite: .3,  altitude: .35, lumiere: .7,  couvert: .1  }, food: .08, voisins: [4, 20] },
+  20: { id: 'terres-creuses', u: 'grotte', nom: 'Terres creuses', milieu: 'terrestre', axes: { temperature: .4, humidite: .5,  altitude: .2,  lumiere: .2,  couvert: .3  }, food: .15, voisins: [19] },
+  23: { id: 'cerisaie', u: 'maquis',  nom: 'Cerisaie',           milieu: 'terrestre', axes: { temperature: .6,  humidite: .6,  altitude: .25, lumiere: .85, couvert: .7  }, food: .7,  voisins: [2, 3] },
 };
-const biomeOrvane = k => BIOMES_SV[k]?.id || null;                                   // index du jeu → id Orvane
-const biomeSV = id => +Object.keys(BIOMES_SV).find(k => BIOMES_SV[k].id === id) || null;   // id Orvane → index du jeu
+// la carte suit le monde : celui dont les biomes ressemblent le plus aux « id » ou aux « u » (choisirCarte, à chaque instantané)
+let CARTE = 'id';
+function choisirCarte(ids) {
+  const I = new Set(Object.values(BIOMES_SV).map(b => b.id)), U = new Set(Object.values(BIOMES_SV).map(b => b.u)), L = [...(ids || [])];
+  CARTE = L.filter(x => U.has(x) && !I.has(x)).length > L.filter(x => I.has(x) && !U.has(x)).length ? 'u' : 'id'; return CARTE;
+}
+const biomeOrvane = k => BIOMES_SV[k]?.[CARTE] || null;                              // index du jeu → id Orvane
+const biomesSV = id => Object.keys(BIOMES_SV).filter(k => BIOMES_SV[k][CARTE] === id).map(Number);   // id Orvane → index du jeu (plusieurs dans le monde d'Orvane)
+const biomeSV = id => biomesSV(id)[0] || null;
 
 // --- taxon Orvane → espèce du jeu (sp.id). Par défaut, le même identifiant. Une lignée inconnue du jeu
 //     (« crapaud.tourbiere ») est rendue par l'espèce de son parent : le jeu n'a pas de nouveau corps à lui donner.
@@ -107,24 +115,41 @@ function corpsDe(s) {
 // --- une lignée sans ancêtre dans le jeu (un monde né de la genèse) : quelle fiche du jeu lui prête sa conduite ---
 //     Le corps, lui, est construit (lignees.js) ; la fiche ne donne que le comportement : brouter, glaner, chasser.
 const GABARITS = { herbivore: 'brouteur', omnivore: 'glaneur', carnivore: 'traqueur', filtreur: 'glaneur', detritivore: 'glaneur' };
-const gabaritDe = plan => GABARITS[plan?.regime] || 'glaneur';
+// (§217) un herbivore paisible (tempérament sous 0,4) se conduit comme un Doux, le cotonnier : c'est d'eux que sont faites
+// les premières îles, et le jeu n'y met que des Doux
+const gabaritDe = plan => plan?.regime === 'herbivore' && (plan.temperament ?? .5) < .4 ? 'cotonnier' : GABARITS[plan?.regime] || 'glaneur';
+// la faune du jeu qu'Orvane simule (sa génération 0) et son régime. Dans un monde dont le bestiaire est celui d'Orvane
+// (profil.exposition.bestiaire = 'orvane', un monde né de la genèse), ces trente espèces cèdent leur place aux lignées
+// du monde, régime par régime ; les automates, les boss, les villageois ne changent pas.
+const FAUNE = { brouteur: 'herbivore', bosseu: 'herbivore', glaneur: 'omnivore', traqueur: 'carnivore', spectre: 'carnivore', coursier: 'herbivore',
+  coursier_o: 'herbivore', coursier_r: 'herbivore', coursier_a: 'herbivore', crapaud: 'omnivore', varan: 'omnivore', vesseron: 'herbivore', cerf: 'herbivore',
+  salamandre: 'omnivore', lentigrade: 'herbivore', cotonnier: 'herbivore', carillonneur: 'herbivore', oglodon: 'herbivore', felin: 'carnivore', bramard: 'herbivore',
+  sterne: 'omnivore', dragon: 'carnivore', sika: 'herbivore', renard: 'herbivore', lentisakura: 'herbivore', trottin_menu: 'herbivore', trottin_echasse: 'herbivore',
+  trottin_pataud: 'herbivore', trottin_bondeur: 'herbivore', trottin_huppe: 'herbivore' };
+const GROUPE = { herbivore: 'herbivore', carnivore: 'carnivore', omnivore: 'omnivore', filtreur: 'omnivore', detritivore: 'omnivore' };   // les trois parts d'une île
 
 // --- les conduites (§211) : le vocabulaire d'Orvane (catalogue, conduite.type) → ce que Stone Valley sait jouer (conduites.js) ---
 //     Un trait nouveau dans Orvane, d'un type déjà connu ici, agit dans le jeu sans rien changer : c'est le TYPE qui compte.
 const CONDUITE_JEU = {
   'riposte-distance': 'crachat', 'riposte-contact': 'dard', 'defense-contact': 'glande', 'repli': 'carapace', 'protection': 'cuir',
   'immobilite': 'camouflage', 'alerte-groupe': 'alerte', 'defense-petits': 'parent', 'vision-nocturne': 'nyctalope',
-  'perception-proche': 'vibrisses', 'vue-diurne-faible': 'ebloui', 'morsure': 'crocs', 'sprint': 'foulee', 'lenteur': 'lent',
+  'perception-proche': 'vibrisses', 'vue-diurne-faible': 'ebloui', 'morsure': 'crocs', 'sprint': 'foulee', 'lenteur': 'lent', 'charge': 'charge',
 };
 // un mode de déplacement de la lignée qui devient une conduite
 const LOCOMOTION_CONDUITE = { fouissage: 'terrier' };
-// les conduites d'une bête : ses traits (ceux de son phénotype), lus dans le catalogue du monde ; et les modes de
-// déplacement de sa lignée. → [{ id, trait, effet, portee, recharge, force, presage }]
-function conduitesDe(traits, catalogue, locomotion) {
+// les conduites d'une bête : ses traits (ceux de son phénotype), lus dans le catalogue du monde ; les modes de déplacement
+// de sa lignée ; et les organes de son corps (moteur/corps.js, ORGANES_CAT : une massue fait charger, un aiguillon pique,
+// des plaques amortissent les coups) — plus l'organe est grand, plus la conduite est forte. → [{ id, trait|locomotion|organe,
+// effet, portee, recharge, force, presage, nom }]. Le catalogue des organes se lit dans l'instantané (catalogue.organes),
+// à défaut dans moteur/corps.js.
+function conduitesDe(traits, catalogue, locomotion, organes, catOrganes) {
   const out = [], vus = new Set();
   for (const t of traits || []) { const c = catalogue?.[t]?.conduite, id = c && CONDUITE_JEU[c.type]; if (!id || vus.has(id)) continue; vus.add(id);
     out.push({ id, trait: t, effet: c.effet, portee: c.portee, recharge: c.recharge, force: c.force, presage: c.presage }); }
   for (const l of locomotion || []) { const id = LOCOMOTION_CONDUITE[l]; if (id && !vus.has(id)) { vus.add(id); out.push({ id, locomotion: l }); } }
+  const OC = catOrganes || (typeof require === 'function' ? (() => { try { return require('../../moteur/corps.js'); } catch (e) { return null; } })() : racine.OrvaneCorps)?.ORGANES_CAT || {};
+  for (const o of (organes || []).slice().sort((a, b) => b.taille - a.taille)) { const c = OC[o.type]?.conduite, id = c && CONDUITE_JEU[c.type]; if (!id || vus.has(id) || !(o.taille >= .3)) continue; vus.add(id);
+    out.push({ id, organe: o.type, effet: c.effet, force: c.force ? +(1 + (c.force - 1) * Math.min(1.5, o.taille / .6)).toFixed(2) : undefined, presage: c.presage, nom: c.nom }); }
   return out;
 }
 
@@ -137,7 +162,14 @@ const QUANT_JEU = {
   audace:  { cle: 'fq', vaut: s => Math.exp(-.2 * s), haut: 'peu farouche', bas: 'très farouche', ici: ['l\'espèce est moins farouche ici', 'l\'espèce est plus farouche ici'] }
 };
 
-const API = { BIOMES_SV, biomeOrvane, biomeSV, TAXON_ESPECE, especeDe, taxonDe, TRAIT_VARIANTE, varianteDe, traitsDe, CORPS_FAMILLE, CORPS_ESPECE, corpsDe, GABARITS, gabaritDe,
-  CONDUITE_JEU, LOCOMOTION_CONDUITE, conduitesDe, QUANT_JEU };
+// ce que Stone Valley sait montrer du monde d'Orvane (schemas/profil.schema.json, exposition) : le tampon lit les lots du jeu
+// avec la même, enregistrée dans le Supabase d'Orvane (orvane_regler_jeu) et publiée dans jeux.json ; celle-ci ne sert que
+// tant que jeux.json n'est pas arrivé. Les deux doivent rester d'accord (la changer ici, c'est la régler là-bas aussi).
+const EXPOSITION = { mode: 'relatif', compression: { defaut: .1, par_domaine: { morphologie: .1 }, par_trait: { gigantisme: .1, nanisme: .1 } },
+  taux_jeu: { albinisme: .0002924, melanisme: .0002924, 'robe-doree': .0002924, gigantisme: 3.333e-5, nanisme: 2.222e-5 }, reference_min: .01,
+  propagation_cycles: 3, inertie_max: .05, traits_rendus: ['albinisme', 'melanisme', 'robe-doree', 'gigantisme', 'nanisme'],
+  seuil_extinction_jeu: 40, retour_apres_extinction: true, seuil_extinction_part: .25, quantitatifs: { rendus: ['taille', 'vitesse', 'audace'], variation: 0 }, bestiaire: 'orvane' };
+const API = { EXPOSITION, BIOMES_SV, choisirCarte, biomeOrvane, biomeSV, biomesSV, TAXON_ESPECE, especeDe, taxonDe, TRAIT_VARIANTE, varianteDe, traitsDe, CORPS_FAMILLE, CORPS_ESPECE, corpsDe, GABARITS, gabaritDe,
+  CONDUITE_JEU, LOCOMOTION_CONDUITE, conduitesDe, QUANT_JEU, FAUNE, GROUPE };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else racine.OrvaneSV_Corr = API;
 })(globalThis);

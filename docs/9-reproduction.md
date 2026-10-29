@@ -25,7 +25,7 @@ Les `phenotypes` restent ce qui **se voit**, avec leurs fréquences. Les allèle
 
 Ce que ça change (banc : `traducteurs/stone-valley/banc.js`, section 8) :
 - **Le réservoir récessif.** Abattre tous les brouteurs albinos pendant quinze cycles les fait disparaître ; trente cycles plus tard, ils sont revenus à 0,16 %, nés de parents qui ne l'étaient pas. Avec l'ancien moteur, ils ne revenaient pas.
-- **Le choix du partenaire.** La robe dorée du crapaud coûte en survie (plus voyante) mais attire. En 120 cycles, elle passe de 0,19 % à 0,30 % ; si les partenaires ne choisissaient pas, elle tomberait à 0,24 %.
+- **Le choix du partenaire.** La robe dorée du crapaud coûte en survie (plus voyante) mais attire. À la tourbière, en 120 cycles, son allèle se maintient (4,67 % → 4,63 %) ; si les partenaires ne choisissaient pas, il tomberait à 3,93 %. Les crapauds dorés y sont 0,21 % au lieu de 0,15 %.
 - **Des équilibres neufs.** Un trait récessif coûteux se maintient caché ; un dominant coûteux est purgé plus vite. Le monde sv-1 a été refait de zéro pour que sa génération 0 soit l'équilibre de ces règles.
 
 `REGLES.sexe` règle tout cela : `actif: false` rend l'ancien moteur clonal (et `REGLES.mutation`), `attrait: 0` supprime le choix du partenaire.

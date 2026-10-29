@@ -7,6 +7,7 @@
     "cycle": "24h",
     "amorce": "traducteurs/stone-valley/generation-0.json",
     "rodage": 400,
+    "nocturne": false,
     "annee": 120,
     "pressions": {
       "url": "https://ldazucyrnpewkqdneznc.supabase.co",

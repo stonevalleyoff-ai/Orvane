@@ -437,6 +437,96 @@
               }
             }
           }
+        },
+        "organes": {
+          "type": "object",
+          "description": "Les types d'organes (moteur/corps.js, docs/11) : places possibles, nombre, formes, fonction, mots pour les décrire, et la conduite qu'un organe prête au jeu (charge, riposte-contact, protection, repli…), forte en proportion de sa taille. Ajouter un type, c'est une entrée ici : ni le schéma ni les jeux ne changent.",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "places",
+              "nombre",
+              "formes",
+              "fonction",
+              "mot"
+            ],
+            "properties": {
+              "places": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "tete",
+                    "dos",
+                    "flancs",
+                    "queue",
+                    "avant"
+                  ]
+                },
+                "minItems": 1
+              },
+              "nombre": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "defaut": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "formes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              },
+              "fonction": {
+                "type": "string"
+              },
+              "mot": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "fem": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ]
+              },
+              "conduite": {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "force": {
+                    "type": "number"
+                  },
+                  "effet": {
+                    "type": "string"
+                  },
+                  "nom": {
+                    "type": "string"
+                  },
+                  "presage": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -590,7 +680,7 @@
               },
               "corps": {
                 "type": "object",
-                "description": "La silhouette (moteur/corps.js) : des proportions de 0 à 1 et des couleurs, pour qu'un jeu dessine une lignée qu'il n'a jamais vue. Dérive à chaque séparation. Facultatif.",
+                "description": "La silhouette (moteur/corps.js) : des proportions de 0 à 1 et des couleurs, pour qu'un jeu dessine une lignée qu'il n'a jamais vue. Dérive à chaque séparation. Les organes (cornes, massue, aiguillon…) apparaissent, grandissent et se perdent ; les scalaires cornes, crête, ailes, carapace, antennes en sont le résumé (la plus grande taille du type), pour les lecteurs anciens. Facultatif.",
                 "properties": {
                   "forme": {
                     "enum": [
@@ -665,6 +755,49 @@
                     "type": "number",
                     "minimum": 0,
                     "maximum": 1
+                  },
+                  "organes": {
+                    "type": "array",
+                    "maxItems": 16,
+                    "description": "Les organes de la silhouette (docs/11). Chaque type se pose à une place (tête, dos, flancs, queue, avant) ; sa taille va de 0,2 à 1 ; un organe qui passe sous 0,2 se perd. Ce qu'il fait au jeu (charger, piquer, amortir) est dans ORGANES_CAT.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "taille"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z-]*$",
+                          "description": "Un type du catalogue (catalogue.organes) ; un lecteur qui ne le connaît pas l'ignore."
+                        },
+                        "place": {
+                          "enum": [
+                            "tete",
+                            "dos",
+                            "flancs",
+                            "queue",
+                            "avant"
+                          ]
+                        },
+                        "taille": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        },
+                        "nombre": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 12
+                        },
+                        "forme": {
+                          "type": "string",
+                          "description": "Une des formes que le catalogue donne à ce type."
+                        }
+                      }
+                    }
                   },
                   "motif": {
                     "enum": [
@@ -822,6 +955,51 @@
                     "maximum": 1
                   },
                   "description": "La reproduction sexuée (docs/9) : pour chaque trait, la fréquence de l’allèle qui le porte dans cette population. Une bête en a deux copies ; un trait dominant se voit chez une part 1 − (1 − p)² des bêtes, un récessif chez p². Un allèle récessif peut donc être bien plus répandu que le trait ne se voit."
+                },
+                "flux": {
+                  "$ref": "#/$defs/unite",
+                  "description": "Le flux de gènes reçu : la part d’immigrants par cycle, en moyenne glissante (docs/10). Près de 0, la population est isolée."
+                },
+                "divergence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "L’écart génétique de cette population au reste de l’espèce : le F_ST de leurs allèles, plus le quart de l’écart moyen des traits continus (docs/10). Au-delà de REGLES.separation.divergence, une population isolée peut devenir une lignée."
+                },
+                "hybride": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "avec",
+                    "part",
+                    "isolement"
+                  ],
+                  "description": "Une zone hybride (docs/10) : une lignée apparentée vit dans le même biome et s’y croise.",
+                  "properties": {
+                    "avec": {
+                      "type": "string",
+                      "description": "La lignée avec laquelle elle se croise le plus."
+                    },
+                    "part": {
+                      "$ref": "#/$defs/unite",
+                      "description": "La part des naissances de cette population qui a un père de l’autre lignée et survit."
+                    },
+                    "isolement": {
+                      "$ref": "#/$defs/unite",
+                      "description": "L’isolement reproductif entre les deux (0 : une seule population ; 1 : aucun croisement)."
+                    }
+                  }
+                },
+                "mefiance": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Ce que la population a appris des joueurs (docs/12) : la méfiance, nourrie des contacts qui finissent mal (prélèvements, captures), retombe de moitié en 6 cycles. Absente : 0."
+                },
+                "habituation": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "L'habituation, nourrie des rencontres sans suite et de l'aide (nourrissage, libération), défaite par ce qui finit mal, retombe de moitié en 15 cycles. Absente : 0."
                 }
               }
             }
@@ -901,7 +1079,9 @@
               "nouveau_trait",
               "epidemie",
               "remission",
-              "catastrophe"
+              "catastrophe",
+              "hybridation",
+              "mefiance"
             ]
           },
           "taxon": {

@@ -7,12 +7,14 @@
 //   instantane.json    le même, publié : c'est ce que les traducteurs lisent (GitHub Pages sert avec CORS *)
 //   historique.json    les derniers cycles (365, ou profil.monde.historique), allégés (effectifs, fréquences, événements) : pour l'observatoire
 //   tampon.json        la mémoire du tampon (lissage) et la dernière ligne lue (dernier_id)
+//   jeux.json          les jeux branchés sur le monde et leur exposition (publié : chaque traducteur y lit la sienne)
 //   lots/              (facultatif) des lots déposés à la main ; lus en plus de Supabase, puis déplacés dans lots/traites/
 //   node hebergement/cycle.js sv-1 [--sans-reseau] [--cycles N] [--rodage N] [--forcer]   (rodage : au premier cycle seulement ;
 //   --forcer : faire tourner un monde dont le profil dit monde.nocturne = false, comme une genèse à observer)
-// Les lots en ligne viennent de la table orvane_pressions (traducteurs/stone-valley/supabase.sql), lue par la fonction
-// orvane_lire_lots avec le secret de lecture d'Orvane (profil.monde.pressions, voir lotsEnLigne). Sans lui, ou avec
-// --sans-reseau, seuls les lots du dossier comptent.
+// Les lots en ligne viennent du Supabase d'Orvane (hebergement/supabase.sql, hebergement/LISEZ-MOI.md), où tous les jeux déposent : lus par
+// la fonction orvane_lire_lots avec le secret de lecture d'Orvane (profil.monde.pressions, voir lotsEnLigne), avec les
+// jeux et leur exposition (orvane_lire_jeux). Sans le secret, ou avec --sans-reseau, seuls les lots du dossier comptent,
+// lus avec les expositions du dernier jeux.json.
 'use strict';
 const fs = require('fs'), path = require('path');
 const Orvane = require('../moteur/orvane.js'), Tampon = require('../tampon/tampon.js');
@@ -20,27 +22,30 @@ const a = process.argv.slice(2), monde = a.find(x => !x.startsWith('--')) || 'sv
 const arg = (k, defaut) => { const i = a.indexOf(k); return i >= 0 && a[i + 1] != null ? +a[i + 1] : defaut; };
 const nCycles = arg('--cycles', 1) || 1;
 const D = path.join(__dirname, '..', 'mondes', monde), f = n => path.join(D, n);
+const secretDe = Pp => Pp && (process.env[Pp.secret || 'ORVANE_LECTURE_SECRET'] || '').trim().replace(/^["']+|["']+$/g, '');
+const rpc = async (Pp, fn, corps) => { const r = await fetch(`${Pp.url.replace(/\/$/, '')}/rest/v1/rpc/${fn}`, { method: 'POST',
+  headers: { apikey: Pp.cle, 'Content-Type': 'application/json' }, body: JSON.stringify(corps) });
+  if (!r.ok) throw new Error(`Supabase ${r.status} : ${await r.text()}`); return r.json(); };
 const lire = (n, defaut) => fs.existsSync(f(n)) ? JSON.parse(fs.readFileSync(f(n), 'utf8')) : defaut;
 const ecrire = (n, o, compact) => fs.writeFileSync(f(n), compact ? JSON.stringify(o) : JSON.stringify(o, null, 1));
 
 // Les lots en ligne. Deux chemins :
 //  - le monde dit où lire (profil.monde.pressions : { url, cle, secret }) : la fonction orvane_lire_lots du projet
-//    Supabase du jeu, appelée avec sa clé publique et le secret de lecture d'Orvane (variable d'environnement nommée par
-//    « secret », ORVANE_LECTURE_SECRET par défaut). L'action n'a jamais la clé de service du jeu. Lu par pages de 1000,
-//    d'après l'identifiant de la dernière ligne lue (tampon.dernier_id) ; le compte arrive pseudonymisé.
+//    Supabase d'Orvane (ou, pour sv-1, celui du jeu), appelée avec sa clé publique et le secret de lecture d'Orvane
+//    (variable d'environnement nommée par « secret », ORVANE_LECTURE_SECRET par défaut). L'action n'a jamais de clé de
+//    service. Lu par pages de 1000, d'après l'identifiant de la dernière ligne lue (tampon.dernier_id) ; chaque ligne dit
+//    son jeu, le compte arrive pseudonymisé. Avec « jeux » (orvane_lire_jeux), la liste des jeux est lue aussi.
 //  - à l'ancienne : SUPABASE_URL et SUPABASE_SERVICE_KEY dans l'environnement, lecture directe de la table.
 async function lotsEnLigne(tampon, profil) {
   if (sansReseau) return [];
   // (le secret tel qu'on l'a collé : sans les espaces, retours à la ligne ou guillemets qui s'y glissent souvent)
-  const Pp = profil.monde?.pressions, secret = Pp && (process.env[Pp.secret || 'ORVANE_LECTURE_SECRET'] || '').trim().replace(/^["']+|["']+$/g, '');
+  const Pp = profil.monde?.pressions, secret = secretDe(Pp), id = profil.monde?.id || monde;
   if (Pp && Pp.url && Pp.cle && secret) {
     const out = []; let apres = tampon.dernier_id || 0;
     for (let page = 0; page < 200; page++) {
-      const r = await fetch(`${Pp.url.replace(/\/$/, '')}/rest/v1/rpc/${Pp.fonction || 'orvane_lire_lots'}`, { method: 'POST',
-        headers: { apikey: Pp.cle, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_secret: secret, p_monde: monde, p_apres: apres, p_limite: 1000 }) });
-      if (!r.ok) throw new Error(`Supabase ${r.status} : ${await r.text()}`);
-      const rows = await r.json();
-      for (const x of rows) { const lot = x.lot || {}; lot.source = { ...(lot.source || {}), compte: x.compte }; lot._id = x.id; lot._recu = x.recu; out.push(lot); }
+      const rows = await rpc(Pp, Pp.fonction || 'orvane_lire_lots', { p_secret: secret, p_monde: id, p_apres: apres, p_limite: 1000 });
+      for (const x of rows) { const lot = x.lot || {}; lot.monde ??= id; if (x.jeu) lot.jeu = x.jeu; lot.source = { ...(lot.source || {}), compte: x.compte };
+        lot._id = x.id; lot._recu = x.recu; out.push(lot); }
       if (rows.length < 1000) break; apres = rows[rows.length - 1].id;
     }
     return out;
@@ -53,6 +58,12 @@ async function lotsEnLigne(tampon, profil) {
   if (!r.ok) throw new Error(`Supabase ${r.status} : ${await r.text()}`);
   const rows = await r.json();
   return rows.map(x => { const lot = x.lot || {}; lot.source = { ...(lot.source || {}), compte: 'u:' + String(x.compte).slice(0, 8) }; lot._id = x.id; lot._recu = x.recu; return lot; });
+}
+// les jeux branchés sur le monde : lus dans Supabase (profil.monde.pressions.jeux), sinon ceux du dernier jeux.json
+async function jeuxEnLigne(profil) {
+  const Pp = profil.monde?.pressions, secret = secretDe(Pp);
+  if (sansReseau || !Pp?.jeux || !Pp.url || !Pp.cle || !secret) return null;
+  return (await rpc(Pp, Pp.jeux, { p_secret: secret })).map(j => ({ id: j.id, nom: j.nom, actif: j.actif, exposition: j.exposition || {} }));
 }
 function lotsLocaux() {
   const d = f('lots'); if (!fs.existsSync(d)) return [];
@@ -81,13 +92,21 @@ const alleger = I => ({ cycle: I.cycle, taxons: I.taxons.map(t => ({ id: t.id, n
     etat = JSON.parse(fs.readFileSync(am, 'utf8')); console.log('amorce :', profil.monde.amorce);
     const rodage = arg('--rodage', profil.monde?.rodage || 0) || 0;   // le monde tourne seul jusqu'à son équilibre avant d'être publié
     for (let k = 0; k < rodage; k++) etat = Orvane.cycle(etat, {}, { duree_ms: 0 });
-    if (rodage) { etat.cycle.n = 0; etat.evenements = []; for (const t of etat.taxons) for (const p of t.populations) p.depuis = Math.min(p.depuis ?? 0, 0); console.log(`rodage : ${rodage} cycles ; la génération 0 est l'équilibre atteint`); }
+    // (la génération 0 garde la saison où le rodage s'est arrêté : un monde qui a une année repart au même point de l'année, pas
+    // en plein hiver d'un coup — le cycle est ramené dans sa première année)
+    const an = profil.monde?.annee ?? etat.monde.annee;
+    if (rodage) { etat.cycle.n = an ? etat.cycle.n % an : 0; etat.evenements = []; for (const t of etat.taxons) for (const p of t.populations) p.depuis = Math.min(p.depuis ?? 0, 0); console.log(`rodage : ${rodage} cycles ; la génération 0 est l'équilibre atteint`); }
     etat.monde.ne = new Date().toISOString();   // la naissance du monde : avec son id, c'est son identité (un monde refait de zéro change de date)
+    etat.monde.id = profil.monde?.id || monde;   // une amorce née de la genèse s'appelle « genese » : le monde prend le nom de son dossier (les lots du jeu le portent)
+    if (profil.monde?.graine != null) etat.monde.graine = profil.monde.graine;
     ecrire('generation-0.json', etat, true);
   }
   if (profil.monde?.annee != null) etat.monde.annee = profil.monde.annee;   // la durée de l'année suit le profil
   const tampon = lire('tampon.json', { lisse: {}, dernier_id: 0 });
-  let lectureEchouee = false;
+  let lectureEchouee = false, jeux = lire('jeux.json', []);
+  try { const j = await jeuxEnLigne(profil); if (j) { jeux = j; ecrire('jeux.json', jeux); } }
+  catch (e) { lectureEchouee = true; console.log(`::error title=${monde} · lecture des jeux::${e.message || e}. Le cycle lit les lots avec les expositions de la dernière fois.`); }
+  const expositions = Object.fromEntries(jeux.map(j => [j.id, j]));
   const gen0 = lire('generation-0.json', null);   // la référence du mode relatif (profil.exposition.mode)
   let avant = etat;
   let historique = lire('historique.json', []);
@@ -101,8 +120,8 @@ const alleger = I => ({ cycle: I.cycle, taxons: I.taxons.map(t => ({ id: t.id, n
       const pourquoi = /secret invalide/.test(m) ? 'le secret ORVANE_LECTURE_SECRET du dépôt ne correspond pas à celui enregistré dans Supabase : recopiez-le exactement, sans espace ni guillemets (Settings › Secrets and variables › Actions)'
         : /\b40[13]\b/.test(m) ? 'Supabase refuse la lecture : vérifiez la clé publique et l\'URL dans profil.monde.pressions' : m;
       console.log(`::error title=${monde} · lecture des pressions::${pourquoi}. Le cycle tourne sans les lots en ligne ; ils seront lus la prochaine fois.`); }
-    const locaux = lotsLocaux(), lots = [...enLigne, ...locaux];
-    const r = Tampon.agreger(lots, etat, profil, tampon, gen0);
+    const locaux = lotsLocaux().map(l => ({ monde: profil.monde?.id || monde, ...l })), lots = [...enLigne, ...locaux];
+    const r = Tampon.agreger(lots, etat, profil, tampon, gen0, expositions);
     const suivant = Orvane.cycle(etat, r.pressions, { duree_ms: ms });
     if (k === nCycles - 1) suivant.cycle.date = new Date().toISOString();   // le dernier cycle est daté de maintenant : les traducteurs s'y réfèrent
     tampon.lisse = r.etat.lisse; tampon.lisseQ = r.etat.lisseQ; if (enLigne.length) { tampon.dernier_id = enLigne[enLigne.length - 1]._id; tampon.derniere_lecture = enLigne[enLigne.length - 1]._recu; }
