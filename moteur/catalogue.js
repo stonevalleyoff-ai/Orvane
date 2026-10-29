@@ -88,7 +88,7 @@ const TRAITS = {
   'metabolisme-lent': { domaine: 'metabolisme', organe: 'thyroïde peu active', cout: .0,
                       effet: 'vit plus longtemps, bouge moins, mûrit plus tard', ecarts: { longevite: 1.35, vitesse_rel: .85, maturite: 1.2, resistance: 0.85 }, vulnerabilite: 1.1 ,
                       conduite: { type: 'lenteur', force: .85, presage: 'des gestes lents' } },
-  'estomac-large':  { domaine: 'metabolisme', organe: 'tube digestif allongé', cout: .05,
+  'estomac-large':  { domaine: 'metabolisme', organe: 'tube digestif allongé', cout: .2,
                       effet: 'digère végétaux et proies', fixe: { regime: 'omnivore' }, resistance: 0.95 },
   // --- reproduction ---
   'ponte-abondante': { domaine: 'reproduction', organe: 'gonades hypertrophiées', cout: .10,

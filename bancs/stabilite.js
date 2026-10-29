@@ -7,7 +7,7 @@
 //  4. le jour un : les ajouts de la phase 1 démarrent neutres (un cycle avec ou sans eux donne presque le même monde) ;
 //  5. la réponse à la sélection : une chasse des plus grands déplace la taille moyenne de h² × S (équation du sélectionneur) ;
 //  6. le déterminisme : même état, mêmes pressions, même monde, au caractère près.
-//   node bancs/stabilite.js [--cycles 1000] [--monde sv-1] [--genese genese-7] [--cycles-genese 300] [--court] [--sortie rapport.json]
+//   node bancs/stabilite.js [--cycles 1000] [--monde sv-1] [--genese orvane] [--cycles-genese 300] [--court] [--sortie rapport.json]
 // --court : 200 cycles (100 pour le monde de genèse), une vérification rapide. Sortie : 0 si tout passe, 1 sinon.
 'use strict';
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
@@ -15,7 +15,7 @@ const racine = p => path.join(__dirname, '..', p);
 const Orvane = require(racine('moteur/orvane.js')), Tampon = require(racine('tampon/tampon.js')), CAT = require(racine('moteur/catalogue.js'));
 const a = process.argv.slice(2), arg = (k, d) => { const i = a.indexOf(k); return i >= 0 && a[i + 1] != null ? a[i + 1] : d; }, court = a.includes('--court');
 const CYCLES = court ? 200 : +arg('--cycles', 1000), CG = court ? 100 : +arg('--cycles-genese', 300);
-const MONDE = arg('--monde', 'sv-1'), GENESE = arg('--genese', 'genese-7'), SORTIE = arg('--sortie', null);
+const MONDE = arg('--monde', 'sv-1'), GENESE = arg('--genese', 'orvane'), SORTIE = arg('--sortie', null);
 const lire = id => JSON.parse(fs.readFileSync(racine(`mondes/${id}/${'instantane.json'}`), 'utf8'));
 const lireP = id => JSON.parse(fs.readFileSync(racine(`mondes/${id}/profil.json`), 'utf8'));
 
@@ -155,7 +155,9 @@ const mTaille = (I, id, bid) => pop(I, id, bid)?.quant?.taille?.m ?? 0;
       `la diversité tient : ${n0} → ${n1} lignées vivantes (${G.ev.separation || 0} séparations, ${G.ev.extinction || 0} extinctions de populations, ${G.ev.hybridation || 0} zones hybrides) ; le monde entre ${fx(Math.min(...Mg))} et ${fx(Math.max(...Mg))} fois son effectif`);
     verif(org > 0, `${org} lignées portent des organes`);
     const sG = (G.ev.explosion || 0) + (G.ev.effondrement || 0), nP = vivants(G.I).reduce((s, t) => s + t.populations.length, 0);
-    verif(sG <= CG, `${sG} sursauts brusques en ${CG} cycles pour ${nP} populations (moins d'un par cycle), ${G.ev.epidemie || 0} épidémies`);
+    // (à la mesure du monde : un monde de genèse a des centaines de populations, et ses petits herbivores rapides suivent les
+    // saisons à grands bonds ; on veut des sursauts rares pour chaque population, sous 0,5 % des populations par cycle)
+    verif(sG <= .005 * nP * CG, `${sG} sursauts brusques en ${CG} cycles pour ${nP} populations (${fx(100 * sG / (nP * CG), 2)} % des populations par cycle, moins de 0,5 %), ${G.ev.epidemie || 0} épidémies`);
     rapport.series.genese = G.monde;
   }
 

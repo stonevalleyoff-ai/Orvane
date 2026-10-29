@@ -65,6 +65,10 @@
           "type": "string",
           "format": "date-time",
           "description": "La naissance du monde (le premier cycle, posé par hebergement/cycle.js). Avec l'id, c'est l'identité d'un monde : un monde refait de zéro garde son id mais change de date — les traducteurs repartent alors de sa nouvelle génération 0."
+        },
+        "regles": {
+          "type": "object",
+          "description": "Les règles du moteur propres à ce monde (REGLES de moteur/orvane.js), choisies par sa genèse : elles valent pour chacun de ses cycles, où qu'il tourne."
         }
       }
     },

@@ -71,6 +71,12 @@ const REGLES = {
   predation_max: .3,         // part d'une population de proies qu'un cycle de prédation peut retirer
   chasse_omnivore: .4,       // un omnivore chasse moins bien qu'un carnivore
   omnivore_vegetal: .4,      // un carnivore devenu omnivore (estomac-large) tire des plantes moins qu'un herbivore : 40 %
+  omnivore_vegetal_base: 1,  // un omnivore de naissance (essais : moins d'un herbivore)
+  longevite_predateur: 0,    // (essais) un carnivore né de la dérive vit au moins autant de fois ce que sa viande lui permet de remplacer
+  viande_omnivore: 1,        // la part de viande dans ce que mange un omnivore : son besoin de proies (essais)
+  faim_carnivore: 3,         // un carnivore affamé meurt plus : × (1 + faim × (1 − satiété)²)
+  detritivore_vegetal: 1,    // ce qu'un détritivore tire de la place, rapporté à un herbivore (essais)
+  vers_carnivore: .35,       // à la dérive du régime, la chance qu'un omnivore devienne carnivore (sinon herbivore)
   faim_migration: .4,        // satiété sous laquelle un prédateur s'en va chercher ailleurs
   report_proies: 1.5,        // exposant du report sur la proie abondante (1 : au prorata ; 2 : fort)
   // les saisons (si le monde a une année) : amplitudes par défaut d'un biome, sur les axes et sur la production
@@ -284,7 +290,7 @@ function deriver(plan, b, R) {
     niche: { ...b.axes }, tolerance: plan.tolerance || .35, locomotion: [...(plan.locomotion || ['marche'])] };
   // le régime passe par l'omnivore ; un omnivore redevient plus souvent herbivore que carnivore (il y a plus à brouter qu'à chasser)
   // (un filtreur, un détritivore gardent le leur : ce n'est pas un pas de plus ou de moins vers la viande)
-  if (R() < D.regime && ['herbivore', 'omnivore', 'carnivore'].includes(plan.regime)) p.regime = plan.regime === 'herbivore' ? 'omnivore' : plan.regime === 'carnivore' ? 'omnivore' : R() < .35 ? 'carnivore' : 'herbivore';
+  if (R() < D.regime && ['herbivore', 'omnivore', 'carnivore'].includes(plan.regime)) p.regime = plan.regime === 'herbivore' ? 'omnivore' : plan.regime === 'carnivore' ? 'omnivore' : R() < (REGLES.vers_carnivore ?? .35) ? 'carnivore' : 'herbivore';
   // un mode de déplacement se gagne (ce que le biome favorise) ou se perd (un accessoire dont le biome n'a pas l'usage) : sans
   // cela, toutes les lignées finiraient par tout savoir faire
   const VOL = REGLES.vol_masse_max ?? Infinity, eau = b.milieu === 'amphibie' || b.milieu === 'aquatique' || b.milieu === 'marin';
@@ -303,6 +309,11 @@ function deriver(plan, b, R) {
     p.eau = b.milieu === 'marin' ? (e === 'douce' ? 'mixte' : R() < .3 ? 'salee' : e) : b.milieu === 'aquatique' ? (e === 'salee' ? 'mixte' : R() < .3 ? 'douce' : e)
       : b.milieu === 'amphibie' && R() < .25 ? 'mixte' : e; }
   if (p.regime === 'carnivore' && R() < .5) { p.vitesse_rel = +(p.vitesse_rel * 1.15).toFixed(2); p.perception = clamp((p.perception || .5) + .1, 0, 1); }
+  // un prédateur vit assez pour se nourrir : ses petits naissent de la viande mangée (REGLES.conversion), au plus
+  // conversion × besoin × masse^-0,25 par tête et par cycle ; il lui faut une mort plus lente que cela, avec de la marge
+  // (un carnivore né d'un petit omnivore à vie brève, sinon, n'a aucune chance)
+  if (p.regime === 'carnivore' && REGLES.longevite_predateur) { const Lmin = REGLES.longevite_predateur / (REGLES.conversion * REGLES.besoin * Math.pow(Math.max(.001, p.masse_kg), -.25));
+    if (p.longevite < Lmin) { p.maturite = +(p.maturite * Math.min(2, Lmin / p.longevite) ** .5).toFixed(2); p.longevite = +Lmin.toFixed(2); } }
   // le corps suit : la silhouette dérive vers ce que le biome favorise, et garde la marque d'un mode de déplacement gagné
   if (plan.corps && CORPS) { const avant = new Set(plan.locomotion || ['marche']);
     p.corps = CORPS.deriver(plan.corps, p, b, R, D.corps ?? 1, p.locomotion.filter(l => !avant.has(l)), k);
@@ -374,7 +385,13 @@ function convenance(plan, biome) {
 const biomasse = (plans, N) => N.reduce((s, n, i) => s + n * (plans[i].masse_kg || 1), 0);
 
 // --- un cycle ---
+// un monde peut porter ses propres règles (monde.regles : celles que sa genèse a choisies) ; elles valent le temps de son cycle
 function cycle(inst, pressions = {}, opt = {}) {
+  const propres = inst?.monde?.regles; if (!propres || typeof propres !== 'object') return cycleBrut(inst, pressions, opt);
+  const avant = {}; for (const k in propres) avant[k] = REGLES[k];
+  Object.assign(REGLES, propres); try { return cycleBrut(inst, pressions, opt); } finally { Object.assign(REGLES, avant); }
+}
+function cycleBrut(inst, pressions = {}, opt = {}) {
   const n = inst.cycle.n + 1, R = rng(inst.monde.graine, n);
   const cat = { ...(inst.catalogue?.traits || {}), ...CAT.TRAITS };   // la biologie d'un trait connu est celle du moteur ; un trait propre au monde garde la sienne
   const biomes = Object.fromEntries(inst.biomes.map(b => [b.id, clone(b)]));
@@ -456,7 +473,8 @@ function cycle(inst, pressions = {}, opt = {}) {
       const puiss = x.map(v => v > 0 ? Math.pow(v, REGLES.report_proies) : 0), z = puiss.reduce((a, v) => a + v, 0);
       p.part = puiss.map(v => z ? v / z : 0); p.x = x; p.A = A;                       // la part de chaque proie dans ce que ce prédateur prélève
       p.eff = p.E.chasse.map((c, i) => c * (.7 + .6 * (p.E.plans[i].perception ?? .5)) * (p.regime === 'omnivore' ? REGLES.chasse_omnivore : 1));
-      p.besoin = p.E.plans.map(pl => REGLES.besoin * Math.pow(pl.masse_kg || 1, .75));
+      // (un omnivore ne cherche en viande qu'une part de ce qu'il mange : il ne dispute aux carnivores que cette part)
+      p.besoin = p.E.plans.map(pl => REGLES.besoin * Math.pow(pl.masse_kg || 1, .75) * (p.regime === 'omnivore' ? REGLES.viande_omnivore ?? 1 : 1));
       p.effMoy = p.pop.N.reduce((a, N, i) => a + N * p.eff[i], 0) / p.Nt; p.besoinMoy = p.pop.N.reduce((a, N, i) => a + N * p.besoin[i], 0) / p.Nt;
     }
     // les prédateurs se partagent les proies : chacun compte, en concurrents, ceux qui mangent les mêmes, au prorata de leur besoin
@@ -504,9 +522,9 @@ function cycle(inst, pressions = {}, opt = {}) {
         // ce qui nourrit les naissances : la place pour l'herbivore ; la viande mangée pour le carnivore, convertie en petits à
         // REGLES.conversion (l'énergie vient des plantes : un prédateur ne vit pas de prédateurs qui vivent de lui) ; les deux pour l'omnivore
         const viande = REGLES.conversion * pop.ration[i] / (E.plans[i].masse_kg || 1);
-        if (reg === 'carnivore') { nais[i] = Math.min(Np * r * s, viande); m *= 1 + 3 * (1 - s) * (1 - s); faim = Math.max(faim, 1 - s); }   // un carnivore affamé meurt plus
-        else if (reg === 'omnivore') nais[i] = Np * r * place * (1 - .3 * s) * (t.plan.regime === 'carnivore' ? REGLES.omnivore_vegetal ?? 1 : 1) + Math.min(Np * r * .3 * s, viande);
-        else nais[i] = Np * r * place; morts[i] = Np * m; mortsNat += morts[i];
+        if (reg === 'carnivore') { nais[i] = Math.min(Np * r * s, viande); m *= 1 + (REGLES.faim_carnivore ?? 3) * (1 - s) * (1 - s); faim = Math.max(faim, 1 - s); }   // un carnivore affamé meurt plus
+        else if (reg === 'omnivore') nais[i] = Np * r * place * (1 - .3 * s) * (t.plan.regime === 'carnivore' ? REGLES.omnivore_vegetal ?? 1 : REGLES.omnivore_vegetal_base ?? 1) + Math.min(Np * r * .3 * s, viande);
+        else nais[i] = Np * r * place * (reg === 'detritivore' ? REGLES.detritivore_vegetal ?? 1 : 1); morts[i] = Np * m; mortsNat += morts[i];
         if (mal) { const mm = Np * mal.virulence * E.resist[i] * (pop.fm ?? 1) * (.5 + Math.min(1.5, sat)); morts[i] += mm; mortsMal += mm; }   // la maladie frappe les faibles et les entassés
         if (sinistres[bid]) { const loco = E.plans[i].locomotion || [], type = sinistres[bid];                                      // la catastrophe épargne qui peut s'y soustraire
           const echappe = type === 'incendie' ? loco.includes('vol') || loco.includes('fouissage') : type === 'crue' ? loco.includes('vol') || loco.includes('nage') : loco.includes('vol');

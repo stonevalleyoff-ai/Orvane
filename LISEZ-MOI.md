@@ -68,7 +68,8 @@ Un monde publié part d'un **rodage** (`profil.monde.rodage`, 400 cycles pour St
 ## La genèse
 
 ```
-node moteur/genese.js moteur/biomes-universels.json --cycles 1400 --graine 1 --lignees 200 --nom "Le monde d'Orvane" --sortie amorce.json
+node moteur/genese.js moteur/biomes-universels.json --cycles 900 --graine 1 --lignees 200 --etage 30 --nom "Le monde d'Orvane" \
+     --regles '{"omnivore_vegetal_base":0.6,"detritivore_vegetal":0.5,"viande_omnivore":0.3,"longevite_predateur":1.6,"omnivore_vegetal":0.2,"vers_carnivore":0.5}' --sortie amorce.json
 node moteur/genese.js mondes/sv-1 --cycles 3000 --graine 7 --nom "Monde né d'Orvane" --sortie amorce.json
 ```
 

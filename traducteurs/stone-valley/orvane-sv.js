@@ -88,8 +88,25 @@ async function charger() {
   // monde, ce que la graine met sur l'île aussi (les bêtes déjà là restent, les suivantes suivent le monde)
   if (S.applique && S.courant && S.applique !== identite(S.courant) + '|' + S.courant.cycle.n) {
     const autre = !S.applique.startsWith(identite(S.courant) + '|');
-    try { orvaneAppliquer(); if (autre && typeof tirerBestiaire === 'function' && typeof especesIle !== 'undefined') especesIle = tirerBestiaire(); } catch (e) { }
+    try { orvaneAppliquer(); if (autre && typeof tirerBestiaire === 'function' && typeof especesIle !== 'undefined') { especesIle = tirerBestiaire(); repeuplerIle(); } } catch (e) { }
   }
+}
+
+// L'île peuplée d'après un autre monde (celui d'avant, ou l'abrégé gardé) quand le monde d'Orvane arrive : dans un monde au
+// bestiaire d'Orvane, ses bêtes sauvages de la faune du jeu que le monde n'a pas s'en vont, et les lignées du monde viennent à
+// leur place, comme à l'arrivée sur une île neuve. Sans cela, les naissances perpétuaient l'ancienne faune tout le temps de
+// l'île. Les compagnes, les automates, les boss ne bougent pas ; la faune partagée repart de là (faune.js).
+function repeuplerIle() {
+  if (S.profil?.exposition?.bestiaire !== 'orvane' || typeof beasts === 'undefined' || typeof poser !== 'function' || typeof capEsp !== 'function'
+    || typeof especesIle === 'undefined' || typeof SPEC === 'undefined') return 0;
+  const part = b => b && b.sp && !b.tame && !b.dead && !b.sp.orvane && Corr.FAUNE?.[b.sp.id] && !especesIle.has(b.sp.id);
+  for (let k = beasts.length - 1; k >= 0; k--) if (part(beasts[k])) beasts.splice(k, 1);
+  let n = 0;
+  for (const sp of SPEC) if (sp.orvane && especesIle.has(sp.id)) { const deja = beasts.filter(b => b.sp === sp && !b.dead).length;
+    for (let i = deja; i < Math.round(capEsp(sp) * .75); i++) { const b = poser(sp); if (b) { beasts.push(b); n++; } } }
+  beasts.forEach((b, k) => { b.num = k; });
+  try { if (typeof fauneNouvelleIle === 'function') fauneNouvelleIle(); } catch (e) { }
+  return n;
 }
 
 // --- le temps : l'avancement entre le cycle d'avant (joint à l'instantané) et celui-ci ---
@@ -508,7 +525,7 @@ const hachage = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (Mat
 // --- mise en place ---
 racine.orvaneEspeces = orvaneEspeces; racine.orvaneAppliquer = orvaneAppliquer; racine.orvaneVariante = orvaneVariante; racine.orvaneEvenement = orvaneEvenement;
 racine.orvaneLot = orvaneLot; racine.orvaneEnvoyer = orvaneEnvoyer; racine.orvaneNaissance = orvaneNaissance;
-racine.OrvaneSV = { S, conduitesPour, loiQ, tirerQuant, quantMots, apprisDe, apprisFuite, heriter, zoneHybride, hybrider, charger, avancement, effectifSur, biomesIle, releverRencontres, inscrireLignees, definir, enregistrer, especeDeSecours, ancetreJeu, nomJeu, CAUSES_JOUEUR, SEUIL_CORPS };
+racine.OrvaneSV = { S, repeuplerIle, conduitesPour, loiQ, tirerQuant, quantMots, apprisDe, apprisFuite, heriter, zoneHybride, hybrider, charger, avancement, effectifSur, biomesIle, releverRencontres, inscrireLignees, definir, enregistrer, especeDeSecours, ancetreJeu, nomJeu, CAUSES_JOUEUR, SEUIL_CORPS };
 lire();
 if (typeof window !== 'undefined' && typeof fetch === 'function') { charger(); setInterval(releverRencontres, PERIODE_RENCONTRE); }
 })(globalThis);
