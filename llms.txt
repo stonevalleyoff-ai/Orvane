@@ -1,0 +1,37 @@
+# Orvane
+
+> Orvane est un moteur d'écosystème et d'évolution qui fait vivre un seul monde partagé par tous les jeux. Le monde compte 24 biomes et plus d'une centaine de lignées inventées par l'évolution, et il avance d'un cycle chaque nuit. Un jeu s'y branche en trois temps : il s'inscrit pour recevoir une clé, il lit le monde publié en JSON, et il renvoie ce que font ses joueurs dans le Supabase d'Orvane. La documentation est en français ; le guide de branchement finit par un résumé en anglais.
+>
+> Orvane is an ecosystem and evolution engine running one shared living world that any game can plug into: register for a key, read the world as JSON, report player actions back through Supabase.
+
+Points essentiels :
+- Le monde se lit sans clé, avec CORS ouvert : https://stonevalleyoff-ai.github.io/orvane/mondes/orvane/instantane.json
+- Supabase d'Orvane : https://rospodujiyltmxitykwc.supabase.co ; clé publique du projet, à mettre dans l'en-tête `apikey` : sb_publishable_F98uYIaPrLTjhj3n7QiBOg_SOtFynn8
+- Fonctions, appelées en `POST /rest/v1/rpc/<fonction>` : `orvane_inscrire_jeu`, `orvane_regler_jeu`, `orvane_deposer`, `orvane_jeu`. Elles répondent toujours `{"ok": true|false, …}`, avec HTTP 200 dans les deux cas.
+- La clé d'administration (`orvadm_…`) ne va jamais dans un jeu publié.
+- Licence : PolyForm Shield 1.0.0 (https://polyformproject.org/licenses/shield/1.0.0). Brancher un jeu, même commercial, et copier le tampon, les schémas ou un traducteur dans un jeu sont permis, avec la ligne « Required Notice: Copyright StoneValley (https://github.com/stonevalleyoff-ai/orvane) ». Fournir un produit concurrent à partir du code d'Orvane ne l'est pas.
+
+## Brancher un jeu
+
+- [Le guide pas à pas](https://raw.githubusercontent.com/stonevalleyoff-ai/orvane/main/BRANCHER-UN-JEU.md) : adresses, appels, exemples, erreurs, liste de vérification, résumé en anglais
+- [La page d'inscription](https://stonevalleyoff-ai.github.io/orvane/inscription/) : recevoir la clé du jeu et la clé d'administration
+
+## Le contrat
+
+- [L'instantané](https://raw.githubusercontent.com/stonevalleyoff-ai/orvane/main/schemas/instantane.schema.json) : le monde publié chaque nuit
+- [Le lot de pressions](https://raw.githubusercontent.com/stonevalleyoff-ai/orvane/main/schemas/pression.schema.json) : ce qu'un jeu renvoie
+- [Le profil](https://raw.githubusercontent.com/stonevalleyoff-ai/orvane/main/schemas/profil.schema.json) : dont l'exposition d'un jeu
+
+## Écrire un traducteur
+
+- [Le mode d'emploi](https://raw.githubusercontent.com/stonevalleyoff-ai/orvane/main/docs/LISEZ-MOI.md) : 13 chapitres
+- [Lire un instantané](https://raw.githubusercontent.com/stonevalleyoff-ai/orvane/main/docs/1-lire-un-instantane.md)
+- [Renvoyer des pressions](https://raw.githubusercontent.com/stonevalleyoff-ai/orvane/main/docs/4-renvoyer-des-pressions.md)
+- [L'exemple Stone Valley](https://raw.githubusercontent.com/stonevalleyoff-ai/orvane/main/docs/6-exemple-stone-valley.md)
+
+## Optional
+
+- [Le dépôt](https://github.com/stonevalleyoff-ai/orvane)
+- [Le fonctionnement, fichier par fichier](https://raw.githubusercontent.com/stonevalleyoff-ai/orvane/main/LISEZ-MOI.md)
+- [L'hébergement](https://raw.githubusercontent.com/stonevalleyoff-ai/orvane/main/hebergement/LISEZ-MOI.md)
+- [L'observatoire](https://stonevalleyoff-ai.github.io/orvane/monde/?monde=orvane) : le monde vu de l'intérieur (page interactive)

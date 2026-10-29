@@ -47,6 +47,8 @@ Les fiches des lignées sont gardées en mémoire locale : une compagne liée ga
 
 **Le dessin (§219 du jeu).** `sp.orvane` porte aussi la masse (`masse`) et le régime (`regime`) de la lignée : le jeu en tire sa silhouette (un brouteur au long cou, un chasseur bas, un lourd épais, un poisson fuselé).
 
+**La paroi et le vol (§220 du jeu).** Une lignée sans ancêtre dans le jeu ne prend à sa fiche que sa conduite : elle ne grimpe que si elle a le mode `grimpe` (`sp.grimpe`), et elle vole si elle a le mode `vol` (`sp.orvane.vol`) : au sol selon sa fiche, en l'air pour fuir, se promener ou gagner une proie (`orvaneVol`, appelée par `majBete`).
+
 **Jeu → Orvane.** `orvaneEvenement('prelevement', b, cause)` dans `mourirBete()` : comptent les armes, les sorts, les tours et les **compagnes** du joueur ; pas la faim, pas la cause `proie` (une bête de l'île qui en tue une autre : Orvane simule déjà la prédation). `orvaneEvenement('capture', b)` dans `lier()`, et les rencontres relevées toutes les dix secondes (une bête sauvage à moins de douze pas, comptée une fois). Le biome noté est celui de la bête. Le tout s'accumule en un lot (`orvaneLot()`), gardé en `localStorage`, poussé par `orvaneEnvoyer(rpc, Compte.uid)` après une sauvegarde réussie — **une fois par demi-heure au plus** (le serveur en accepte 48 par jour) ; un refus garde le lot, une panne réessaie dans cinq minutes.
 
 **Un monde refait de zéro.** L'identité d'un monde, c'est son id et sa naissance (`monde.ne`, posée par le premier cycle). Si le monde publié change de naissance, le traducteur repart de sa nouvelle génération 0, même si son numéro de cycle est plus petit.

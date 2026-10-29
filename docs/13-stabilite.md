@@ -3,7 +3,7 @@
 Un monde Orvane avance d'un cycle par nuit. Mille cycles, c'est près de trois ans de nuits. Avant d'aller plus loin (phase 2 : l'espace, la flore), il faut savoir ce que le moteur tient sur cette durée. Il ne doit ni s'emballer ni s'effondrer, avec ou sans joueurs. Les ajouts de la phase 1 doivent démarrer neutres. La sélection doit répondre comme le dit la génétique, et tout doit rester déterministe.
 
 ```
-node bancs/stabilite.js                      # mille cycles de sv-1, trois cents du monde d'Orvane : quelques minutes
+node bancs/stabilite.js                      # mille cycles de sv-1, trois cents du monde de genèse : six à sept minutes
 node bancs/stabilite.js --court              # deux cents cycles : deux minutes
 node bancs/stabilite.js --monde mon-monde --genese '' --sortie rapport.json
 ```
@@ -14,7 +14,7 @@ Le banc du jeu (`traducteurs/stone-valley/banc.js`, 67 vérifications) vérifie 
 
 1. **Mille cycles sans joueurs** (sv-1). À chaque relevé, les nombres doivent être sains : effectifs, fréquences qui somment à 1, allèles, traits continus, méfiance, organes. Aucune espèce du départ ne doit s'éteindre. Chacune doit rester entre le dixième et dix fois son effectif de départ, et le monde ne doit pas dériver sur la seconde moitié. Les sursauts brusques (une population qui gagne 40 % ou perd 25 % en un cycle) sont comptés.
 2. **Mille cycles de chasse**. Dix joueurs passent chaque soir. Ils chassent quatre espèces, les plus grandes bêtes d'abord, et en croisent trois autres sans rien faire. Comme dans un jeu, ils croisent moins de bêtes quand il y en a moins, et en prennent moins quand elles fuient de loin (la méfiance, docs/12). Ils prennent chaque soir 0,6 % de la population de départ, et 0,3 % pour le bosseu, qui se reproduit à peine plus qu'il ne meurt. Puis les joueurs partent pour soixante cycles.
-3. **Un monde de genèse** pendant 300 cycles : sa diversité, ses lignées à organes, ses sursauts. C'était genese-7 ; c'est désormais le monde d'Orvane (`--genese orvane`, avec ses propres règles, `monde.regles`).
+3. **Un monde de genèse** (genese-7, 99 lignées) pendant 300 cycles : sa diversité, ses lignées à organes, ses sursauts.
 4. **Le jour un**. Un cycle avec ou sans les ajouts de la phase 1 (génétique continue, allèles, hybrides, méfiance) doit donner presque le même monde. Cent cycles plus tard aussi.
 5. **La réponse à la sélection**. On fait tourner deux mondes jumeaux. Dans l'un, les joueurs prennent 3 % des brouteurs de prairie parmi les plus grands, le dixième du haut. Dans l'autre, ils en prennent autant au hasard : même nombre de morts, même densité. L'écart de taille moyenne entre les deux est comparé à l'équation du sélectionneur, R = h² × S, cumulée cycle après cycle sur la part de la population qui a survécu.
 6. **Le déterminisme**. Deux fois quarante cycles de chasse depuis le même état doivent donner le même monde, au caractère près (empreinte SHA-256).
@@ -57,16 +57,6 @@ Le plus lourd des volants pèse alors 1,7 kg, et seules 13 lignées sur 105 ont 
 Sur 900 cycles, il reste alors quelques vrais carnivores, bien nourris (satiété 0,67), de 0,7 à 10 kg. Les herbivores sont 45 millions, les omnivores 34 millions. Les carnivores sont rares, comme il se doit au sommet d'une chaîne.
 
 **Des filtreurs dans la prairie.** Le régime d'un filtreur pouvait dériver comme les autres, vers l'herbivore ou le carnivore. La nage pouvait aussi se perdre : un filtreur marin de 71 kg finissait par courir dans la prairie. Un filtreur garde désormais son régime (le détritivore aussi), ne perd pas la nage, et ne vit que dans l'eau : rivière, lac, mer, ou les rives (`convenance`).
-
-**Deux prédateurs sur 123 lignées.** Même après ces corrections, la genèse ne gardait presque pas de carnivores. Les essais (des genèses de 900 cycles, `ORVANE_TRACE=1` pour compter qui naît et qui meurt par régime) ont trouvé quatre causes :
-- les omnivores chassaient comme s'ils ne mangeaient que de la viande : ils prenaient cent fois plus de proies que les carnivores. Un omnivore ne cherche plus en viande que 30 % de ce qu'il mange (`viande_omnivore`), et tire des plantes 60 % de ce qu'en tire un herbivore (`omnivore_vegetal_base`) ;
-- un carnivore né d'un petit omnivore à vie brève ne vivait pas assez pour se nourrir. Ses petits naissent de la viande mangée, au plus `conversion × besoin × masse^-0,25` par tête et par cycle ; il reçoit désormais au moins 1,6 fois la vie que cela demande (`longevite_predateur`). Les ancêtres prédateurs ont une longévité qui suit leur masse ;
-- `estomac-large` restait une aubaine : il coûte 20 % de fécondité (au lieu de 5 %), et un carnivore qui digère les plantes n'en tire que 20 % (`omnivore_vegetal`) ;
-- la genèse rayait les lignées rares sans tenir compte de leur étage : un prédateur pèse naturellement bien moins que ses proies. Sa biomasse compte désormais trente fois (`--etage 30`).
-
-Sauf le coût d'`estomac-large` (le catalogue, pour tous), ces règles sont celles du monde d'Orvane, pas du moteur : la genèse les écrit dans le monde (`monde.regles`) et chaque cycle les applique, où qu'il tourne ; sv-1 garde les siennes. Le monde d'Orvane (900 cycles) a 112 lignées après son rodage, dont 13 vrais carnivores de 0,2 à 16 kg, bien nourris (satiété 0,7), sur 18 biomes. Au-delà de 900 cycles, les herbivores remplissent la place laissée aux lignées et la part des carnivores retombe (10 sur 190 à 1 400 cycles).
-
-Sur 100 cycles, le monde fait 128 sursauts pour 668 populations, 0,2 % des populations par cycle : de petits herbivores de moins d'un kilo qui suivent les saisons. Le banc les mesure désormais à la taille du monde (moins de 0,5 % des populations par cycle).
 
 ## Ce qu'ils montrent, et qui reste à faire
 

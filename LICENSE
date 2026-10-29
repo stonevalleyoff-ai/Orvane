@@ -1,0 +1,34 @@
+Orvane
+Copyright StoneValley
+
+Ce dépôt (le moteur, le tampon, les traducteurs, les schémas, les mondes et la documentation) est
+distribué sous la licence PolyForm Shield 1.0.0. Seul son texte fait foi :
+
+    https://polyformproject.org/licenses/shield/1.0.0
+
+Required Notice: Copyright StoneValley (https://github.com/stonevalleyoff-ai/orvane)
+
+
+En clair : ce résumé aide à lire la licence et n'a pas de valeur juridique ; seul le texte ci-dessus en a.
+
+Ce qui est permis, à tous, sans rien demander :
+- brancher n'importe quel jeu sur le monde d'Orvane, y compris un jeu commercial ou au code fermé ;
+- copier dans son jeu le tampon, les schémas ou un traducteur, et les adapter ;
+- lire le code, le modifier pour son propre usage, l'étudier, s'en inspirer ;
+- redistribuer le code, modifié ou non, à condition de joindre cette licence (ou son adresse) et la
+  ligne « Required Notice » ci-dessus.
+
+Ce qui ne l'est pas :
+- se servir du code d'Orvane pour fournir un produit qui lui fait concurrence : un autre moteur
+  d'écosystème et d'évolution, un autre monde partagé où brancher des jeux, une copie d'Orvane sous
+  un autre nom. Peu importe que ce produit soit gratuit, ou qu'il soit écrit dans un autre langage.
+Un jeu qui se branche sur Orvane ne lui fait pas concurrence : il s'en sert.
+
+Le logiciel est fourni tel quel, sans garantie d'aucune sorte.
+
+
+In plain English (not legal text; only the licence above is binding): anyone may use Orvane freely,
+including in commercial or closed-source games, and may copy and adapt the buffer, schemas and
+translators into their game, provided this licence (or its URL) and the Required Notice line come
+along. What is not allowed is using Orvane's code to provide a competing product, such as another
+ecosystem engine, another shared world for games, or a renamed copy of Orvane.

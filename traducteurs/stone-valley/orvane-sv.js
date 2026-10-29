@@ -168,6 +168,11 @@ function appliquerDef(sp, def, base) {
   sp.id = def.id; sp.n = def.nom;
   sp.orvane = { taxon: def.id, base: def.base, gabarit: def.gabarit, genere: !!def.genere && typeof osOrvane === 'function', corps: def.corps, traits: def.traits || [], locomotion: def.locomotion || [],
     masse: def.masse, regime: def.regime || ({ c: 'carnivore', h: 'herbivore', o: 'omnivore' })[base.diet] || 'omnivore' };   // (§219) le dessin lit sa masse et son régime
+  if (def.gabarit) {                                                  // (§220) sa fiche ne lui prête que sa conduite : elle grimpe et vole
+    const loco = def.locomotion || [];                                //   selon ses propres modes, pas selon ceux de sa fiche
+    sp.grimpe = loco.includes('grimpe') ? Math.max(base.grimpe || 0, .6) : 0;
+    sp.orvane.vol = loco.includes('vol');
+  }
   const k = def.gabarit ? 1 : clamp(Math.cbrt((def.masse || 1) / (def.masseRef || 1)), .6, 1.7);
   // (une lignée sans ancêtre du jeu : sa taille suit le logarithme de sa masse, de 0,5 pour un insecte de 10 g à 1,6 pour une bête
   // de 100 kg — à la racine cubique, presque tout le monde d'Orvane, qui pèse de 20 g à 5 kg, aurait la taille d'un caillou)
@@ -326,6 +331,49 @@ function garantirChasseur(ile) {
   if (C.some(sp => sp.cap > 0)) return;
   const best = C.map(sp => [sp, presenceSur(S.courant, sp.orvane.taxon, ile)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1])[0];
   if (best) { best[0].cap = 2; POIDS_ESPECE[best[0].id] = .25; chasseurLoin(best[0]); }
+}
+// (§220) UNE LIGNÉE QUI VOLE. Au sol, elle suit la conduite de sa fiche (brouter, glaner, chasser). Elle s'envole pour fuir,
+// pour une balade (plus souvent et plus longue chez un chasseur, qui plane), ou, chasseuse, pour gagner une proie éloignée,
+// sur laquelle elle fond avant de se poser. En l'air, elle vole comme la sterne (volerVers) ; pour se poser, il lui faut un
+// sol sec. Morte, elle tombe (chute) ; liée ou montée, elle marche. Rend true quand elle a vécu l'image en l'air.
+function orvaneVol(b, dt) {
+  if (b.dead || b.tame || b.as || typeof volerVers !== 'function') { if (b.enVol) { b.enVol = false; b.roll = 0; b.bat = 0; } return false; }
+  const sp = b.sp, chasseur = sp.diet === 'c', cible = b.cible && !b.cible.dead ? b.cible : null;
+  const dC = cible ? Math.hypot(cible.x - b.x, cible.y - b.y) : 1e9;
+  if (!b.enVol) {
+    const fuit = b.etat === 'fuir' || (b.alarm || 0) > .6, gagne = cible && dC > 6 && (b.etat === 'chasser' || b.etat === 'traquer');
+    const balade = b.etat === 'errer' && Math.random() < dt / (chasseur ? 14 : 35);
+    if (!fuit && !gagne && !balade) return false;
+    b.enVol = true; b.vz = 3.4; b.v = 2.2; b.bat = 1; b.ph = 0; b.roll = 0; b.volC = [b.x, b.y]; b.volA = Math.random() * 6.28;
+    b.volM = fuit ? 'fuir' : gagne ? 'chasse' : 'balade'; b.volT = fuit ? 5 + Math.random() * 4 : gagne ? 14 : (chasseur ? 14 : 7) + Math.random() * (chasseur ? 22 : 10);
+    try { if (typeof burst === 'function') burst(b.x, b.y, b.z + .2, 4, '#e8e4dc'); } catch (e) { }
+  }
+  b.t += dt; b.age += dt; b.bob += dt * 2; b.volT -= dt;
+  if (b.hit > 0) b.hit -= dt;
+  if (b.alarm > 0) b.alarm -= dt * .3;
+  const h = Math.max(3.5, Math.min(8, 2.5 + sp.sz * 3.5)), J = P, sH = sol(b.x, b.y);
+  if (b.hit > 0 && b.volM !== 'fuir') { b.volM = 'fuir'; b.volT = Math.max(b.volT, 5); }
+  let tx, ty, tz = sH + h, v = 3.2, mode = 'plane';
+  if (b.volM === 'chasse' && cible && b.volT > 0) {                   // vers la proie, puis le piqué ; tout près, elle se pose et mord
+    tx = cible.x; ty = cible.y; mode = dC > 5 ? 'bat' : 'pose'; v = dC > 5 ? 5 : 3; if (dC < 8) tz = sol(cible.x, cible.y) + .3 + dC * .25;
+    if (dC < 1.4 && b.z < sol(b.x, b.y) + .7) return orvanePoser(b, 'chasser');
+  } else if (b.volM === 'fuir' && b.volT > 0) {
+    const a = Math.atan2(b.y - J.y, b.x - J.x); tx = b.x + Math.cos(a) * 8; ty = b.y + Math.sin(a) * 8; v = 5.2; mode = 'bat';
+  } else if (b.volT > 0) {                                            // la balade : en cercle autour d'où elle est partie
+    b.volA += dt * v / 6; tx = b.volC[0] + Math.cos(b.volA) * 6; ty = b.volC[1] + Math.sin(b.volA) * 6;
+  } else {                                                            // se poser : là où elle est, si c'est sec ; sinon d'où elle est partie
+    const i = (b.y | 0) * WS + (b.x | 0), mouille = Hgt[i] <= SEA || (typeof Eau !== 'undefined' && Eau[i]);
+    if (mouille) { tx = b.volC[0]; ty = b.volC[1]; v = 3.6; mode = 'bat'; }
+    else { tx = b.x + Math.cos(b.dir) * 1.5; ty = b.y + Math.sin(b.dir) * 1.5; tz = sH; v = 1.6; mode = 'pose'; if (b.z < sH + .35) return orvanePoser(b, 'errer'); }
+  }
+  volerVers(b, tx, ty, tz, v, mode, dt);
+  const fl = (typeof hRendu === 'function' ? hRendu(b.x, b.y) : sol(b.x, b.y)) + .2;
+  if (b.z < fl) { b.z = fl; if (b.vz < 0) b.vz = 0; }
+  return true;
+}
+function orvanePoser(b, etat) {
+  b.enVol = false; b.z = sol(b.x, b.y); b.vz = 0; b.v = 0; b.vit = 0; b.bat = 0; b.roll = 0; b.tang = 0; b.etat = etat; b.alarm = Math.min(b.alarm || 0, .4);
+  return false;
 }
 // le tirage de l'île (bestiaireGraine) : au moins un chasseur dès la troisième exploration, deux dès la huitième
 function orvaneTirage(e, graine, niv, okR) {
@@ -628,7 +676,7 @@ const hachage = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (Mat
 // --- mise en place ---
 racine.orvaneEspeces = orvaneEspeces; racine.orvaneAppliquer = orvaneAppliquer; racine.orvaneVariante = orvaneVariante; racine.orvaneEvenement = orvaneEvenement;
 racine.orvaneTirage = orvaneTirage; racine.orvaneArrivee = orvaneArrivee; racine.orvaneTrophee = orvaneTrophee; racine.orvanePhoto = orvanePhoto;
-racine.orvaneRelire = orvaneRelire; racine.orvaneCarnetLignees = orvaneCarnetLignees;
+racine.orvaneRelire = orvaneRelire; racine.orvaneCarnetLignees = orvaneCarnetLignees; racine.orvaneVol = orvaneVol;
 racine.orvaneLot = orvaneLot; racine.orvaneEnvoyer = orvaneEnvoyer; racine.orvaneNaissance = orvaneNaissance;
 racine.OrvaneSV = { S, repeuplerIle, rangsRarete, ligneesDuJeu, garantirChasseur, conduitesPour, loiQ, tirerQuant, quantMots, apprisDe, apprisFuite, heriter, zoneHybride, hybrider, charger, avancement, effectifSur, biomesIle, releverRencontres, inscrireLignees, definir, enregistrer, especeDeSecours, ancetreJeu, nomJeu, CAUSES_JOUEUR, SEUIL_CORPS };
 lire();

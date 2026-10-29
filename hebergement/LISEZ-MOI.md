@@ -43,6 +43,8 @@ Le secret de lecture n'est gardé que par son empreinte, dans un schéma que l'A
 
 ## Brancher un jeu
 
+Le guide pas à pas, avec les adresses, les appels et les erreurs : [BRANCHER-UN-JEU.md](../BRANCHER-UN-JEU.md). Pour s'inscrire sans écrire de code : la page `inscription/` du site publié (`https://<compte>.github.io/orvane/inscription/`).
+
 1. **S'inscrire** : appeler `orvane_inscrire_jeu` (`POST https://<projet>.supabase.co/rest/v1/rpc/orvane_inscrire_jeu`, en-tête `apikey` : la clé publique du projet, corps `{"p_nom": "Mon jeu"}`). Garder la clé d'administration.
 2. **Dire ce qu'on montre** : `orvane_regler_jeu` avec l'exposition du jeu. Sans exposition, le jeu est lu « tel quel ».
 3. **Lire le monde** : `https://<compte>.github.io/orvane/mondes/orvane/instantane.json` (docs/1), `generation-0.json` pour le mode relatif, `jeux.json` pour son exposition.

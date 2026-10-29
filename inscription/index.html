@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Brancher un jeu — Orvane</title>
+<meta name="description" content="Inscrire son jeu sur Orvane et recevoir ses clés pour le Supabase d'Orvane.">
+<style>
+:root {
+  --fond:#121a17; --surface:#18221e; --surface2:#1f2b26; --ligne:#2d3b35; --texte:#e9efe6; --sourd:#97a69d;
+  --ambre:#e0a54a; --vif:#8fcf8a; --declin:#e58a73;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing:border-box; }
+html, body { margin:0; background:var(--fond); color:var(--texte); font:15px/1.55 var(--sans); -webkit-text-size-adjust:100%; }
+a { color:var(--ambre); }
+button, input, textarea { font:inherit; color:inherit; }
+:focus-visible { outline:2px solid var(--ambre); outline-offset:2px; }
+h1, h2 { font-family:var(--serif); font-weight:600; letter-spacing:.01em; line-height:1.2; }
+h1 { font-size:30px; margin:28px 0 10px; }
+h2 { font-size:20px; margin:0 0 6px; }
+.tete { border-bottom:1px solid var(--ligne); padding:12px 16px; }
+.tete div { max-width:760px; margin:0 auto; display:flex; align-items:center; gap:12px; }
+.marque { font:600 19px/1 var(--serif); letter-spacing:.02em; color:var(--texte); text-decoration:none; }
+.tete .lien { margin-left:auto; font-size:13px; color:var(--sourd); }
+main { max-width:760px; margin:0 auto; padding:0 16px 48px; }
+.chapeau { color:var(--sourd); margin:0 0 24px; max-width:62ch; }
+.carte { background:var(--surface); border:1px solid var(--ligne); border-radius:10px; padding:20px; margin:0 0 18px; }
+.carte > p { margin:0 0 14px; color:var(--sourd); }
+label { display:block; font-size:13px; color:var(--sourd); margin:12px 0 4px; }
+label b { color:var(--texte); font-weight:600; }
+input[type=text], input[type=password], textarea { width:100%; background:var(--fond); border:1px solid var(--ligne); border-radius:8px; padding:10px 12px; }
+input:focus, textarea:focus { border-color:var(--ambre); outline:none; }
+textarea { font:13px/1.5 var(--mono); min-height:200px; resize:vertical; }
+.actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:16px; }
+button { background:var(--ambre); color:#1b1408; border:0; border-radius:8px; padding:10px 18px; font-weight:600; cursor:pointer; }
+button.second { background:var(--surface2); color:var(--texte); border:1px solid var(--ligne); font-weight:500; }
+button:disabled { opacity:.55; cursor:default; }
+.etat { font-size:14px; min-height:1.5em; }
+.etat.ok { color:var(--vif); } .etat.err { color:var(--declin); }
+.cle { margin:14px 0 0; }
+.cle .nom { font-size:13px; color:var(--sourd); margin-bottom:4px; }
+.cle .nom b { color:var(--texte); }
+.cle .val { display:flex; gap:8px; align-items:stretch; }
+.cle code { flex:1; min-width:0; overflow-wrap:anywhere; background:var(--fond); border:1px solid var(--ligne); border-radius:8px; padding:9px 12px; font:13px/1.45 var(--mono); }
+.cle button { padding:8px 12px; }
+.secret code { border-color:var(--declin); }
+.alerte { border-left:3px solid var(--declin); background:var(--surface2); padding:10px 14px; border-radius:0 8px 8px 0; margin:16px 0 0; font-size:14px; }
+pre { background:var(--fond); border:1px solid var(--ligne); border-radius:8px; padding:12px; overflow-x:auto; font:12.5px/1.5 var(--mono); margin:8px 0 0; }
+ol.etapes { margin:8px 0 0; padding-left:22px; } ol.etapes li { margin:0 0 14px; } ol.etapes li > span { color:var(--sourd); }
+dl.fiche { display:grid; grid-template-columns:max-content 1fr; gap:4px 14px; margin:14px 0 0; font-size:14px; }
+dl.fiche dt { color:var(--sourd); } dl.fiche dd { margin:0; overflow-wrap:anywhere; }
+[hidden] { display:none !important; }
+footer { color:var(--sourd); font-size:13px; border-top:1px solid var(--ligne); padding-top:16px; margin-top:28px; }
+@media (max-width:520px) { h1 { font-size:25px; } .carte { padding:16px; } .cle .val { flex-direction:column; } }
+</style>
+</head>
+<body>
+<header class="tete"><div><a class="marque" href="../">Orvane</a><a class="lien" href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">Le guide complet</a></div></header>
+<main>
+<h1>Brancher un jeu</h1>
+<p class="chapeau">Orvane fait vivre un seul monde, et tous les jeux s'y branchent. Chaque jeu lit le monde chaque nuit, et y renvoie ce que font ses joueurs. Inscrivez votre jeu pour recevoir ses deux clés.</p>
+
+<section class="carte" id="cInscrire" aria-labelledby="tInscrire">
+  <h2 id="tInscrire">Inscrire un jeu</h2>
+  <p>Vous recevrez la clé du jeu, qui va dans son code, et la clé d'administration, qui le règle et ne s'affiche qu'une fois.</p>
+  <form id="fInscrire" novalidate>
+    <label for="iNom"><b>Nom du jeu</b> · 2 à 60 caractères</label>
+    <input type="text" id="iNom" name="nom" minlength="2" maxlength="60" required autocomplete="off" placeholder="Mon jeu">
+    <label for="iContact"><b>Contact</b> · facultatif : un courriel ou un lien, pour qu'Orvane puisse vous écrire</label>
+    <input type="text" id="iContact" name="contact" maxlength="200" autocomplete="email" placeholder="moi@exemple.fr">
+    <div class="actions"><button type="submit" id="bInscrire">Inscrire le jeu</button><span class="etat" id="eInscrire" role="status" aria-live="polite"></span></div>
+  </form>
+</section>
+
+<section class="carte" id="cCles" aria-labelledby="tCles" hidden>
+  <h2 id="tCles">Les clés de <span id="kNomJeu"></span></h2>
+  <dl class="fiche"><dt>Identifiant</dt><dd><code id="kJeu"></code></dd></dl>
+  <div class="cle"><div class="nom"><b>Clé du jeu</b> · publique : elle va dans le code du jeu, elle signe ses dépôts</div>
+    <div class="val"><code id="kCle"></code><button type="button" class="second" data-copier="kCle">Copier</button></div></div>
+  <div class="cle secret"><div class="nom"><b>Clé d'administration</b> · secrète : elle règle le jeu, elle ne va jamais dans le jeu</div>
+    <div class="val"><code id="kAdmin"></code><button type="button" class="second" data-copier="kAdmin">Copier</button></div></div>
+  <p class="alerte">Orvane ne garde que l'empreinte de la clé d'administration : elle ne s'affichera plus, et perdue, elle ne se retrouve pas. Rangez-la maintenant, dans un gestionnaire de mots de passe ou dans le fichier ci-dessous.</p>
+  <div class="actions"><button type="button" id="bTelecharger">Télécharger mes clés</button><span class="etat" id="eCles" role="status" aria-live="polite"></span></div>
+
+  <h2 style="margin-top:28px">Les étapes suivantes</h2>
+  <ol class="etapes">
+    <li><b>Lire le monde</b> <span>: chaque jour, sans clé. Il est publié à 03:17 UTC.</span>
+<pre id="pLire"></pre></li>
+    <li><b>Traduire</b> <span>: relier les terrains du jeu aux 24 biomes d'Orvane, et faire de chaque lignée une créature, là où elle vit et en proportion de son effectif.</span></li>
+    <li><b>Renvoyer des pressions</b> <span>: ce que font les joueurs, en comptes bruts, avec la clé du jeu.</span>
+<pre id="pDeposer"></pre></li>
+    <li><b>Régler l'exposition</b> <span>: facultatif, plus bas, avec la clé d'administration.</span></li>
+  </ol>
+  <p style="margin:6px 0 0">Tout le détail, les limites et les erreurs : <a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">le guide « Brancher un jeu sur Orvane »</a>.</p>
+</section>
+
+<section class="carte" id="cRegler" aria-labelledby="tRegler">
+  <h2 id="tRegler">Régler l'exposition</h2>
+  <p>L'exposition dit ce que le jeu sait montrer : la compression des raretés, l'étalement des changements, les traits qu'il sait dessiner. Sans exposition, les lots du jeu sont lus tels quels. Le schéma complet est <a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/schemas/profil.schema.json">profil.schema.json</a>, propriété <code>exposition</code>.</p>
+  <form id="fRegler" novalidate>
+    <label for="iAdmin"><b>Clé d'administration</b></label>
+    <input type="password" id="iAdmin" autocomplete="off" spellcheck="false" placeholder="orvadm_…">
+    <label for="iRenommer"><b>Nouveau nom</b> · facultatif</label>
+    <input type="text" id="iRenommer" maxlength="60" autocomplete="off">
+    <label for="iExpo"><b>Exposition</b> · un objet JSON, 32 Ko au plus</label>
+    <textarea id="iExpo" spellcheck="false">{
+  "compression": { "defaut": 0.1 },
+  "propagation_cycles": 3,
+  "inertie_max": 0.05,
+  "traits_rendus": ["albinisme", "melanisme", "gigantisme"]
+}</textarea>
+    <div class="actions"><button type="submit" id="bRegler">Enregistrer</button><span class="etat" id="eRegler" role="status" aria-live="polite"></span></div>
+  </form>
+</section>
+
+<section class="carte" id="cVerifier" aria-labelledby="tVerifier">
+  <h2 id="tVerifier">Vérifier une clé de jeu</h2>
+  <p>Ce qu'Orvane sait d'un jeu, à partir de sa clé publique.</p>
+  <form id="fVerifier" novalidate>
+    <label for="iCle"><b>Clé du jeu</b></label>
+    <input type="text" id="iCle" autocomplete="off" spellcheck="false" placeholder="orv_…">
+    <div class="actions"><button type="submit" class="second" id="bVerifier">Vérifier</button><span class="etat" id="eVerifier" role="status" aria-live="polite"></span></div>
+  </form>
+  <dl class="fiche" id="dJeu" hidden></dl>
+</section>
+
+<footer>Orvane ne reçoit que des comptes, jamais de données personnelles : l'identifiant d'un joueur lui arrive haché, et il n'en garde qu'un pseudonyme. <a href="../">L'observatoire</a> montre le monde vivre.</footer>
+</main>
+<script>
+(() => {
+  const SUPA = 'https://rospodujiyltmxitykwc.supabase.co', PUB = 'sb_publishable_F98uYIaPrLTjhj3n7QiBOg_SOtFynn8';
+  const MONDE = 'https://stonevalleyoff-ai.github.io/orvane/mondes/orvane/';
+  const $ = id => document.getElementById(id);
+  let cles = null, rangees = false;
+
+  async function rpc(fonction, params) {
+    let r;
+    try {
+      r = await fetch(SUPA + '/rest/v1/rpc/' + fonction, { method: 'POST', headers: { apikey: PUB, 'Content-Type': 'application/json' }, body: JSON.stringify(params) });
+    } catch (e) { return { ok: false, erreur: 'Orvane ne répond pas : vérifiez la connexion, puis réessayez.' }; }
+    let j = null; try { j = await r.json(); } catch (e) { }
+    if (!r.ok) return { ok: false, erreur: (j && (j.message || j.erreur)) || 'erreur ' + r.status };
+    return j && typeof j === 'object' ? j : { ok: false, erreur: 'réponse inattendue' };
+  }
+  const dire = (el, texte, ok) => { el.textContent = texte; el.className = 'etat' + (ok === true ? ' ok' : ok === false ? ' err' : ''); };
+
+  function exemples(c) {
+    $('pLire').textContent =
+`const inst = await (await fetch('${MONDE}instantane.json', { cache: 'no-cache' })).json();
+for (const t of inst.taxons) for (const p of t.populations) console.log(t.nom, p.biome, p.effectif);`;
+    $('pDeposer').textContent =
+`await fetch('${SUPA}/rest/v1/rpc/orvane_deposer', { method: 'POST',
+  headers: { apikey: '${PUB}', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ p_cle: '${c.cle}', p_compte: compteOpaque, p_lot: {
+    orvane: '0.1', monde: 'orvane', instantane: inst.cycle.n,
+    source: { jeu: '${c.jeu}', compte: compteOpaque },
+    periode: { debut: '2026-10-29T18:00:00Z', fin: '2026-10-29T19:00:00Z' },
+    evenements: [{ taxon: 'dunvi', biome: 'savane', action: 'rencontre', n: 12 }] } }) });`;
+  }
+
+  $('fInscrire').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const nom = $('iNom').value.trim(), contact = $('iContact').value.trim(), e = $('eInscrire');
+    if (nom.length < 2 || nom.length > 60) { dire(e, 'Le nom du jeu fait de 2 à 60 caractères.', false); $('iNom').focus(); return; }
+    $('bInscrire').disabled = true; dire(e, 'Inscription…');
+    const r = await rpc('orvane_inscrire_jeu', { p_nom: nom, p_contact: contact || null });
+    if (!r.ok) { $('bInscrire').disabled = false; dire(e, r.erreur || 'L\'inscription a échoué.', false); return; }
+    cles = { jeu: r.jeu, nom, cle: r.cle, cle_admin: r.cle_admin }; rangees = false;
+    dire(e, 'Jeu inscrit.', true);
+    $('kNomJeu').textContent = nom; $('kJeu').textContent = r.jeu; $('kCle').textContent = r.cle; $('kAdmin').textContent = r.cle_admin;
+    $('iAdmin').value = r.cle_admin; $('iCle').value = r.cle;
+    exemples(cles);
+    $('cCles').hidden = false; $('fInscrire').querySelectorAll('input').forEach(i => i.disabled = true);
+    $('cCles').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  document.addEventListener('click', async ev => {
+    const b = ev.target.closest('[data-copier]'); if (!b) return;
+    const texte = $(b.dataset.copier).textContent;
+    try { await navigator.clipboard.writeText(texte); }
+    catch (e) { const s = getSelection(), rg = document.createRange(); rg.selectNodeContents($(b.dataset.copier)); s.removeAllRanges(); s.addRange(rg); try { document.execCommand('copy'); } catch (e2) { } }
+    if (b.dataset.copier === 'kAdmin') rangees = true;
+    const avant = b.textContent; b.textContent = 'Copiée'; setTimeout(() => { b.textContent = avant; }, 1600);
+  });
+
+  $('bTelecharger').addEventListener('click', () => {
+    if (!cles) return;
+    const fiche = { jeu: cles.jeu, nom: cles.nom, cle: cles.cle, cle_admin: cles.cle_admin,
+      note: 'cle : dans le code du jeu. cle_admin : secrète, jamais dans le jeu (orvane_regler_jeu).',
+      supabase: SUPA, apikey: PUB, monde: MONDE, guide: 'https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md',
+      inscrit: new Date().toISOString() };
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(fiche, null, 2)], { type: 'application/json' }));
+    a.download = 'orvane-' + cles.jeu + '.json'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    rangees = true; dire($('eCles'), 'Fichier téléchargé : gardez-le hors du code du jeu.', true);
+  });
+
+  addEventListener('beforeunload', ev => { if (cles && !rangees) { ev.preventDefault(); ev.returnValue = ''; } });
+
+  $('fRegler').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const e = $('eRegler'), adm = $('iAdmin').value.trim(), texte = $('iExpo').value.trim(), nom = $('iRenommer').value.trim();
+    if (!adm) { dire(e, 'Il faut la clé d\'administration.', false); $('iAdmin').focus(); return; }
+    let expo = null;
+    if (texte) {
+      try { expo = JSON.parse(texte); } catch (err) { dire(e, 'L\'exposition n\'est pas du JSON valide : ' + err.message, false); return; }
+      if (!expo || typeof expo !== 'object' || Array.isArray(expo)) { dire(e, 'L\'exposition doit être un objet JSON.', false); return; }
+      if (new Blob([texte]).size > 32768) { dire(e, 'L\'exposition dépasse 32 Ko.', false); return; }
+    }
+    if (!expo && !nom) { dire(e, 'Rien à enregistrer : une exposition ou un nouveau nom.', false); return; }
+    $('bRegler').disabled = true; dire(e, 'Enregistrement…');
+    const r = await rpc('orvane_regler_jeu', { p_cle_admin: adm, p_exposition: expo, p_nom: nom || null });
+    $('bRegler').disabled = false;
+    dire(e, r.ok ? 'Enregistré pour ' + r.jeu + ' : la nuit prochaine, le cycle lira vos lots avec cette exposition.' : r.erreur || 'L\'enregistrement a échoué.', !!r.ok);
+  });
+
+  $('fVerifier').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const e = $('eVerifier'), cle = $('iCle').value.trim(), d = $('dJeu');
+    d.hidden = true; d.replaceChildren();
+    if (!cle) { dire(e, 'Il faut la clé du jeu.', false); $('iCle').focus(); return; }
+    $('bVerifier').disabled = true; dire(e, 'Vérification…');
+    const r = await rpc('orvane_jeu', { p_cle: cle });
+    $('bVerifier').disabled = false;
+    if (!r.ok) { dire(e, r.erreur || 'La vérification a échoué.', false); return; }
+    dire(e, 'Clé reconnue.', true);
+    const expo = r.exposition && typeof r.exposition === 'object' ? Object.keys(r.exposition).join(', ') : 'aucune : ses lots sont lus tels quels';
+    for (const [k, v] of [['Identifiant', r.jeu], ['Nom', r.nom], ['État', r.actif ? 'actif' : 'suspendu'], ['Exposition', expo]]) {
+      const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v == null ? '' : String(v); d.append(dt, dd);
+    }
+    d.hidden = false;
+  });
+})();
+</script>
+</body>
+</html>

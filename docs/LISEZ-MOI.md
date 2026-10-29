@@ -2,6 +2,8 @@
 
 Orvane fait vivre un monde : des espèces, des biomes, des populations qui naissent, meurent, migrent, mutent et se séparent. Il ne sait rien de votre jeu. Pour l'y brancher, vous écrivez un **traducteur** : un petit fichier, côté client, qui lit ce qu'Orvane publie et le rend jouable, puis qui renvoie ce que vos joueurs font. Ce guide explique comment, chapitre par chapitre, avec le traducteur de Stone Valley comme exemple de bout en bout.
 
+Pour s'inscrire, recevoir ses clés et faire ses premiers appels au Supabase d'Orvane : [BRANCHER-UN-JEU.md](../BRANCHER-UN-JEU.md) et la [page d'inscription](https://stonevalleyoff-ai.github.io/orvane/inscription/).
+
 | chapitre | ce que vous saurez faire |
 | --- | --- |
 | [1. Lire un instantané](1-lire-un-instantane.md) | comprendre le fichier qu'Orvane publie chaque nuit |

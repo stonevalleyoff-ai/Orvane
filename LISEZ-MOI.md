@@ -1,6 +1,6 @@
 # Orvane — v1
 
-Un moteur d'écosystème et d'évolution, indépendant de tout jeu. Il fait vivre **un seul monde**, le monde d'Orvane, et tous les jeux s'y branchent : chacun le montre à sa façon et y renvoie ce que font ses joueurs, par un **traducteur** (côté jeu), le **tampon** (fourni ici) et le Supabase d'Orvane, sur un contrat en trois objets (`schemas/`). N'importe quel jeu peut s'inscrire et recevoir sa clé : **[hebergement/](hebergement/LISEZ-MOI.md)**. Pour écrire son traducteur : **[docs/](docs/LISEZ-MOI.md)**.
+Un moteur d'écosystème et d'évolution, indépendant de tout jeu. Il fait vivre **un seul monde**, le monde d'Orvane, et tous les jeux s'y branchent : chacun le montre à sa façon et y renvoie ce que font ses joueurs, par un **traducteur** (côté jeu), le **tampon** (fourni ici) et le Supabase d'Orvane, sur un contrat en trois objets (`schemas/`). N'importe quel jeu peut s'inscrire et recevoir ses clés sur la **[page d'inscription](https://stonevalleyoff-ai.github.io/orvane/inscription/)** ; les étapes, les adresses et les appels sont dans **[BRANCHER-UN-JEU.md](BRANCHER-UN-JEU.md)**, et le fonctionnement de l'hébergement dans **[hebergement/](hebergement/LISEZ-MOI.md)**. Pour écrire son traducteur : **[docs/](docs/LISEZ-MOI.md)**.
 
 ```
 moteur/orvane.js      le moteur : instantané + pressions → instantané suivant (Node ou navigateur, zéro dépendance)
@@ -10,7 +10,10 @@ moteur/genese.js      la genèse : des biomes, des ancêtres très simples, des 
 moteur/biomes-universels.json  les 24 biomes neutres du monde d'Orvane : terre, eau douce, mer, sous-sol
 tampon/tampon.js      exposer() Orvane → jeu ; agreger() jeu → Orvane (dénormalisation, plafonds, lissage)
 monde/index.html      l’observatoire : ce que vit un monde (espèces, biomes, lignées, chaîne alimentaire, journal), et une simulation locale
-index.html            l’entrée du site publié : ouvre l’observatoire sur le monde d'Orvane ; mondes/liste.json : les mondes qu’il propose
+BRANCHER-UN-JEU.md    brancher un jeu, pas à pas : s'inscrire, lire le monde, traduire, régler l'exposition, déposer des lots, les erreurs
+inscription/          la page d'inscription : inscrire un jeu et recevoir ses clés, régler son exposition, vérifier une clé
+index.html            la page d'accueil du site publié : ce qu'est Orvane, l'état du monde, l'observatoire, l'inscription, le guide ; mondes/liste.json : les mondes que l'observatoire propose
+README.md, llms.txt   la présentation du dépôt (GitHub l'affiche en page d'accueil) et son résumé pour les IA (liens vers le guide et les schémas)
 schemas/              le contrat : instantane, pression, profil — avec exemples (crapaud buffle)
 traducteurs/stone-valley/   le premier client, de bout en bout : correspondances, traducteur, génération 0, banc, SQL
 bancs/stabilite.js    les bancs de stabilité : mille cycles sans joueurs et avec, le jour un, la réponse à la sélection, le déterminisme

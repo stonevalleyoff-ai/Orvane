@@ -4,11 +4,85 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>Orvane</title>
-<meta http-equiv="refresh" content="0; url=monde/?monde=orvane">
-<style>body { margin:0; padding:24px; background:#121a17; color:#e9efe6; font:16px/1.5 system-ui, sans-serif; } a { color:#e0a54a; }</style>
+<title>Orvane — un monde vivant que tous les jeux partagent</title>
+<meta name="description" content="Orvane est un moteur d'écosystème et d'évolution : un seul monde vivant, 24 biomes et plus d'une centaine de lignées, où n'importe quel jeu peut se brancher.">
+<meta property="og:title" content="Orvane — un monde vivant que tous les jeux partagent">
+<meta property="og:description" content="Un moteur d'écosystème et d'évolution. N'importe quel jeu peut s'y brancher : il lit le monde, et y renvoie ce que font ses joueurs.">
+<meta property="og:type" content="website">
+<link rel="alternate" type="text/plain" href="llms.txt" title="Orvane pour les IA">
+<style>
+:root {
+  --fond:#121a17; --surface:#18221e; --ligne:#2d3b35; --texte:#e9efe6; --sourd:#97a69d; --ambre:#e0a54a; --vif:#8fcf8a;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing:border-box; }
+html, body { margin:0; background:var(--fond); color:var(--texte); font:16px/1.6 var(--sans); -webkit-text-size-adjust:100%; }
+a { color:var(--ambre); }
+:focus-visible { outline:2px solid var(--ambre); outline-offset:2px; }
+main { max-width:760px; margin:0 auto; padding:48px 16px 48px; }
+.marque { font:600 15px/1 var(--serif); letter-spacing:.14em; text-transform:uppercase; color:var(--sourd); margin:0 0 18px; }
+h1 { font:600 40px/1.15 var(--serif); letter-spacing:.005em; margin:0 0 16px; }
+h2 { font:600 21px/1.25 var(--serif); margin:36px 0 8px; }
+.chapeau { font-size:18px; color:var(--sourd); margin:0 0 26px; max-width:60ch; }
+.vie { font-size:14px; color:var(--sourd); min-height:1.6em; margin:0 0 26px; }
+.vie b { color:var(--vif); font-weight:600; }
+.portes { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
+.porte { display:block; background:var(--surface); border:1px solid var(--ligne); border-radius:10px; padding:16px; text-decoration:none; color:var(--texte); }
+.porte:hover { border-color:var(--ambre); }
+.porte b { display:block; font:600 17px/1.3 var(--serif); color:var(--ambre); margin-bottom:6px; }
+.porte span { font-size:14px; color:var(--sourd); }
+p { margin:0 0 12px; max-width:64ch; }
+ol { padding-left:22px; margin:0 0 12px; } ol li { margin:0 0 8px; }
+footer { color:var(--sourd); font-size:13px; border-top:1px solid var(--ligne); padding-top:16px; margin-top:40px; }
+@media (max-width:640px) { main { padding-top:32px; } h1 { font-size:31px; } .portes { grid-template-columns:1fr; } }
+</style>
 </head>
 <body>
-<p>Ouverture de l'observatoire… Si rien ne se passe : <a href="monde/?monde=orvane">ouvrir l'observatoire d'Orvane</a>.</p>
+<main>
+<p class="marque">Orvane</p>
+<h1>Un monde vivant que tous les jeux partagent</h1>
+<p class="chapeau">Orvane est un moteur d'écosystème et d'évolution. Il fait vivre un seul monde : 24 biomes, de la banquise aux abysses, et plus d'une centaine de lignées inventées par l'évolution, pas par un dessinateur. N'importe quel jeu peut s'y brancher.</p>
+<p class="vie" id="vie" aria-live="polite"></p>
+
+<nav class="portes" aria-label="Entrées">
+  <a class="porte" href="monde/?monde=orvane"><b>L'observatoire</b><span>Voir le monde vivre : ses espèces, ses biomes, ses lignées, sa chaîne alimentaire, son journal.</span></a>
+  <a class="porte" href="inscription/"><b>Brancher un jeu</b><span>Inscrire son jeu et recevoir ses clés, en une minute.</span></a>
+  <a class="porte" href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md"><b>Le guide</b><span>Les étapes, les adresses, les appels et les erreurs, pas à pas.</span></a>
+</nav>
+
+<h2>Un monde qui se souvient des joueurs</h2>
+<p>Chaque nuit, le monde avance d'un cycle. Ses lignées naissent, se nourrissent, se chassent, migrent, mutent et se séparent en espèces nouvelles. Chaque jeu le lit et en fait ses créatures, à sa façon. Puis il renvoie ce que font ses joueurs : les bêtes croisées, chassées, apprivoisées.</p>
+<p>La nuit suivante, le monde en tient compte, dans tous les jeux à la fois. Une espèce trop chassée se raréfie et devient méfiante ; elle rapetisse si l'on prend toujours les plus grandes. Un seul jeu ne pèse jamais plus de la moitié de la pression sur une espèce.</p>
+
+<h2>Brancher son jeu</h2>
+<ol>
+  <li><a href="inscription/">S'inscrire</a> pour recevoir la clé du jeu.</li>
+  <li>Lire le monde, publié chaque nuit en JSON : <a href="mondes/orvane/instantane.json"><code>instantane.json</code></a>.</li>
+  <li>Faire de chaque lignée une créature, là où elle vit et en proportion de son nombre.</li>
+  <li>Renvoyer ce que font les joueurs, en comptes bruts.</li>
+</ol>
+<p>Le premier jeu branché est Stone Valley. Son traducteur complet sert d'exemple, avec <a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/docs/LISEZ-MOI.md">le mode d'emploi en treize chapitres</a>.</p>
+
+<footer>
+  <a href="https://github.com/stonevalleyoff-ai/orvane">Le dépôt sur GitHub</a> · <a href="llms.txt">Orvane pour les IA (llms.txt)</a><br>
+  <span lang="en">Orvane is an ecosystem and evolution engine running one shared living world that any game can plug into. See the <a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">integration guide</a>; it ends with an English summary.</span>
+</footer>
+</main>
+<script>
+(async () => {
+  const el = document.getElementById('vie');
+  try {
+    const [inst, jeux] = await Promise.all(['instantane.json', 'jeux.json'].map(f => fetch('mondes/orvane/' + f, { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null)));
+    if (!inst || !inst.cycle) return;
+    const vivantes = (inst.taxons || []).filter(t => t.eteint == null).length;
+    const branches = Array.isArray(jeux) ? jeux.filter(j => j.actif !== false).length : 0;
+    const sn = inst.cycle.saison && inst.cycle.saison.nom, saison = sn ? (sn === 'printemps' ? ', au printemps' : ', en ' + sn) : '';
+    el.innerHTML = '';
+    const b = document.createElement('b'); b.textContent = '● ';
+    el.append(b, 'Cycle ' + inst.cycle.n + saison + ' · ' + vivantes + ' lignées vivantes' + (branches ? ' · ' + branches + (branches > 1 ? ' jeux branchés' : ' jeu branché') : ''));
+  } catch (e) { }
+})();
+</script>
 </body>
 </html>
