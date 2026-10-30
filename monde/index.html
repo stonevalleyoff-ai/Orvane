@@ -3,147 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#121a17">
-<title>Orvane — observatoire</title>
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#172c25">
+<title>L’Observatoire — Orvane</title>
+<meta name="description" content="Explorez le monde vivant d’Orvane : populations, espèces, biomes, lignées, chaîne alimentaire et simulation locale.">
 <!-- Orvane — L'OBSERVATOIRE (monde/index.html)
      Ce que vit un monde Orvane : ses espèces, ses biomes, ses lignées, ce qui s'est passé cette nuit ; et une simulation
-     locale (le moteur tourne dans le navigateur, le monde publié n'est jamais touché). Un seul fichier, zéro dépendance :
+     locale (le moteur tourne dans le navigateur, le monde publié n'est jamais touché). Sans dépendance externe :
      le moteur et le tampon sont chargés depuis ../moteur et ../tampon. Les mondes : ../mondes/liste.json.
      Adresse partageable : ?monde=<id>&vue=<vue>&espece=<id>. -->
-<style>
-:root {
-  --fond:#121a17; --surface:#18221e; --surface2:#1f2b26; --ligne:#2d3b35; --texte:#e9efe6; --sourd:#97a69d;
-  --ambre:#e0a54a; --vif:#8fcf8a; --declin:#e58a73; --eau:#82b9cb;
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
-* { box-sizing:border-box; }
-html, body { margin:0; background:var(--fond); color:var(--texte); font:15px/1.5 var(--sans); -webkit-text-size-adjust:100%; }
-a { color:var(--ambre); }
-button, select, input { font:inherit; color:inherit; }
-:focus-visible { outline:2px solid var(--ambre); outline-offset:2px; }
-.sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
-.sourd { color:var(--sourd); } .vif { color:var(--vif); } .declin { color:var(--declin); } .ambre { color:var(--ambre); }
-.n { font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
-
-/* l'en-tête : le monde, son cycle, et les vues sur une seule ligne qui défile */
-.tete { position:sticky; top:0; z-index:5; background:var(--fond); border-bottom:1px solid var(--ligne); padding:max(8px, env(safe-area-inset-top)) 14px 0; }
-.ligne1 { display:flex; align-items:center; gap:10px; max-width:1180px; margin:0 auto; }
-.marque { font:600 19px/1 var(--serif); letter-spacing:.02em; color:var(--texte); text-decoration:none; }
-.monde select { background:var(--surface); border:1px solid var(--ligne); border-radius:8px; padding:6px 28px 6px 10px; max-width:52vw; appearance:none;
-  background-image:linear-gradient(45deg, transparent 50%, var(--sourd) 50%), linear-gradient(135deg, var(--sourd) 50%, transparent 50%); background-position:calc(100% - 15px) 52%, calc(100% - 10px) 52%; background-size:5px 5px; background-repeat:no-repeat; }
-.cycle { margin-left:auto; color:var(--sourd); font-size:13px; text-align:right; line-height:1.25; }
-.cycle b { color:var(--texte); font-weight:600; }
-nav { display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; max-width:1180px; margin:6px auto 0; }
-nav::-webkit-scrollbar { display:none; }
-nav button { background:none; border:0; border-bottom:2px solid transparent; padding:8px 10px 9px; color:var(--sourd); white-space:nowrap; cursor:pointer; }
-nav button[aria-current="page"] { color:var(--texte); border-bottom-color:var(--ambre); }
-#bandeau { max-width:1180px; margin:0 auto; padding:0 14px; }
-#bandeau p { margin:10px 0 0; padding:8px 12px; border-radius:8px; background:var(--surface2); font-size:14px; }
-#bandeau p.erreur { border-left:3px solid var(--declin); } #bandeau p.local { border-left:3px solid var(--ambre); }
-#bandeau button { background:none; border:0; color:var(--ambre); text-decoration:underline; cursor:pointer; padding:0; }
-
-main { max-width:1180px; margin:0 auto; padding:6px 14px 60px; }
-h1, h2, h3 { font-family:var(--serif); font-weight:600; letter-spacing:.01em; }
-h2 { font-size:19px; margin:26px 0 10px; }
-h3 { font-size:16px; margin:20px 0 6px; }
-.grille2 > *, .especes > * { min-width:0; }
-.grille2 { display:grid; gap:0 34px; } @media (min-width:900px) { .grille2 { grid-template-columns:1fr 1fr; } }
-.phrase { font:400 18px/1.5 var(--serif); margin:16px 0 4px; max-width:62ch; }
-.chiffres { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:0; margin:14px 0 0; border-top:1px solid var(--ligne); border-bottom:1px solid var(--ligne); }
-.chiffres div { padding:10px 12px 10px 0; } .chiffres dt { color:var(--sourd); font-size:13px; } .chiffres dd { margin:0; font-size:22px; font-variant-numeric:tabular-nums; }
-.vide { color:var(--sourd); border:1px dashed var(--ligne); border-radius:10px; padding:14px; margin:6px 0; }
-.lien { background:none; border:0; color:var(--ambre); padding:6px 0; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
-
-/* le classement : une ligne par espèce, son nom comme sur une planche */
-.classement { list-style:none; padding:0; margin:0; }
-.classement button { width:100%; display:grid; grid-template-columns:12px minmax(0, 1fr) 72px auto; align-items:center; gap:10px; background:none; border:0; border-bottom:1px solid var(--ligne); padding:8px 0; text-align:left; cursor:pointer; }
-.classement button:hover .nom { color:var(--ambre); }
-.pt { width:10px; height:10px; border-radius:50%; display:inline-block; }
-.nom { font:italic 400 16px/1.3 var(--serif); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.jauge { height:6px; background:var(--surface2); border-radius:3px; overflow:hidden; } .jauge span { display:block; height:100%; background:var(--eau); }
-.chiffre { display:flex; flex-direction:column; align-items:flex-end; font-variant-numeric:tabular-nums; min-width:70px; } .chiffre small { font-size:12px; }
-
-/* les événements du cycle */
-.evts { list-style:none; padding:0; margin:0; } .evts li { padding:7px 0; border-bottom:1px solid var(--ligne); display:flex; gap:10px; align-items:baseline; }
-.evts .combien { font-variant-numeric:tabular-nums; min-width:28px; text-align:right; color:var(--ambre); font-weight:600; }
-.evts .qui { color:var(--sourd); font-size:13px; }
-
-/* les biomes : une fiche par sol */
-.biomes { display:grid; gap:10px; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); }
-.biome { background:var(--surface); border-radius:10px; padding:12px 14px; }
-.biome h3 { margin:0; font-size:16px; } .biome .milieu { color:var(--sourd); font-size:13px; }
-.biome .occ { display:flex; justify-content:space-between; font-size:13px; color:var(--sourd); margin:10px 0 4px; }
-.biome ul { list-style:none; padding:0; margin:8px 0 0; font-size:14px; } .biome li { display:flex; justify-content:space-between; gap:8px; padding:2px 0; } .biome li i { font-family:var(--serif); }
-
-/* les espèces : le registre et la fiche */
-.especes { display:grid; gap:24px; } @media (min-width:900px) { .especes { grid-template-columns:340px minmax(0, 1fr); } .especes .retour { display:none; } }
-@media (max-width:899px) { .especes.ouverte .registre { display:none; } .especes:not(.ouverte) .fiche { display:none; } }
-.registre { position:relative; }
-@media (min-width:900px) { .registre { position:sticky; top:96px; max-height:calc(100vh - 110px); display:flex; flex-direction:column; } .registre > * { flex-shrink:0; } .registre .liste { flex:1 1 auto; min-height:0; overflow-y:auto; } }
-.cherche { width:100%; background:var(--surface); border:1px solid var(--ligne); border-radius:8px; padding:9px 12px; margin-top:14px; }
-.filtres { display:flex; gap:6px; overflow-x:auto; padding:10px 0 6px; scrollbar-width:none; } .filtres::-webkit-scrollbar { display:none; }
-.puce { background:var(--surface); border:1px solid var(--ligne); border-radius:999px; padding:5px 11px; font-size:13px; cursor:pointer; white-space:nowrap; }
-.puce[aria-pressed="true"] { background:var(--texte); color:var(--fond); border-color:var(--texte); }
-.tri { display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--sourd); padding:4px 0 8px; }
-.tri select { background:var(--surface); border:1px solid var(--ligne); border-radius:6px; padding:3px 6px; }
-.liste { list-style:none; padding:0; margin:0; }
-.liste button { width:100%; display:grid; grid-template-columns:58px minmax(0, 1fr) auto; gap:10px; align-items:center; background:none; border:0; border-bottom:1px solid var(--ligne); padding:6px 4px; text-align:left; cursor:pointer; border-radius:6px; }
-.liste button[aria-current="true"] { background:var(--surface2); }
-.liste svg { width:58px; height:31px; }
-.liste .sous { display:block; color:var(--sourd); font-size:12px; }
-.etiq { font-size:12px; border-radius:4px; padding:1px 6px; background:var(--surface2); color:var(--sourd); white-space:nowrap; }
-.etiq.vif { color:var(--vif); } .etiq.declin { color:var(--declin); }
-.retour { margin-top:12px; }
-.fiche header { display:grid; grid-template-columns:minmax(0, 1fr); gap:6px 18px; align-items:center; margin-top:10px; }
-@media (min-width:560px) { .fiche header { grid-template-columns:200px minmax(0, 1fr); } }
-.fiche header svg { width:100%; max-width:240px; height:auto; background:var(--surface); border-radius:10px; }
-.fiche h1 { font:italic 600 26px/1.15 var(--serif); margin:0; }
-.fiche .ident { color:var(--sourd); font-size:13px; margin-top:4px; }
-.fiche .ident button { background:none; border:0; padding:0; color:var(--ambre); text-decoration:underline; cursor:pointer; font-size:13px; }
-.faits { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); margin:14px 0 0; border-top:1px solid var(--ligne); }
-.faits div { padding:8px 10px 8px 0; border-bottom:1px solid var(--ligne); } .faits dt { color:var(--sourd); font-size:12px; } .faits dd { margin:0; }
-.defile { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-table { width:100%; border-collapse:collapse; font-size:14px; } th, td { padding:6px 8px 6px 0; border-bottom:1px solid var(--ligne); text-align:left; vertical-align:top; } th { color:var(--sourd); font-weight:400; font-size:13px; }
-td.n, th.n { text-align:right; }
-.note { color:var(--sourd); font-size:13px; margin:6px 0 0; max-width:70ch; }
-.trait { padding:8px 0; border-bottom:1px solid var(--ligne); } .trait b { font-weight:600; } .trait p { margin:2px 0 0; color:var(--sourd); font-size:14px; }
-.trait .presage { color:var(--texte); font-style:italic; font-family:var(--serif); }
-canvas { width:100%; display:block; }
-.leg { display:flex; flex-wrap:wrap; gap:4px 14px; font-size:13px; color:var(--sourd); margin:8px 0 0; padding:0; list-style:none; }
-.leg button { background:none; border:0; padding:2px 0; color:inherit; cursor:pointer; } .leg button[aria-pressed="false"] { opacity:.4; text-decoration:line-through; }
-.leg i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:-1px; }
-
-/* qui mange qui, en toutes lettres */
-.mange { list-style:none; padding:0; margin:0; } .mange li { padding:7px 0; border-bottom:1px solid var(--ligne); } .mange .proies { color:var(--sourd); font-size:14px; }
-/* le journal */
-.cycleJ { margin:18px 0 4px; font:600 15px var(--serif); color:var(--sourd); }
-.evt { padding:6px 0; border-bottom:1px solid var(--ligne); } .evt b { font-weight:600; } .evt .det { color:var(--sourd); }
-
-/* simuler */
-.actions { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
-.bouton { background:var(--surface2); border:1px solid var(--ligne); border-radius:8px; padding:9px 14px; cursor:pointer; }
-.bouton.principal { background:var(--ambre); border-color:var(--ambre); color:#1d1406; font-weight:600; }
-.bouton:disabled { opacity:.45; cursor:default; }
-.progres { height:6px; background:var(--surface2); border-radius:3px; overflow:hidden; margin:8px 0; } .progres span { display:block; height:100%; background:var(--ambre); width:0; }
-.champ { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:8px 0; font-size:14px; }
-@media (prefers-reduced-motion:no-preference) { .progres span { transition:width .15s; } }
-</style>
+<link rel="stylesheet" href="../assets/observatoire.css">
+<link rel="icon" href="../assets/embleme.svg" type="image/svg+xml">
 </head>
-<body>
-<header class="tete">
-  <div class="ligne1">
-    <a class="marque" href="./">Orvane</a>
-    <label class="monde"><span class="sr">Monde affiché</span><select id="choixMonde"></select></label>
-    <span class="cycle" id="etatCycle"></span>
-  </div>
-  <nav id="nav" aria-label="Vues">
-    <button data-v="vue">Vue d'ensemble</button><button data-v="especes">Espèces</button><button data-v="lignees">Lignées</button><button data-v="chaine">Chaîne alimentaire</button><button data-v="journal">Journal</button><button data-v="simuler">Simuler</button>
-  </nav>
-</header>
+<body class="observatoire" data-vue="vue">
+<a class="atlas-skip" href="#contenu">Aller au contenu</a>
+<header class="atlas-masthead"><div class="atlas-wrap"><a class="atlas-brand" href="../" aria-label="Orvane, accueil"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 35V19M20 26C8 27 4 18 5 7c11 0 17 6 15 19ZM20 21C19 11 26 5 35 5c1 10-4 17-15 16Z" stroke="currentColor" stroke-width="1.5"/><path d="m11 14 9 12M28 12l-8 9" stroke="currentColor" stroke-width="1.3"/></svg><span>orvane<small>MOTEUR DU VIVANT</small></span></a><div class="atlas-links"><a href="../">Le projet</a><a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">Documentation <span aria-hidden="true">↗</span></a><a class="atlas-connect" href="../inscription/">Brancher un jeu <span aria-hidden="true">→</span></a></div></div></header>
+<section class="atlas-cover" aria-labelledby="atlasTitre"><img class="atlas-cover-image" src="../assets/vallee.webp" srcset="../assets/vallee-900.webp 900w, ../assets/vallee.webp 1536w" sizes="100vw" width="1536" height="1024" alt="" fetchpriority="high"><div class="atlas-wrap"><div class="atlas-cover-copy"><p class="atlas-kicker">ORVANE / ATLAS DU VIVANT</p><h1 id="atlasTitre">L’Observatoire<span class="atlas-title-dot">.</span></h1><p id="atlasDescription">Explorer les espèces. Lire les équilibres. Voir le monde évoluer.</p></div><div class="atlas-cover-note"><span id="atlasMode">LECTURE DU MONDE</span><small>Illustration d’univers</small></div></div></section>
+<div class="tete"><div class="atlas-toolbar"><div class="ligne1"><label class="monde"><span class="world-label">MONDE OBSERVÉ</span><span class="select-wrap"><span class="world-symbol" aria-hidden="true">◎</span><select id="choixMonde" aria-label="Monde affiché"></select></span></label><div class="cycle-wrap"><span class="cycle-label">DERNIER ÉTAT</span><span class="cycle" id="etatCycle" role="status" aria-live="polite"></span></div></div>
+<nav id="nav" aria-label="Vues de l’Observatoire"><button data-v="vue"><span class="nav-symbol" aria-hidden="true">◉</span>Vue d’ensemble</button><button data-v="especes"><span class="nav-symbol" aria-hidden="true">❧</span>Espèces</button><button data-v="lignees"><span class="nav-symbol" aria-hidden="true">⑂</span>Lignées</button><button data-v="chaine"><span class="nav-symbol" aria-hidden="true">⌘</span>Chaîne alimentaire</button><button data-v="journal"><span class="nav-symbol" aria-hidden="true">≡</span>Journal</button><button data-v="simuler"><span class="nav-symbol" aria-hidden="true">▷</span>Simuler</button></nav></div></div>
 <div id="bandeau" role="status" aria-live="polite"></div>
 <main id="contenu"><p class="vide">Chargement du monde…</p></main>
+<footer class="atlas-footer"><div class="atlas-wrap"><a href="../">← Retour à Orvane</a><p>Le vivant se construit, cycle après cycle.</p><a href="../inscription/">Brancher votre jeu ↗</a></div></footer>
 <input type="file" id="fInst" accept=".json" hidden><input type="file" id="fLot" accept=".json" hidden><input type="file" id="fProfil" accept=".json" hidden>
 <script src="../moteur/catalogue.js"></script>
 <script src="../moteur/corps.js"></script>
@@ -153,7 +33,7 @@ canvas { width:100%; display:block; }
 'use strict';
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const ESC = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-const COUL = ['#e0a54a', '#82b9cb', '#8fcf8a', '#e58a73', '#b9a2e0', '#d8c36a', '#6fc7b8', '#e59ab9', '#a9c46f', '#8fa0e0', '#c9a27a', '#7fd1a0'];
+const COUL = ['#916b32', '#397680', '#527249', '#b15d4b', '#826c9b', '#8b7a2d', '#388372', '#a15d7c', '#6c7f35', '#596f9f', '#8c684c', '#3b7b5a'];
 const AXES = ['temperature', 'humidite', 'altitude', 'lumiere', 'couvert'];
 const MONDES_CONNUS = [{ id: 'orvane', nom: 'Le monde d\'Orvane' }, { id: 'sv-1', nom: 'Monde de Stone Valley' }, { id: 'genese-7', nom: 'Monde né d\'Orvane' }];
 // l'état de la page : l'histoire (un instantané par cycle), ce qui vient du monde publié, ce que fait la personne
@@ -228,6 +108,10 @@ lireFichier($('#fProfil'), t => { try { E.profil = JSON.parse(t); rendre(); } ca
 // --- l'en-tête et la navigation ---
 function entete() {
   const I = inst(); if (!I) return; const s = I.cycle.saison, local = E.H.length - E.publies;
+  document.body.dataset.vue = E.vue;
+  $('#atlasMode').textContent = local > 0 ? 'SIMULATION LOCALE · +' + local + ' CYCLE' + (local > 1 ? 'S' : '') : E.source?.publie ? 'MONDE PUBLIÉ · DONNÉES OBSERVÉES' : 'EXPÉRIENCE LOCALE';
+  const descriptions = { vue: 'Explorer les espèces. Lire les équilibres. Voir le monde évoluer.', especes: 'Le registre du vivant : silhouettes, populations et héritages.', lignees: 'Les histoires se séparent. Les parentés restent.', chaine: 'Chaque espèce trouve sa place dans le réseau du vivant.', journal: 'La mémoire du monde, d’un cycle au suivant.', simuler: 'Explorez les possibles dans une expérience locale.' };
+  $('#atlasDescription').textContent = descriptions[E.vue] || descriptions.vue;
   $('#etatCycle').innerHTML = `cycle <b>${I.cycle.n}</b>${s ? ` · ${s.nom}` : ''}${local > 0 ? `<br><span class="ambre">+${local} simulé${local > 1 ? 's' : ''}</span>` : ''}`;
   $$('#nav button').forEach(b => { if (b.dataset.v === E.vue) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
 }
@@ -244,7 +128,7 @@ addEventListener('resize', (() => { let t; return () => { clearTimeout(t); t = s
 
 // --- dessin : une toile nette à toute densité d'écran ---
 function toile(c) { const dpr = devicePixelRatio || 1, w = c.clientWidth || 600, h = +c.getAttribute('height'); c.width = w * dpr; c.height = h * dpr; const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, h); x.font = '12px system-ui, sans-serif'; return [x, w, h]; }
-const CS = { grille: '#2d3b35', sourd: '#97a69d', texte: '#e9efe6' };
+const CS = { grille: '#d8ddce', sourd: '#667467', texte: '#233c31' };
 // des courbes au fil des cycles de l'histoire : series = [{ id, nom, coul, pts }]
 function courbes(c, series, { empile = false, log = false } = {}) {
   const [x, w, h] = toile(c), m = { g: 50, d: 12, h: 10, b: 24 }, W = w - m.g - m.d, Hh = h - m.h - m.b, n = E.H.length, c0 = E.H[0].cycle.n;
@@ -259,7 +143,7 @@ function courbes(c, series, { empile = false, log = false } = {}) {
     for (const s of series) { x.beginPath(); for (let i = 0; i < n; i++) x.lineTo(X(i), Y(cum[i] + s.pts[i])); for (let i = n - 1; i >= 0; i--) x.lineTo(X(i), Y(cum[i])); x.closePath(); x.fillStyle = s.coul + 'c0'; x.fill(); for (let i = 0; i < n; i++) cum[i] += s.pts[i]; }
   } else for (const s of series) { if (E.cache.has(s.id)) continue; x.beginPath(); x.strokeStyle = s.coul; x.lineWidth = 2; let pose = false;
     for (let i = 0; i < n; i++) { const v = s.pts[i]; if (v == null) { pose = false; continue; } pose ? x.lineTo(X(i), Y(v)) : x.moveTo(X(i), Y(v)); pose = true; } x.stroke(); }
-  if (E.publies < n && E.publies > 0) { const xp = X(E.publies - 1); x.strokeStyle = '#e0a54a88'; x.setLineDash([4, 4]); x.beginPath(); x.moveTo(xp, m.h); x.lineTo(xp, h - m.b); x.stroke(); x.setLineDash([]); x.fillStyle = '#e0a54a'; x.textAlign = 'left'; x.fillText('simulé', xp + 4, m.h + 12); }
+  if (E.publies < n && E.publies > 0) { const xp = X(E.publies - 1); x.strokeStyle = '#94703988'; x.setLineDash([4, 4]); x.beginPath(); x.moveTo(xp, m.h); x.lineTo(xp, h - m.b); x.stroke(); x.setLineDash([]); x.fillStyle = '#947039'; x.textAlign = 'left'; x.fillText('simulé', xp + 4, m.h + 12); }
 }
 function legende(series, onToggle) {
   return `<ul class="leg">${series.map(s => `<li><button aria-pressed="${!E.cache.has(s.id)}" data-serie="${ESC(s.id)}"><i style="background:${s.coul}"></i>${ESC(s.nom)}</button></li>`).join('')}</ul>`;
@@ -280,22 +164,22 @@ function vueEnsemble() {
   // les biomes : ce qui les occupe, et à quel point
   const masse = {}, occupants = {}; for (const t of V) for (const p of t.populations) { masse[p.biome] = (masse[p.biome] || 0) + p.effectif * (t.plan.masse_kg || 1) * (PART_K[t.plan.regime] ?? 1); (occupants[p.biome] ??= []).push([t, p.effectif]); }
   const ficheBiome = b => { const sat = (masse[b.id] || 0) / Math.max(1, b.capacite), occ = (occupants[b.id] || []).sort((a, c) => c[1] - a[1]), totB = occ.reduce((a, [, n]) => a + n, 0);
-    return `<article class="biome"><h3>${ESC(b.nom || b.id)}</h3><div class="milieu">${ESC(b.milieu || '')}</div>
+    return `<article class="biome"><div class="biome-heading"><span class="biome-icon" aria-hidden="true">${({marin:'≈',aquatique:'≋',amphibie:'〰',souterrain:'◇'})[b.milieu] || '♧'}</span><div><h3>${ESC(b.nom || b.id)}</h3><div class="milieu">${ESC(b.milieu || '')} · ${occ.length} espèce${occ.length > 1 ? 's' : ''}</div></div></div>
       <div class="occ"><span>pression sur la végétation</span><span class="n ${sat > 1 ? 'declin' : ''}">${sat > 2 ? 'plus de 200 %' : pct(sat)}</span></div><div class="jauge"><span style="width:${Math.min(100, sat * 100)}%;background:${sat > 1 ? 'var(--declin)' : sat > .85 ? 'var(--ambre)' : 'var(--vif)'}"></span></div>
       <ul>${occ.slice(0, 4).map(([t, n]) => `<li><i>${ESC(nomEsp(t))}</i><span class="n sourd">${nb(n)}</span></li>`).join('') || '<li class="sourd">personne</li>'}${occ.length > 4 ? `<li class="sourd">et ${occ.length - 4} autre${occ.length > 5 ? 's' : ''}</li>` : ''}</ul></article>`; };
   const evts = Object.entries(parType).sort((a, b) => b[1].length - a[1].length).map(([t, L]) => `<li><span class="combien">${L.length}</span><span>${evtNom(t, L.length)}<br><span class="qui">${[...new Set(L.map(e => nomEsp(I.taxons.find(x => x.id === e.taxon)) || nomBiome(e.taxon)))].slice(0, 4).map(ESC).join(', ')}${L.length > 4 ? '…' : ''}</span></span></li>`).join('');
   $('#contenu').innerHTML = `
-    <p class="phrase">${ESC(phrase)}</p>
-    <dl class="chiffres"><div><dt>Cycle</dt><dd>${I.cycle.n}</dd></div><div><dt>Espèces vivantes</dt><dd>${V.length}</dd></div><div><dt>Bêtes</dt><dd>${nb(tot)}</dd></div><div><dt>Pressions des joueurs reçues</dt><dd>${nb(I.cycle.pressions_recues || 0)}</dd></div></dl>
+    <div class="overview-heading"><div><p class="atlas-kicker">01 / ÉTAT DU VIVANT</p><h2>Le monde, au dernier cycle.</h2></div><span class="reading-state">${E.H.length > E.publies ? 'Simulation locale' : E.source?.publie ? 'Instantané publié' : 'Monde local'}</span></div><p class="phrase">${ESC(phrase)}</p>
+    <dl class="chiffres"><div><dt>Cycle</dt><dd>${I.cycle.n}</dd></div><div><dt>Espèces vivantes</dt><dd>${V.length}</dd></div><div><dt>Individus</dt><dd>${nb(tot)}</dd></div><div><dt>Pressions des joueurs reçues</dt><dd>${nb(I.cycle.pressions_recues || 0)}</dd></div></dl>
     ${quand ? `<p class="note">Instantané du ${quand}${E.source?.publie ? ', publié' : ''}.</p>` : ''}
-    <div class="grille2">
-      <section><h2>Les espèces les plus nombreuses</h2><ol class="classement">${tri.slice(0, 10).map(ligneEsp).join('')}</ol>
+    <div class="grille2 overview-panels">
+      <section class="atlas-panel"><h2>Les espèces les plus nombreuses</h2><ol class="classement">${tri.slice(0, 10).map(ligneEsp).join('')}</ol>
         ${tri.length > 10 ? `<button class="lien" data-aller="especes">Voir les ${tri.length} espèces</button>` : ''}</section>
-      <section><h2>Ce qui s'est passé ce cycle</h2>${evts ? `<ul class="evts">${evts}</ul>` : '<p class="vide">Rien de notable : pas d\'extinction, pas de lignée nouvelle, pas d\'épidémie.</p>'}
+      <section class="atlas-panel"><h2>Ce qui s'est passé ce cycle</h2>${evts ? `<ul class="evts">${evts}</ul>` : '<p class="vide">Rien de notable : pas d\'extinction, pas de lignée nouvelle, pas d\'épidémie.</p>'}
         <button class="lien" data-aller="journal">Ouvrir le journal</button></section>
     </div>
-    <section><h2>Les effectifs au fil des cycles</h2><div id="zEff"></div></section>
-    <section><h2>Les biomes</h2><div class="biomes">${I.biomes.slice().sort((a, b) => (occupants[b.id] || []).reduce((s, [, n]) => s + n, 0) - (occupants[a.id] || []).reduce((s, [, n]) => s + n, 0)).map(ficheBiome).join('')}</div>
+    <section class="atlas-panel populations-panel"><div class="panel-heading"><div><p class="atlas-kicker">DYNAMIQUE DES POPULATIONS</p><h2>Les effectifs au fil des cycles</h2></div><span class="atlas-chart-label">${E.H.length} cycles connus</span></div><div id="zEff"></div></section>
+    <section class="biomes-section"><div class="biomes-banner"><img src="../assets/littoral-900.webp" width="900" height="600" loading="lazy" alt="Illustration d’un littoral où se rencontrent plusieurs habitats."><div><p class="atlas-kicker">02 / LES MILIEUX DU MONDE</p><h2>${I.biomes.length} biomes.<br><em>Autant d’équilibres.</em></h2><p>Populations, ressources et pression sur la végétation : chaque milieu raconte une autre histoire.</p></div><small>Illustration d’univers</small></div><div class="biomes">${I.biomes.slice().sort((a, b) => (occupants[b.id] || []).reduce((s, [, n]) => s + n, 0) - (occupants[a.id] || []).reduce((s, [, n]) => s + n, 0)).map(ficheBiome).join('')}</div>
     <p class="note">Les biomes du plus peuplé au moins peuplé. La pression sur la végétation compare ce que les mangeurs de plantes demandent à ce que le sol produit : au-delà de 100 %, la population doit refluer ou partir.</p></section>`;
   dessinerEffectifs();
 }
@@ -306,7 +190,7 @@ function dessinerEffectifs() {
   const serie = t => ({ id: t.id, nom: nomEsp(t), coul: couleur(t.id), pts: E.H.map(s => { const q = s.taxons.find(z => z.id === t.id); return q && !q.eteint ? effectif(q) : null; }) });
   const series = top.map(serie);
   if (I.taxons.length > 8) series.push({ id: ':autres', nom: 'toutes les autres', coul: '#97a69d', pts: E.H.map(s => s.taxons.filter(q => !ids.has(q.id) && !q.eteint).reduce((a, q) => a + effectif(q), 0)) });
-  z.innerHTML = `<canvas id="cEff" height="300"></canvas>${legende(series)}<p class="note">Échelle logarithmique : chaque ligne de la grille vaut dix fois la précédente. Touchez une espèce de la légende pour la masquer.</p>`;
+  z.innerHTML = `<canvas id="cEff" height="300" role="img" aria-label="Évolution des effectifs au fil des cycles, sur une échelle logarithmique."></canvas>${legende(series)}<p class="note">Échelle logarithmique : chaque ligne de la grille vaut dix fois la précédente. Touchez une espèce de la légende pour la masquer.</p>`;
   const go = () => courbes($('#cEff'), series, { log: true }); go(); brancherLegende(() => { go(); $$('[data-serie]').forEach(b => b.setAttribute('aria-pressed', !E.cache.has(b.dataset.serie))); });
 }
 
@@ -318,10 +202,10 @@ function vueEspeces() {
   L.sort(E.tri === 'nom' ? (a, b) => nomEsp(a).localeCompare(nomEsp(b), 'fr') : E.tri === 'apparition' ? (a, b) => b.apparu - a.apparu || effectif(b) - effectif(a) : (a, b) => effectif(b) - effectif(a));
   if (!E.espece || !I.taxons.some(t => t.id === E.espece)) E.espece = L[0]?.id || I.taxons[0]?.id || null;
   const rangee = t => { const [st, cl] = STATUT[t.statut] || [t.statut, ''];
-    return `<li><button data-choix="${ESC(t.id)}" aria-current="${t.id === E.espece}">${t.plan.corps && globalThis.OrvaneCorps ? croquis(t.plan.corps) : `<span class="pt" style="background:${couleur(t.id)}"></span>`}<span><span class="nom">${ESC(nomEsp(t))}</span><span class="sous">${ESC(REGIME[t.plan.regime] || t.plan.regime || '')} · ${t.plan.masse_kg} kg</span></span><span class="chiffre">${nb(effectif(t))}<small class="${cl}">${st}</small></span></button></li>`; };
+    return `<li><button data-choix="${ESC(t.id)}" title="${ESC(nomEsp(t))}" aria-current="${t.id === E.espece}">${t.plan.corps && globalThis.OrvaneCorps ? croquis(t.plan.corps) : `<span class="pt" style="background:${couleur(t.id)}"></span>`}<span><span class="nom">${ESC(nomEsp(t))}</span><span class="sous">${ESC(REGIME[t.plan.regime] || t.plan.regime || '')} · ${t.plan.masse_kg} kg</span></span><span class="chiffre">${nb(effectif(t))}<small class="${cl}">${st}</small></span></button></li>`; };
   const n = f => I.taxons.filter(f[2]).length;
   $('#contenu').innerHTML = `<div class="especes ${E.ouverte ? 'ouverte' : ''}">
-    <aside class="registre"><label class="sr" for="cherche">Chercher une espèce</label><input class="cherche" id="cherche" type="search" placeholder="Chercher une espèce" value="${ESC(E.recherche)}" autocomplete="off">
+    <aside class="registre"><div class="register-heading"><p class="atlas-kicker">LE REGISTRE DU VIVANT</p><h2>Les espèces</h2></div><label class="sr" for="cherche">Chercher une espèce</label><input class="cherche" id="cherche" type="search" placeholder="Chercher une espèce" value="${ESC(E.recherche)}" autocomplete="off">
       <div class="filtres" role="group" aria-label="Filtrer">${FILTRES.map(f => `<button class="puce" data-filtre="${f[0]}" aria-pressed="${f[0] === E.filtre}">${f[1]} <span class="sourd">${n(f)}</span></button>`).join('')}</div>
       <div class="tri"><span>${L.length} espèce${L.length > 1 ? 's' : ''}</span><label>Trier <select id="tri"><option value="effectif">par effectif</option><option value="nom">par nom</option><option value="apparition">les plus récentes</option></select></label></div>
       <ul class="liste" id="liste">${L.map(rangee).join('') || '<li class="vide">Aucune espèce ne correspond.</li>'}</ul></aside>
@@ -338,7 +222,7 @@ function fiche() {
   const par = t.parent && I.taxons.find(z => z.id === t.parent), enfants = I.taxons.filter(z => z.parent === t.id);
   const dom = (() => { const n = {}; for (const q of t.phenotypes) for (const id of q.traits) n[id] = (n[id] || 0) + q.frequence; return Object.keys(n).filter(k => n[k] >= .5); })();
   let h = `<button class="lien retour" id="retour">‹ Toutes les espèces</button>
-    <header>${p.corps && globalThis.OrvaneCorps ? croquis(p.corps, dom) : ''}<div><h1>${ESC(nomEsp(t))}</h1>
+    <header class="species-plate">${p.corps && globalThis.OrvaneCorps ? `<div class="silhouette-plate"><span>SILHOUETTE CALCULÉE</span>${croquis(p.corps, dom)}<small>PLAN CORPOREL · ${ESC(t.id)}</small></div>` : ''}<div><p class="atlas-kicker">FICHE NATURALISTE</p><h2 class="species-name">${ESC(nomEsp(t))}</h2>
       <div class="ident"><span class="etiq ${cl}">${st}</span> ${nb(effectif(t))} bêtes · apparue au cycle ${t.apparu}${t.eteint ? `, éteinte au cycle ${t.eteint}` : ''}${par ? ` · issue de <button data-esp="${ESC(par.id)}">${ESC(nomEsp(par))}</button>` : ''}</div>
       ${p.corps && globalThis.OrvaneCorps ? `<p class="note">${ESC(OrvaneCorps.decrire(OrvaneCorps.normaliser(p.corps)))}</p>` : ''}</div></header>
     <dl class="faits">${[['Régime', REGIME[p.regime] || p.regime], ['Masse', fx(p.masse_kg, 3) + ' kg'], ['Taille', fx(p.taille_m, 3) + ' m'], ['Vitesse', p.vitesse_rel != null ? fx(p.vitesse_rel) + ' corps/s' : '—'], ['Activité', p.activite || '—'], ['Se déplace', (p.locomotion || []).join(', ')],
@@ -362,7 +246,7 @@ function fiche() {
   h += `<h2>Ce qui se voit</h2><div class="defile"><table><tr><th>phénotype</th><th class="n">part réelle</th>${expo ? '<th class="n">dans le jeu</th>' : ''}<th class="n">coût</th><th class="n">sur le cycle</th></tr>
     ${t.phenotypes.map(q => `<tr><td><span class="pt" style="background:${couleur(t.id + '/' + q.id)};margin-right:6px"></span>${q.traits.length ? ESC(q.traits.join(' + ')) : '<span class="sourd">plan de base</span>'}</td><td class="n">${pct(q.frequence)}</td>${expo ? `<td class="n ambre">${pct(expo[q.id] ?? 0)}</td>` : ''}<td class="n sourd">${q.cout_total ? '−' + Math.round(q.cout_total * 100) + ' %' : '—'}</td><td class="n ${q.selection > 0 ? 'vif' : q.selection < 0 ? 'declin' : 'sourd'}">${q.selection ? (q.selection > 0 ? '+' : '−') + Math.abs(q.selection * 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' pt' : '—'}</td></tr>`).join('')}</table></div>
     <p class="note">Le coût est ce que ses traits retirent à la reproduction.${expo ? ` « Dans le jeu » : ce qu'en montre ${ESC(E.profil.jeu || 'le jeu')}.` : ''}</p>
-    ${E.H.length >= 3 ? '<canvas id="cPh" height="170"></canvas>' : ''}`;
+    ${E.H.length >= 3 ? '<canvas id="cPh" height="170" role="img" aria-label="Répartition des phénotypes de cette espèce au fil des cycles."></canvas>' : ''}`;
   // l'hérédité (docs/9)
   const W = effectif(t) || 1, A = {}; for (const q of t.populations) for (const [id, f] of Object.entries(q.alleles || {})) A[id] = (A[id] || 0) + f * q.effectif / W;
   const Lh = Object.entries(A).filter(([, f]) => f >= .0005).sort((a, b) => b[1] - a[1]);
@@ -442,7 +326,7 @@ function croquis(c, traits = []) {
 // === LIGNÉES : qui descend de qui, et quand ===
 function vueLignees() {
   const I = inst(), T = I.taxons;
-  $('#contenu').innerHTML = `<h2>L'arbre des lignées</h2><p class="note">Chaque trait est une espèce, de son apparition à aujourd'hui (ou à son extinction, †). Les pointillés relient une lignée à celle dont elle s'est séparée. Touchez une ligne pour ouvrir l'espèce.</p><div class="defile"><canvas id="cArbre" height="360" style="min-width:560px"></canvas></div>`;
+  $('#contenu').innerHTML = `<p class="atlas-kicker">PARENTÉS & DIVERGENCES</p><h2>L'arbre des lignées</h2><p class="note">Chaque trait est une espèce, de son apparition à aujourd'hui (ou à son extinction, †). Les pointillés relient une lignée à celle dont elle s'est séparée. Touchez une ligne pour ouvrir l'espèce.</p><div class="defile tree-scroll"><canvas id="cArbre" height="360" style="min-width:900px" role="img" aria-label="Arbre des lignées, de leur apparition au cycle actuel. Un index textuel suit le graphique."></canvas></div><details class="lineage-index"><summary>Index des ${T.length} lignées · ouvrir une fiche</summary><ul>${T.map(t => `<li><button class="lien" data-esp="${ESC(t.id)}">${ESC(nomEsp(t))}</button><span>cycle ${t.apparu}${t.eteint ? ' · éteinte' : ''}</span></li>`).join('')}</ul></details>`;
   const c = $('#cArbre'), c0 = Math.min(...T.map(t => t.apparu), E.H[0].cycle.n), c1 = I.cycle.n;
   const enfants = id => T.filter(t => t.parent === id), racines = T.filter(t => !t.parent || !T.some(z => z.id === t.parent));
   const lignes = []; (function poser(liste) { for (const t of liste.slice().sort((a, b) => a.apparu - b.apparu)) { lignes.push(t); poser(enfants(t.id)); } })(racines);
@@ -453,7 +337,7 @@ function vueLignees() {
   lignes.forEach((t, i) => { const y = Y(i), x0 = X(t.apparu), x1 = X(t.eteint ?? c1);
     if (t.parent && rang.has(t.parent)) { x.strokeStyle = CS.sourd; x.lineWidth = 1; x.setLineDash([2, 3]); x.beginPath(); x.moveTo(x0, Y(rang.get(t.parent))); x.lineTo(x0, y); x.stroke(); x.setLineDash([]); }
     x.strokeStyle = couleur(t.id); x.lineWidth = 4; x.lineCap = 'round'; x.beginPath(); x.moveTo(x0, y); x.lineTo(Math.max(x0 + 2, x1), y); x.stroke();
-    if (t.eteint) { x.fillStyle = '#e58a73'; x.textAlign = 'left'; x.fillText('†', x1 + 5, y + 4); }
+    if (t.eteint) { x.fillStyle = '#a14c3b'; x.textAlign = 'left'; x.fillText('†', x1 + 5, y + 4); }
     const lib = `${nomEsp(t)}  ${nb(effectif(t))}`, droite = x0 > w * .55; x.font = 'italic 13px ' + getComputedStyle(document.body).getPropertyValue('--serif'); x.fillStyle = CS.texte; x.textAlign = droite ? 'right' : 'left'; x.fillText(lib, droite ? x0 - 8 : x0 + 4, y - 7); x.font = '12px system-ui, sans-serif'; });
   c.onclick = e => { const r = c.getBoundingClientRect(), i = Math.floor((e.clientY - r.top - m.h) / pas); if (lignes[i]) aller('especes', lignes[i].id); };
   c.style.cursor = 'pointer';
@@ -463,8 +347,8 @@ function vueLignees() {
 function vueChaine() {
   const I = inst(); if (!I.biomes.some(b => b.id === E.biome)) E.biome = I.biomes.slice().sort((a, b) => vivants(I).filter(t => t.populations.some(p => p.biome === b.id)).length - vivants(I).filter(t => t.populations.some(p => p.biome === a.id)).length)[0]?.id;
   const nbIci = b => vivants(I).filter(t => t.populations.some(p => p.biome === b.id && p.effectif >= 1)).length;
-  $('#contenu').innerHTML = `<h2>La chaîne alimentaire</h2><div class="champ"><label for="choixBiome">Biome</label><select id="choixBiome" class="bouton">${I.biomes.map(b => `<option value="${ESC(b.id)}">${ESC(b.nom || b.id)} (${nbIci(b)} espèces)</option>`).join('')}</select></div>
-    <canvas id="cChaine" height="${innerWidth < 600 ? 560 : 460}"></canvas><p class="note">De gauche à droite, la masse des bêtes (échelle logarithmique) ; de bas en haut, herbivores, omnivores, carnivores. La taille d'un disque dit la biomasse, son anneau la satiété d'un prédateur ; une flèche va du mangeur à ce qu'il mange, plus épaisse s'il en mange plus. Touchez une espèce pour l'ouvrir ; seules les plus grandes biomasses sont nommées sur le dessin.</p><h3>Qui mange qui</h3><ul class="mange" id="mange"></ul>`;
+  $('#contenu').innerHTML = `<p class="atlas-kicker">LES LIENS DU VIVANT</p><h2>La chaîne alimentaire</h2><div class="champ"><label for="choixBiome">Biome</label><select id="choixBiome" class="bouton">${I.biomes.map(b => `<option value="${ESC(b.id)}">${ESC(b.nom || b.id)} (${nbIci(b)} espèces)</option>`).join('')}</select></div>
+    <div class="defile food-chart"><canvas id="cChaine" height="${innerWidth < 600 ? 560 : 460}" role="img" aria-label="Réseau alimentaire du biome sélectionné. La liste Qui mange qui détaille les liens." style="min-width:650px"></canvas></div><p class="note">De gauche à droite, la masse des bêtes (échelle logarithmique) ; de bas en haut, herbivores, omnivores, carnivores. La taille d'un disque dit la biomasse, son anneau la satiété d'un prédateur ; une flèche va du mangeur à ce qu'il mange, plus épaisse s'il en mange plus. Touchez une espèce pour l'ouvrir ; seules les plus grandes biomasses sont nommées sur le dessin.</p><h3>Qui mange qui</h3><ul class="mange" id="mange"></ul>`;
   $('#choixBiome').value = E.biome; $('#choixBiome').onchange = e => { E.biome = e.target.value; vueChaine(); };
   const c = $('#cChaine'), [x, w, h] = toile(c), m = { g: 74, d: 20, h: 26, b: 40 };
   const N = []; for (const t of vivants(I)) { const p = t.populations.find(q => q.biome === E.biome); if (!p || p.effectif < 1) continue;
@@ -484,7 +368,7 @@ function vueChaine() {
       x.fillStyle = couleur(p.t.id); x.beginPath(); x.moveTo(x1 + ux * 6, y1 + uy * 6); x.lineTo(x1 - uy * 4, y1 + ux * 4); x.lineTo(x1 + uy * 4, y1 - ux * 4); x.closePath(); x.fill(); } }
   const nommes = new Set(N.slice().sort((a, b) => b.bio - a.bio).slice(0, w < 600 ? 7 : 14));
   for (const n of N) { x.beginPath(); x.arc(n.x, n.y, n.r, 0, 7); x.fillStyle = couleur(n.t.id); x.fill();
-    if (n.p.satiete != null) { x.beginPath(); x.arc(n.x, n.y, n.r + 3, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * n.p.satiete); x.strokeStyle = n.p.satiete < .4 ? '#e58a73' : '#8fcf8a'; x.lineWidth = 2.5; x.stroke(); }
+    if (n.p.satiete != null) { x.beginPath(); x.arc(n.x, n.y, n.r + 3, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * n.p.satiete); x.strokeStyle = n.p.satiete < .4 ? '#a14c3b' : '#527249'; x.lineWidth = 2.5; x.stroke(); }
     n.lib = nommes.has(n); }
   // les noms : sous le disque, ou un cran plus bas s'il gêne un autre nom ; sinon, on se tait (la liste les donne tous)
   const poses = []; x.textAlign = 'center'; x.fillStyle = CS.texte;
@@ -507,7 +391,7 @@ function vueJournal() {
     html += `<div class="cycleJ">Cycle ${s.cycle.n}${i >= E.publies ? ' <span class="ambre">(simulé)</span>' : ''}</div>`;
     for (const e of L) { n++; const t = inst().taxons.find(z => z.id === e.taxon);
       html += `<div class="evt"><b>${ESC(evtNom(e.type))}</b> · ${t ? `<button class="lien" data-esp="${ESC(t.id)}" style="padding:0">${ESC(nomEsp(t))}</button>` : ESC(nomBiome(e.taxon))}${e.biome && e.biome !== e.taxon ? ` <span class="sourd">en ${ESC(nomBiome(e.biome))}</span>` : ''}${e.detail ? ` <span class="det">— ${ESC(e.detail)}</span>` : ''}</div>`; } }
-  $('#contenu').innerHTML = `<h2>Le journal</h2><p class="note">Ce qui s'est passé, du plus récent au plus ancien, ${E.H.length > 1 ? `sur les ${E.H.length} cycles connus` : 'au seul cycle connu'}.</p>
+  $('#contenu').innerHTML = `<p class="atlas-kicker">CHRONIQUES DU VIVANT</p><h2>Le journal</h2><p class="note">Ce qui s'est passé, du plus récent au plus ancien, ${E.H.length > 1 ? `sur les ${E.H.length} cycles connus` : 'au seul cycle connu'}.</p>
     <div class="filtres" role="group" aria-label="Filtrer par type"><button class="puce" data-type="tous" aria-pressed="${E.journal === 'tous'}">Tout <span class="sourd">${Object.values(compte).reduce((a, x) => a + x, 0)}</span></button>${types.map(t => `<button class="puce" data-type="${ESC(t)}" aria-pressed="${E.journal === t}">${ESC(evtNom(t, 2))} <span class="sourd">${compte[t]}</span></button>`).join('')}</div>
     ${html || '<p class="vide">Rien encore.</p>'}`;
   $$('[data-type]').forEach(b => b.onclick = () => { E.journal = b.dataset.type; vueJournal(); });
@@ -516,17 +400,17 @@ function vueJournal() {
 // === SIMULER : le moteur tourne ici, le monde publié reste intact ===
 function vueSimuler() {
   const local = E.H.length - E.publies, K = E.comptes || 10;
-  $('#contenu').innerHTML = `<h2>Simuler la suite</h2>
+  $('#contenu').innerHTML = `<section class="simulation-panel"><p class="atlas-kicker">LABORATOIRE / EXPÉRIENCE LOCALE</p><h2>Simuler la suite</h2>
     <p class="note">Le moteur d'Orvane tourne dans votre navigateur, à partir du monde affiché. Rien n'est envoyé ni publié : le monde en ligne continue d'avancer d'un cycle chaque nuit, de son côté.</p>
     <div class="actions"><button class="bouton principal" data-n="1">Faire tourner 1 cycle</button><button class="bouton" data-n="10">10 cycles</button><button class="bouton" data-n="50">50 cycles</button><button class="bouton" id="arret" disabled>Arrêter</button></div>
     <div class="progres" aria-hidden="true"><span id="barre"></span></div><p class="note" id="avance">${local > 0 ? `${local} cycle${local > 1 ? 's' : ''} simulé${local > 1 ? 's' : ''} depuis le monde ${E.source?.publie ? 'publié' : 'ouvert'}.` : 'Aucun cycle simulé pour l\'instant.'}</p>
     ${local > 0 ? '<button class="lien" id="revenir">Revenir au monde de départ</button>' : ''}
-    <h2>Rejouer des joueurs</h2>
+    </section><section class="simulation-panel"><p class="atlas-kicker">LES PRESSIONS DES JOUEURS</p><h2>Rejouer des joueurs</h2>
     <p class="note">Un lot de pressions (ce que des joueurs ont fait, <code>pression.json</code>) et le profil d'un jeu (<code>profil.json</code>) : à chaque cycle simulé, le lot est rejoué comme si autant de joueurs refaisaient la même chose chaque jour.</p>
     <div class="actions"><button class="bouton" id="bLot">Choisir un lot…</button><button class="bouton" id="bProfil">Choisir un profil…</button><button class="bouton" id="bExLot">Prendre ceux de l'exemple</button>${E.lot ? '<button class="bouton" id="bSansLot">Ne plus rejouer</button>' : ''}</div>
     <div class="champ"><label for="comptes">Joueurs</label><input type="range" id="comptes" min="1" max="100" value="${K}"><b id="vComptes">${K}</b></div>
     <p class="note">${E.lot && E.profil ? `Lot de « ${ESC(E.lot.source?.jeu || '?')} » (${E.lot.evenements.length} événements) et profil « ${ESC(E.profil.jeu)} » : rejoués pour ${K} joueurs à chaque cycle.` : E.lot ? 'Lot choisi : il manque le profil du jeu.' : E.profil ? `Profil « ${ESC(E.profil.jeu)} » chargé ; sans lot, le monde vit sans joueurs.` : 'Sans lot, le monde vit sans joueurs.'}</p>
-    <h2>Pressions du dernier cycle simulé</h2><div id="vuePressions"></div>`;
+    </section><section class="simulation-panel"><p class="atlas-kicker">RÉSULTATS DE L’EXPÉRIENCE</p><h2>Pressions du dernier cycle simulé</h2><div id="vuePressions"></div></section>`;
   $$('[data-n]').forEach(b => b.onclick = () => simuler(+b.dataset.n));
   $('#arret').onclick = () => { E.arret = true; };
   if ($('#revenir')) $('#revenir').onclick = () => { E.H = E.H.slice(0, E.publies); E.tampon = {}; E.pressions = null; rendre(); };

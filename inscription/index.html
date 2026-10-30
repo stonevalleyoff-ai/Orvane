@@ -3,81 +3,38 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="light dark">
 <title>Brancher un jeu — Orvane</title>
 <meta name="description" content="Inscrire son jeu sur Orvane et recevoir ses clés pour le Supabase d'Orvane.">
-<style>
-:root {
-  --fond:#121a17; --surface:#18221e; --surface2:#1f2b26; --ligne:#2d3b35; --texte:#e9efe6; --sourd:#97a69d;
-  --ambre:#e0a54a; --vif:#8fcf8a; --declin:#e58a73;
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-}
-* { box-sizing:border-box; }
-html, body { margin:0; background:var(--fond); color:var(--texte); font:15px/1.55 var(--sans); -webkit-text-size-adjust:100%; }
-a { color:var(--ambre); }
-button, input, textarea { font:inherit; color:inherit; }
-:focus-visible { outline:2px solid var(--ambre); outline-offset:2px; }
-h1, h2 { font-family:var(--serif); font-weight:600; letter-spacing:.01em; line-height:1.2; }
-h1 { font-size:30px; margin:28px 0 10px; }
-h2 { font-size:20px; margin:0 0 6px; }
-.tete { border-bottom:1px solid var(--ligne); padding:12px 16px; }
-.tete div { max-width:760px; margin:0 auto; display:flex; align-items:center; gap:12px; }
-.marque { font:600 19px/1 var(--serif); letter-spacing:.02em; color:var(--texte); text-decoration:none; }
-.tete .lien { margin-left:auto; font-size:13px; color:var(--sourd); }
-main { max-width:760px; margin:0 auto; padding:0 16px 48px; }
-.chapeau { color:var(--sourd); margin:0 0 24px; max-width:62ch; }
-.carte { background:var(--surface); border:1px solid var(--ligne); border-radius:10px; padding:20px; margin:0 0 18px; }
-.carte > p { margin:0 0 14px; color:var(--sourd); }
-label { display:block; font-size:13px; color:var(--sourd); margin:12px 0 4px; }
-label b { color:var(--texte); font-weight:600; }
-input[type=text], input[type=password], textarea { width:100%; background:var(--fond); border:1px solid var(--ligne); border-radius:8px; padding:10px 12px; }
-input:focus, textarea:focus { border-color:var(--ambre); outline:none; }
-textarea { font:13px/1.5 var(--mono); min-height:200px; resize:vertical; }
-.actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:16px; }
-button { background:var(--ambre); color:#1b1408; border:0; border-radius:8px; padding:10px 18px; font-weight:600; cursor:pointer; }
-button.second { background:var(--surface2); color:var(--texte); border:1px solid var(--ligne); font-weight:500; }
-button:disabled { opacity:.55; cursor:default; }
-.etat { font-size:14px; min-height:1.5em; }
-.etat.ok { color:var(--vif); } .etat.err { color:var(--declin); }
-.cle { margin:14px 0 0; }
-.cle .nom { font-size:13px; color:var(--sourd); margin-bottom:4px; }
-.cle .nom b { color:var(--texte); }
-.cle .val { display:flex; gap:8px; align-items:stretch; }
-.cle code { flex:1; min-width:0; overflow-wrap:anywhere; background:var(--fond); border:1px solid var(--ligne); border-radius:8px; padding:9px 12px; font:13px/1.45 var(--mono); }
-.cle button { padding:8px 12px; }
-.secret code { border-color:var(--declin); }
-.alerte { border-left:3px solid var(--declin); background:var(--surface2); padding:10px 14px; border-radius:0 8px 8px 0; margin:16px 0 0; font-size:14px; }
-pre { background:var(--fond); border:1px solid var(--ligne); border-radius:8px; padding:12px; overflow-x:auto; font:12.5px/1.5 var(--mono); margin:8px 0 0; }
-ol.etapes { margin:8px 0 0; padding-left:22px; } ol.etapes li { margin:0 0 14px; } ol.etapes li > span { color:var(--sourd); }
-dl.fiche { display:grid; grid-template-columns:max-content 1fr; gap:4px 14px; margin:14px 0 0; font-size:14px; }
-dl.fiche dt { color:var(--sourd); } dl.fiche dd { margin:0; overflow-wrap:anywhere; }
-[hidden] { display:none !important; }
-footer { color:var(--sourd); font-size:13px; border-top:1px solid var(--ligne); padding-top:16px; margin-top:28px; }
-@media (max-width:520px) { h1 { font-size:25px; } .carte { padding:16px; } .cle .val { flex-direction:column; } }
-</style>
+<link rel="icon" href="../assets/embleme.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/orvane.css">
 </head>
-<body>
-<header class="tete"><div><a class="marque" href="../">Orvane</a><a class="lien" href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">Le guide complet</a></div></header>
-<main>
-<h1>Brancher un jeu</h1>
-<p class="chapeau">Orvane fait vivre un seul monde, et tous les jeux s'y branchent. Chaque jeu lit le monde chaque nuit, et y renvoie ce que font ses joueurs. Inscrivez votre jeu pour recevoir ses deux clés.</p>
-
-<section class="carte" id="cInscrire" aria-labelledby="tInscrire">
-  <h2 id="tInscrire">Inscrire un jeu</h2>
-  <p>Vous recevrez la clé du jeu, qui va dans son code, et la clé d'administration, qui le règle et ne s'affiche qu'une fois.</p>
+<body class="signup"><a class="skip" href="#contenu">Aller au contenu</a>
+<header class="site-header"><div class="header-inner">
+<a class="brand" href="../" aria-label="Orvane, accueil"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 35V19M20 26C8 27 4 18 5 7c11 0 17 6 15 19ZM20 21C19 11 26 5 35 5c1 10-4 17-15 16Z" stroke="currentColor" stroke-width="1.5"/><path d="m11 14 9 12M28 12l-8 9" stroke="currentColor" stroke-width="1.3"/></svg><span>orvane<span class="brand-caption">MOTEUR DU VIVANT</span></span></a>
+<nav class="desktop-nav" aria-label="Navigation principale">
+<a href="../#le-monde" >Le projet</a>
+<a href="../monde/?monde=orvane">L’Observatoire <span aria-hidden="true">↗</span></a>
+<a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">Documentation <span aria-hidden="true">↗</span></a>
+<a class="nav-cta" href="../inscription/" aria-current="page">Brancher un jeu <span aria-hidden="true">→</span></a>
+</nav>
+<details class="mobile-menu"><summary>Menu <span aria-hidden="true">☰</span></summary><nav aria-label="Navigation mobile"><a href="../#le-monde">Le projet</a><a href="../monde/?monde=orvane">L’Observatoire <span aria-hidden="true">↗</span></a><a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">Documentation <span aria-hidden="true">↗</span></a><a href="../inscription/">Brancher un jeu →</a></nav></details>
+</div></header><main id="contenu">
+<section class="connect-hero"><div class="wrap connect-hero-grid"><div><a class="breadcrumb" href="../">Orvane <span aria-hidden="true">/</span> Espace développeur</a><p class="eyebrow">FAITES ENTRER LE VIVANT DANS VOTRE JEU</p><h1>Votre jeu.<br><em>Un monde vivant.</em></h1><p>Branchez votre univers à Orvane. Lisez l’évolution du monde, adaptez-la à votre gameplay et laissez vos joueurs en écrire la suite.</p><a class="hero-anchor" href="#cInscrire">Commencer l’intégration <span aria-hidden="true">↓</span></a></div><figure><img src="../assets/littoral-900.webp" width="900" height="600" alt="Littoral illustré où se rencontrent forêt et océan."><figcaption>UN MÊME MONDE · VOTRE INTERPRÉTATION</figcaption></figure></div></section>
+<div class="wrap developer-layout"><aside class="developer-aside"><div class="aside-sticky"><p class="eyebrow dark-ink">VOTRE CONNEXION</p><nav class="step-nav" aria-label="Étapes de connexion"><a href="#cInscrire"><span>01</span><div>Inscrire un jeu<small>Obtenir les deux clés</small></div><span aria-hidden="true">↗</span></a><a href="#cRegler"><span>02</span><div>Régler l’exposition<small>Adapter le rendu à votre jeu</small></div><span aria-hidden="true">↗</span></a><a href="#cVerifier"><span>03</span><div>Vérifier une clé<small>Consulter un jeu existant</small></div><span aria-hidden="true">↗</span></a></nav><div class="developer-note"><span class="note-symbol" aria-hidden="true">◎</span><h3>Un échange dans les deux sens.</h3><p>Votre jeu lit le monde. Les actions de vos joueurs nourrissent le prochain cycle.</p><a class="inline-link" href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">Lire le guide complet <span aria-hidden="true">↗</span></a></div><p class="privacy-note">Orvane reçoit des comptes d’actions. L’identifiant du joueur lui arrive haché ; seul un pseudonyme est conservé.</p></div></aside><div class="developer-content"><section class="carte" id="cInscrire" aria-labelledby="tInscrire">
+  <p class="eyebrow dark-ink">01 / NOUVELLE CONNEXION</p><h2 id="tInscrire">Inscrire un jeu</h2>
+  <p>Deux clés pour relier votre jeu au monde commun. La clé publique accompagne votre code ; la clé d’administration reste secrète.</p>
   <form id="fInscrire" novalidate>
     <label for="iNom"><b>Nom du jeu</b> · 2 à 60 caractères</label>
-    <input type="text" id="iNom" name="nom" minlength="2" maxlength="60" required autocomplete="off" placeholder="Mon jeu">
+    <input type="text" id="iNom" name="nom" minlength="2" maxlength="60" required autocomplete="off" placeholder="Ex. : Mon monde vivant">
     <label for="iContact"><b>Contact</b> · facultatif : un courriel ou un lien, pour qu'Orvane puisse vous écrire</label>
     <input type="text" id="iContact" name="contact" maxlength="200" autocomplete="email" placeholder="moi@exemple.fr">
-    <div class="actions"><button type="submit" id="bInscrire">Inscrire le jeu</button><span class="etat" id="eInscrire" role="status" aria-live="polite"></span></div>
+    <div class="actions"><button type="submit" id="bInscrire">Créer les clés du jeu <span aria-hidden="true">→</span></button><span class="etat" id="eInscrire" role="status" aria-live="polite"></span></div>
   </form>
 </section>
 
 <section class="carte" id="cCles" aria-labelledby="tCles" hidden>
-  <h2 id="tCles">Les clés de <span id="kNomJeu"></span></h2>
+  <p class="eyebrow dark-ink">CONNEXION CRÉÉE</p><h2 id="tCles">Les clés de <span id="kNomJeu"></span></h2>
   <dl class="fiche"><dt>Identifiant</dt><dd><code id="kJeu"></code></dd></dl>
   <div class="cle"><div class="nom"><b>Clé du jeu</b> · publique : elle va dans le code du jeu, elle signe ses dépôts</div>
     <div class="val"><code id="kCle"></code><button type="button" class="second" data-copier="kCle">Copier</button></div></div>
@@ -95,11 +52,11 @@ footer { color:var(--sourd); font-size:13px; border-top:1px solid var(--ligne); 
 <pre id="pDeposer"></pre></li>
     <li><b>Régler l'exposition</b> <span>: facultatif, plus bas, avec la clé d'administration.</span></li>
   </ol>
-  <p style="margin:6px 0 0">Tout le détail, les limites et les erreurs : <a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">le guide « Brancher un jeu sur Orvane »</a>.</p>
+  <p style="margin:6px 0 0">Retrouvez le détail, les limites et les erreurs : <a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">le guide « Brancher un jeu sur Orvane »</a>.</p>
 </section>
 
 <section class="carte" id="cRegler" aria-labelledby="tRegler">
-  <h2 id="tRegler">Régler l'exposition</h2>
+  <p class="eyebrow dark-ink">02 / ADAPTER LE VIVANT</p><h2 id="tRegler">Régler l'exposition</h2>
   <p>L'exposition dit ce que le jeu sait montrer : la compression des raretés, l'étalement des changements, les traits qu'il sait dessiner. Sans exposition, les lots du jeu sont lus tels quels. Le schéma complet est <a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/schemas/profil.schema.json">profil.schema.json</a>, propriété <code>exposition</code>.</p>
   <form id="fRegler" novalidate>
     <label for="iAdmin"><b>Clé d'administration</b></label>
@@ -118,7 +75,7 @@ footer { color:var(--sourd); font-size:13px; border-top:1px solid var(--ligne); 
 </section>
 
 <section class="carte" id="cVerifier" aria-labelledby="tVerifier">
-  <h2 id="tVerifier">Vérifier une clé de jeu</h2>
+  <p class="eyebrow dark-ink">03 / JEU EXISTANT</p><h2 id="tVerifier">Vérifier une clé de jeu</h2>
   <p>Ce qu'Orvane sait d'un jeu, à partir de sa clé publique.</p>
   <form id="fVerifier" novalidate>
     <label for="iCle"><b>Clé du jeu</b></label>
@@ -128,9 +85,8 @@ footer { color:var(--sourd); font-size:13px; border-top:1px solid var(--ligne); 
   <dl class="fiche" id="dJeu" hidden></dl>
 </section>
 
-<footer>Orvane ne reçoit que des comptes, jamais de données personnelles : l'identifiant d'un joueur lui arrive haché, et il n'en garde qu'un pseudonyme. <a href="../">L'observatoire</a> montre le monde vivre.</footer>
-</main>
-<script>
+<div class="help-strip"><span aria-hidden="true">↳</span><p><b>Besoin d’un exemple concret ?</b><br>Explorez le traducteur de Stone Valley et le mode d’emploi.</p><a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/docs/LISEZ-MOI.md" aria-label="Voir le mode d’emploi du traducteur"><span aria-hidden="true">↗</span></a></div></div></div>
+<section class="connect-bottom wrap"><p>Le monde continue d’évoluer, avec ou sans votre jeu.</p><a class="inline-link" href="../monde/?monde=orvane">Le découvrir dans l’Observatoire <span aria-hidden="true">↗</span></a></section></main><footer class="site-footer"><div class="wrap footer-top"><a class="brand" href="../"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 35V19M20 26C8 27 4 18 5 7c11 0 17 6 15 19ZM20 21C19 11 26 5 35 5c1 10-4 17-15 16Z" stroke="currentColor" stroke-width="1.5"/><path d="m11 14 9 12M28 12l-8 9" stroke="currentColor" stroke-width="1.3"/></svg><span>orvane<span class="brand-caption">MOTEUR DU VIVANT</span></span></a><p>Un monde partagé.<br>Des histoires qui évoluent.</p><nav aria-label="Ressources"><a href="https://github.com/stonevalleyoff-ai/orvane">GitHub <span aria-hidden="true">↗</span></a><a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">Guide d’intégration <span aria-hidden="true">↗</span></a><a href="../llms.txt">Orvane pour les IA <span aria-hidden="true">↗</span></a></nav></div><div class="wrap footer-bottom"><span>© StoneValley · Orvane</span><span>Licence <a href="../LICENSE">PolyForm Shield 1.0.0</a></span><span>Illustrations d’univers · non issues de la simulation</span></div></footer><script>
 (() => {
   const SUPA = 'https://rospodujiyltmxitykwc.supabase.co', PUB = 'sb_publishable_F98uYIaPrLTjhj3n7QiBOg_SOtFynn8';
   const MONDE = 'https://stonevalleyoff-ai.github.io/orvane/mondes/orvane/';
@@ -236,6 +192,4 @@ for (const t of inst.taxons) for (const p of t.populations) console.log(t.nom, p
     d.hidden = false;
   });
 })();
-</script>
-</body>
-</html>
+</script></body></html>

@@ -3,86 +3,44 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="light dark">
 <title>Orvane — un monde vivant que tous les jeux partagent</title>
 <meta name="description" content="Orvane est un moteur d'écosystème et d'évolution : un seul monde vivant, 24 biomes et plus d'une centaine de lignées, où n'importe quel jeu peut se brancher.">
 <meta property="og:title" content="Orvane — un monde vivant que tous les jeux partagent">
 <meta property="og:description" content="Un moteur d'écosystème et d'évolution. N'importe quel jeu peut s'y brancher : il lit le monde, et y renvoie ce que font ses joueurs.">
 <meta property="og:type" content="website">
 <link rel="alternate" type="text/plain" href="llms.txt" title="Orvane pour les IA">
-<style>
-:root {
-  --fond:#121a17; --surface:#18221e; --ligne:#2d3b35; --texte:#e9efe6; --sourd:#97a69d; --ambre:#e0a54a; --vif:#8fcf8a;
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
-* { box-sizing:border-box; }
-html, body { margin:0; background:var(--fond); color:var(--texte); font:16px/1.6 var(--sans); -webkit-text-size-adjust:100%; }
-a { color:var(--ambre); }
-:focus-visible { outline:2px solid var(--ambre); outline-offset:2px; }
-main { max-width:760px; margin:0 auto; padding:48px 16px 48px; }
-.marque { font:600 15px/1 var(--serif); letter-spacing:.14em; text-transform:uppercase; color:var(--sourd); margin:0 0 18px; }
-h1 { font:600 40px/1.15 var(--serif); letter-spacing:.005em; margin:0 0 16px; }
-h2 { font:600 21px/1.25 var(--serif); margin:36px 0 8px; }
-.chapeau { font-size:18px; color:var(--sourd); margin:0 0 26px; max-width:60ch; }
-.vie { font-size:14px; color:var(--sourd); min-height:1.6em; margin:0 0 26px; }
-.vie b { color:var(--vif); font-weight:600; }
-.portes { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
-.porte { display:block; background:var(--surface); border:1px solid var(--ligne); border-radius:10px; padding:16px; text-decoration:none; color:var(--texte); }
-.porte:hover { border-color:var(--ambre); }
-.porte b { display:block; font:600 17px/1.3 var(--serif); color:var(--ambre); margin-bottom:6px; }
-.porte span { font-size:14px; color:var(--sourd); }
-p { margin:0 0 12px; max-width:64ch; }
-ol { padding-left:22px; margin:0 0 12px; } ol li { margin:0 0 8px; }
-footer { color:var(--sourd); font-size:13px; border-top:1px solid var(--ligne); padding-top:16px; margin-top:40px; }
-@media (max-width:640px) { main { padding-top:32px; } h1 { font-size:31px; } .portes { grid-template-columns:1fr; } }
-</style>
+<link rel="icon" href="assets/embleme.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/orvane.css">
+<link rel="preload" as="image" href="assets/vallee.webp">
 </head>
-<body>
-<main>
-<p class="marque">Orvane</p>
-<h1>Un monde vivant que tous les jeux partagent</h1>
-<p class="chapeau">Orvane est un moteur d'écosystème et d'évolution. Il fait vivre un seul monde : 24 biomes, de la banquise aux abysses, et plus d'une centaine de lignées inventées par l'évolution, pas par un dessinateur. N'importe quel jeu peut s'y brancher.</p>
-<p class="vie" id="vie" aria-live="polite"></p>
-
-<nav class="portes" aria-label="Entrées">
-  <a class="porte" href="monde/?monde=orvane"><b>L'observatoire</b><span>Voir le monde vivre : ses espèces, ses biomes, ses lignées, sa chaîne alimentaire, son journal.</span></a>
-  <a class="porte" href="inscription/"><b>Brancher un jeu</b><span>Inscrire son jeu et recevoir ses clés, en une minute.</span></a>
-  <a class="porte" href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md"><b>Le guide</b><span>Les étapes, les adresses, les appels et les erreurs, pas à pas.</span></a>
+<body class="home"><a class="skip" href="#contenu">Aller au contenu</a>
+<header class="site-header"><div class="header-inner">
+<a class="brand" href="./" aria-label="Orvane, accueil"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 35V19M20 26C8 27 4 18 5 7c11 0 17 6 15 19ZM20 21C19 11 26 5 35 5c1 10-4 17-15 16Z" stroke="currentColor" stroke-width="1.5"/><path d="m11 14 9 12M28 12l-8 9" stroke="currentColor" stroke-width="1.3"/></svg><span>orvane<span class="brand-caption">MOTEUR DU VIVANT</span></span></a>
+<nav class="desktop-nav" aria-label="Navigation principale">
+<a href="#le-monde" aria-current="page">Le projet</a>
+<a href="monde/?monde=orvane">L’Observatoire <span aria-hidden="true">↗</span></a>
+<a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">Documentation <span aria-hidden="true">↗</span></a>
+<a class="nav-cta" href="inscription/" >Brancher un jeu <span aria-hidden="true">→</span></a>
 </nav>
-
-<h2>Un monde qui se souvient des joueurs</h2>
-<p>Chaque nuit, le monde avance d'un cycle. Ses lignées naissent, se nourrissent, se chassent, migrent, mutent et se séparent en espèces nouvelles. Chaque jeu le lit et en fait ses créatures, à sa façon. Puis il renvoie ce que font ses joueurs : les bêtes croisées, chassées, apprivoisées.</p>
-<p>La nuit suivante, le monde en tient compte, dans tous les jeux à la fois. Une espèce trop chassée se raréfie et devient méfiante ; elle rapetisse si l'on prend toujours les plus grandes. Un seul jeu ne pèse jamais plus de la moitié de la pression sur une espèce.</p>
-
-<h2>Brancher son jeu</h2>
-<ol>
-  <li><a href="inscription/">S'inscrire</a> pour recevoir la clé du jeu.</li>
-  <li>Lire le monde, publié chaque nuit en JSON : <a href="mondes/orvane/instantane.json"><code>instantane.json</code></a>.</li>
-  <li>Faire de chaque lignée une créature, là où elle vit et en proportion de son nombre.</li>
-  <li>Renvoyer ce que font les joueurs, en comptes bruts.</li>
-</ol>
-<p>Le premier jeu branché est Stone Valley. Son traducteur complet sert d'exemple, avec <a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/docs/LISEZ-MOI.md">le mode d'emploi en treize chapitres</a>.</p>
-
-<footer>
-  <a href="https://github.com/stonevalleyoff-ai/orvane">Le dépôt sur GitHub</a> · <a href="llms.txt">Orvane pour les IA (llms.txt)</a><br>
-  <span lang="en">Orvane is an ecosystem and evolution engine running one shared living world that any game can plug into. See the <a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">integration guide</a>; it ends with an English summary.</span>
-</footer>
-</main>
-<script>
-(async () => {
-  const el = document.getElementById('vie');
-  try {
-    const [inst, jeux] = await Promise.all(['instantane.json', 'jeux.json'].map(f => fetch('mondes/orvane/' + f, { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null)));
-    if (!inst || !inst.cycle) return;
-    const vivantes = (inst.taxons || []).filter(t => t.eteint == null).length;
-    const branches = Array.isArray(jeux) ? jeux.filter(j => j.actif !== false).length : 0;
-    const sn = inst.cycle.saison && inst.cycle.saison.nom, saison = sn ? (sn === 'printemps' ? ', au printemps' : ', en ' + sn) : '';
-    el.innerHTML = '';
-    const b = document.createElement('b'); b.textContent = '● ';
-    el.append(b, 'Cycle ' + inst.cycle.n + saison + ' · ' + vivantes + ' lignées vivantes' + (branches ? ' · ' + branches + (branches > 1 ? ' jeux branchés' : ' jeu branché') : ''));
-  } catch (e) { }
-})();
-</script>
-</body>
-</html>
+<details class="mobile-menu"><summary>Menu <span aria-hidden="true">☰</span></summary><nav aria-label="Navigation mobile"><a href="#le-monde">Le projet</a><a href="monde/?monde=orvane">L’Observatoire <span aria-hidden="true">↗</span></a><a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">Documentation <span aria-hidden="true">↗</span></a><a href="inscription/">Brancher un jeu →</a></nav></details>
+</div></header>
+<main id="contenu">
+<section class="hero" aria-labelledby="hero-title">
+<picture class="hero-art"><source media="(max-width:700px)" srcset="assets/vallee-900.webp"><img src="assets/vallee.webp" width="1536" height="1024" alt="Illustration d’une vallée sauvage traversée par une rivière, entre forêts et montagnes." fetchpriority="high"></picture>
+<div class="hero-shade"></div><div class="wrap hero-content">
+<p class="eyebrow"><span class="tiny-leaf" aria-hidden="true">✳</span> ÉCOSYSTÈMES · ÉVOLUTION · MONDE PARTAGÉ</p>
+<h1 id="hero-title">Le monde vit.<br><em>Vos jeux</em><br>en font partie.</h1>
+<p class="hero-intro">Un moteur d’écosystème et d’évolution. Un même monde vivant, que chaque jeu explore à sa façon.</p>
+<div class="hero-actions"><a class="button button-gold" href="monde/?monde=orvane">Entrer dans l’Observatoire <span aria-hidden="true">↗</span></a><a class="text-link" href="inscription/">Brancher mon jeu <span aria-hidden="true">→</span></a></div>
+<div class="hero-note"><span class="line"></span> La vie ne se programme pas à l’avance.<br>Elle se construit, cycle après cycle.</div>
+</div><div class="hero-caption"><span>ORVANE / ATLAS DU VIVANT</span><span>01 — La vallée · illustration d’univers</span></div>
+</section>
+<section class="world-status" aria-label="Repères du monde"><div class="wrap status-grid"><div class="world-label"><span class="status-icon" aria-hidden="true"></span><span>UN MONDE COMMUN<small id="vie" role="status" aria-live="polite">Un cycle chaque nuit</small></span></div><div class="stat"><strong>24</strong><span>biomes interconnectés</span></div><div class="stat"><strong id="lignees">100+</strong><span id="lignees-label">lignées dans l’univers</span></div><div class="stat"><strong>01</strong><span>monde pour tous les jeux</span></div></div></section>
+<section class="intro-section wrap section" id="le-monde"><div class="section-heading"><p class="eyebrow dark-ink">01 / LE PROJET</p><h2>Un écosystème.<br><em>Une histoire vivante.</em></h2></div><div class="intro-copy"><p class="lead">Dans Orvane, chaque espèce a une place.<br>Et chaque action peut déplacer l’équilibre.</p><p>Les lignées naissent, se nourrissent, se chassent et migrent. Au fil des générations, elles mutent et se séparent en espèces nouvelles. Leur évolution se construit dans la simulation.</p><p>Les jeux lisent ce monde et le rendent jouable. En retour, leurs joueurs y laissent une empreinte : rencontres, chasse, apprivoisement… Le cycle suivant en tient compte.</p></div></section>
+<section class="principles wrap" aria-label="Les principes d’Orvane"><article><span class="principle-number">I.</span><h3>Le vivant se transforme</h3><p>Génétique, reproduction, prédation : les pressions du monde façonnent ses populations.</p></article><article><span class="principle-number">II.</span><h3>Les jeux se répondent</h3><p>Une évolution dans le monde commun peut se retrouver dans tous les jeux qui y sont branchés.</p></article><article><span class="principle-number">III.</span><h3>Le changement prend son temps</h3><p>Un tampon amortit les pressions et leur restitution. Votre jeu garde son rythme et son équilibre.</p></article></section>
+<section class="biomes-section wrap section" aria-labelledby="biomes-title"><figure class="landscape-figure"><img src="assets/littoral.webp" srcset="assets/littoral-900.webp 900w, assets/littoral.webp 1536w" sizes="(max-width: 800px) 100vw, 55vw" width="1536" height="1024" loading="lazy" alt="Illustration naturaliste d’un littoral : forêt, prairie et récifs se rejoignent."><figcaption><span>02 — Aux frontières des biomes</span><span>ILLUSTRATION D’UNIVERS</span></figcaption></figure><div class="biomes-copy"><p class="eyebrow dark-ink">02 / LES MILIEUX</p><h2 id="biomes-title">De la banquise<br><em>aux abysses.</em></h2><p>24 biomes, autant de façons de survivre. Le climat, les ressources et les voisins changent les règles du vivant.</p><p>Une population migre, s’isole ou s’adapte. D’un milieu à l’autre, son histoire se ramifie.</p><div class="habitats"><span>Terre</span><span>Eau douce</span><span>Mer</span><span>Sous-sol</span></div><a class="inline-link" href="monde/?monde=orvane">Explorer les biomes dans l’Observatoire <span aria-hidden="true">↗</span></a></div></section>
+<section class="evolution-section"><div class="wrap evolution-grid"><div class="specimen"><div class="specimen-label">ORVANE / CARNET NATURALISTE <span>FIG. 03</span></div><img src="assets/specimen.webp" width="1024" height="1536" loading="lazy" alt="Planche artistique d’un animal forestier imaginaire à six pattes, à la longue queue et aux petites cornes."><p>Étude d’univers — interprétation artistique, non issue du moteur.</p></div><div class="evolution-copy"><p class="eyebrow">03 / LA MÉMOIRE DU MONDE</p><h2>Rien n’est figé.<br><em>Tout laisse une trace.</em></h2><p class="lead">Une espèce trop chassée ne revient pas toujours comme avant.</p><p>Elle peut se raréfier. Les populations apprennent la méfiance. Si les joueurs prélèvent surtout les plus grands individus, la taille moyenne peut diminuer au fil des générations.</p><div class="field-note"><span class="eyebrow">LE PRINCIPE</span><p>La chasse n’accorde pas de bonus automatique. Ce sont les individus qui survivent et se reproduisent qui écrivent la suite.</p></div><p class="muted">Un seul jeu ne représente jamais plus de la moitié de la pression sur une espèce.</p><a class="text-link" href="monde/?monde=orvane">Observer les lignées <span aria-hidden="true">↗</span></a></div></div></section>
+<section class="integration-section wrap section" aria-labelledby="integration-title"><div class="integration-heading"><div><p class="eyebrow dark-ink">04 / POUR LES DÉVELOPPEURS</p><h2 id="integration-title">Votre univers.<br><em>Le même vivant.</em></h2></div><p>Survie, exploration ou monde paisible : votre traducteur adapte Orvane aux règles et aux créatures de votre jeu.</p></div><div class="integration-steps"><article><span>01</span><h3>Inscrivez votre jeu</h3><p>Recevez sa clé publique et sa clé d’administration.</p></article><article><span>02</span><h3>Lisez le monde</h3><p>Récupérez l’instantané JSON publié chaque nuit.</p><a href="mondes/orvane/instantane.json">Voir l’instantané <span aria-hidden="true">↗</span></a></article><article><span>03</span><h3>Traduisez le vivant</h3><p>Reliez les biomes, les populations et les traits à votre gameplay.</p></article><article><span>04</span><h3>Renvoyez les actions</h3><p>Transmettez des comptes bruts. Le tampon régule leur influence.</p></article></div><div class="integration-bottom"><p><b>Premier jeu branché : Stone Valley.</b><br>Son traducteur complet sert d’exemple pour construire le vôtre.</p><a class="button button-dark" href="inscription/">Brancher mon jeu <span aria-hidden="true">→</span></a></div><a class="inline-link" href="https://github.com/stonevalleyoff-ai/orvane/blob/main/docs/LISEZ-MOI.md">Le mode d’emploi en treize chapitres <span aria-hidden="true">↗</span></a></section>
+<section class="final-cta"><img src="assets/vallee-900.webp" alt="" width="900" height="600" loading="lazy"><div class="wrap"><p class="eyebrow">L’HISTOIRE CONTINUE, CHAQUE NUIT</p><h2>Voyez ce que le monde<br><em>est devenu.</em></h2><a class="button button-gold" href="monde/?monde=orvane">Ouvrir l’Observatoire <span aria-hidden="true">↗</span></a></div></section>
+</main><footer class="site-footer"><div class="wrap footer-top"><a class="brand" href="./"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 35V19M20 26C8 27 4 18 5 7c11 0 17 6 15 19ZM20 21C19 11 26 5 35 5c1 10-4 17-15 16Z" stroke="currentColor" stroke-width="1.5"/><path d="m11 14 9 12M28 12l-8 9" stroke="currentColor" stroke-width="1.3"/></svg><span>orvane<span class="brand-caption">MOTEUR DU VIVANT</span></span></a><p>Un monde partagé.<br>Des histoires qui évoluent.</p><nav aria-label="Ressources"><a href="https://github.com/stonevalleyoff-ai/orvane">GitHub <span aria-hidden="true">↗</span></a><a href="https://github.com/stonevalleyoff-ai/orvane/blob/main/BRANCHER-UN-JEU.md">Guide d’intégration <span aria-hidden="true">↗</span></a><a href="llms.txt">Orvane pour les IA <span aria-hidden="true">↗</span></a></nav></div><div class="wrap footer-bottom"><span>© StoneValley · Orvane</span><span>Licence <a href="LICENSE">PolyForm Shield 1.0.0</a></span><span>Illustrations d’univers · non issues de la simulation</span></div></footer><script src="assets/accueil.js" defer></script></body></html>
