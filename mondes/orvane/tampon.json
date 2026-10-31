@@ -1,6 +1,316 @@
 {
- "lisse": {},
- "dernier_id": 5,
- "lisseQ": {},
- "derniere_lecture": "2026-10-29T20:33:13.948358+00:00"
+ "lisse": {
+  "musilnou": {
+   "montagne": {
+    "base": 0.058,
+    "camouflage+crepuscularite+metabolisme-lent": 0.094,
+    "camouflage+crepuscularite+gregarisme+metabolisme-lent": 0.071,
+    "camouflage+crepuscularite+gregarisme+metabolisme-lent+vibrisses": 0.025,
+    "camouflage+crepuscularite+metabolisme-lent+vibrisses": 0.024,
+    "camouflage+metabolisme-lent": 0.018
+   }
+  },
+  "tisne": {
+   "foret": {
+    "camouflage+crepuscularite+gregarisme+melanisme+metabolisme-lent+palmes+vibrisses+yeux-nocturnes": 0.313,
+    "camouflage+crepuscularite+gregarisme+melanisme+metabolisme-lent+palmes+queue-prehensile+vibrisses+yeux-nocturnes": 0.013,
+    "camouflage+crepuscularite+crocs-allonges+gregarisme+melanisme+metabolisme-lent+palmes+vibrisses+yeux-nocturnes": 0.012
+   }
+  },
+  "memu": {
+   "foret": {
+    "base": 0.015,
+    "camouflage+crepuscularite+metabolisme-lent+robe-doree": 0.453,
+    "crepuscularite+metabolisme-lent+robe-doree": 0.026,
+    "camouflage+metabolisme-lent+robe-doree": 0.021,
+    "camouflage+crepuscularite+gregarisme+metabolisme-lent+robe-doree": 0.014,
+    "camouflage+crepuscularite+metabolisme-lent+peau-epaisse+robe-doree": 0.012,
+    "camouflage+crepuscularite+metabolisme-lent+robe-doree+yeux-nocturnes": 0.038,
+    "camouflage+crepuscularite+metabolisme-lent+ponte-abondante+robe-doree": 0.033
+   }
+  },
+  "phemeva": {
+   "prairie": {
+    "base": 1.955,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+peau-epaisse": 1.716,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+peau-epaisse+queue-prehensile": 1.107,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+palmes+peau-epaisse": 0.786,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+palmes+peau-epaisse+queue-prehensile": 0.327,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+pattes-longues+peau-epaisse": 0.459,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+peau-epaisse+yeux-nocturnes": 0.423,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+pattes-longues+peau-epaisse+queue-prehensile": 0.387,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+palmes+pattes-longues+peau-epaisse": 0.384,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent": 0.561,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+palmes+pattes-longues+peau-epaisse+queue-prehensile": 0.192,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+peau-epaisse+queue-prehensile+yeux-nocturnes": 0.673,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+palmes+peau-epaisse+yeux-nocturnes": 0.212,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+queue-prehensile": 0.36,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+palmes": 0.204,
+    "crepuscularite+glande-irritante+gregarisme+melanisme+metabolisme-lent+peau-epaisse": 0.036,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+pattes-longues": 0.025,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+yeux-nocturnes": 0.172,
+    "crepuscularite+gregarisme+melanisme+metabolisme-lent+peau-epaisse+soins-parentaux": 0.01
+   }
+  },
+  "somu": {
+   "prairie": {
+    "base": 0.066,
+    "camouflage+crepuscularite+metabolisme-lent+robe-doree": 1.096,
+    "camouflage+crepuscularite+metabolisme-lent+robe-doree+vibrisses": 0.07,
+    "crepuscularite+metabolisme-lent+robe-doree": 0.121,
+    "camouflage+crepuscularite+gregarisme+metabolisme-lent+robe-doree": 0.046,
+    "camouflage+crepuscularite+metabolisme-lent+palmes+robe-doree": 0.106,
+    "camouflage+crepuscularite+metabolisme-lent+peau-epaisse+robe-doree": 0.037,
+    "camouflage+crepuscularite+estomac-large+metabolisme-lent+robe-doree": 0.02,
+    "camouflage+metabolisme-lent+robe-doree": 0.02,
+    "camouflage+crepuscularite+metabolisme-lent+robe-doree+yeux-nocturnes": 0.017,
+    "camouflage+crepuscularite+metabolisme-lent+pattes-longues+robe-doree": 0.014,
+    "camouflage+crepuscularite+glande-irritante+metabolisme-lent+robe-doree": 0.013,
+    "camouflage+crepuscularite+metabolisme-lent+queue-prehensile+robe-doree": 0.012,
+    "camouflage+crepuscularite+crocs-allonges+metabolisme-lent+robe-doree": 0.012
+   }
+  },
+  "mutisnou": {
+   "marais": {
+    "camouflage+crepuscularite+gigantisme+melanisme+metabolisme-lent+palmes": 0.151,
+    "camouflage+crepuscularite+gigantisme+melanisme+metabolisme-lent+palmes+vibrisses": 0.146,
+    "camouflage+crepuscularite+gigantisme+gregarisme+melanisme+metabolisme-lent+palmes": 0.011
+   }
+  },
+  "lojafir": {
+   "marais": {
+    "camouflage+crepuscularite+gregarisme+melanisme+metabolisme-lent+palmes+vibrisses+yeux-nocturnes": 0.307
+   }
+  },
+  "dunvi": {
+   "prairie": {
+    "base": 0.02,
+    "metabolisme-lent": 0.191,
+    "crepuscularite+metabolisme-lent": 0.063,
+    "melanisme+metabolisme-lent": 0.018,
+    "camouflage+metabolisme-lent": 0.01
+   }
+  },
+  "vael": {
+   "prairie": {
+    "metabolisme-lent": 0.249,
+    "crepuscularite+metabolisme-lent": 0.029,
+    "melanisme+metabolisme-lent": 0.012,
+    "gregarisme+metabolisme-lent": 0.01
+   }
+  },
+  "belgrane": {
+   "prairie": {
+    "base": 0.014,
+    "camouflage+metabolisme-lent": 0.172,
+    "camouflage+crepuscularite+metabolisme-lent": 0.055,
+    "metabolisme-lent": 0.059,
+    "crepuscularite+metabolisme-lent": 0.013
+   }
+  }
+ },
+ "dernier_id": 16,
+ "lisseQ": {
+  "tisne": {
+   "foret": {
+    "audace": {
+     "s": 6.1323,
+     "w": 4.6667
+    },
+    "taille": {
+     "s": 4.2269,
+     "w": 4.6667
+    },
+    "vitesse": {
+     "s": 0.9548,
+     "w": 4.6667
+    },
+    "sociabilite": {
+     "s": -1.4238,
+     "w": 4.6667
+    }
+   }
+  },
+  "phemeva": {
+   "prairie": {
+    "audace": {
+     "s": 15.4488,
+     "w": 15.3333
+    },
+    "taille": {
+     "s": 18.608,
+     "w": 15.3333
+    },
+    "vitesse": {
+     "s": 10.4742,
+     "w": 15.3333
+    },
+    "sociabilite": {
+     "s": 4.5084,
+     "w": 15.3333
+    }
+   }
+  },
+  "somu": {
+   "prairie": {
+    "audace": {
+     "s": 0.874,
+     "w": 1.6667
+    },
+    "taille": {
+     "s": 1.3605,
+     "w": 1.6667
+    },
+    "vitesse": {
+     "s": 0.7738,
+     "w": 1.6667
+    },
+    "sociabilite": {
+     "s": 0.4443,
+     "w": 1.6667
+    }
+   }
+  },
+  "mutisnou": {
+   "marais": {
+    "audace": {
+     "s": 0.7759,
+     "w": 0.3333
+    },
+    "taille": {
+     "s": 0.8197,
+     "w": 0.3333
+    },
+    "vitesse": {
+     "s": -0.1768,
+     "w": 0.3333
+    },
+    "sociabilite": {
+     "s": 0.2294,
+     "w": 0.3333
+    }
+   }
+  },
+  "memu": {
+   "foret": {
+    "audace": {
+     "s": 0.9366,
+     "w": 0.6667
+    },
+    "taille": {
+     "s": 1.343,
+     "w": 0.6667
+    },
+    "vitesse": {
+     "s": -0.0424,
+     "w": 0.6667
+    },
+    "sociabilite": {
+     "s": 0.8681,
+     "w": 0.6667
+    }
+   }
+  },
+  "lojafir": {
+   "marais": {
+    "audace": {
+     "s": 0.585,
+     "w": 0.3333
+    },
+    "taille": {
+     "s": -0.3838,
+     "w": 0.3333
+    },
+    "vitesse": {
+     "s": 0.5395,
+     "w": 0.3333
+    },
+    "sociabilite": {
+     "s": -0.0234,
+     "w": 0.3333
+    }
+   }
+  },
+  "dunvi": {
+   "prairie": {
+    "audace": {
+     "s": 0.3712,
+     "w": 0.3333
+    },
+    "taille": {
+     "s": 0.2191,
+     "w": 0.3333
+    },
+    "vitesse": {
+     "s": 0.1534,
+     "w": 0.3333
+    },
+    "sociabilite": {
+     "s": -0.1359,
+     "w": 0.3333
+    }
+   }
+  },
+  "lotays": {
+   "prairie": {
+    "audace": {
+     "s": 0.3232,
+     "w": 0.3333
+    },
+    "taille": {
+     "s": 0.4583,
+     "w": 0.3333
+    },
+    "vitesse": {
+     "s": 0.3496,
+     "w": 0.3333
+    },
+    "sociabilite": {
+     "s": -0.0519,
+     "w": 0.3333
+    }
+   }
+  },
+  "vael": {
+   "prairie": {
+    "audace": {
+     "s": -0.2211,
+     "w": 0.3333
+    },
+    "taille": {
+     "s": 0.0537,
+     "w": 0.3333
+    },
+    "vitesse": {
+     "s": 0.1103,
+     "w": 0.3333
+    },
+    "sociabilite": {
+     "s": 0.1542,
+     "w": 0.3333
+    }
+   }
+  },
+  "belgrane": {
+   "prairie": {
+    "audace": {
+     "s": -0.5329,
+     "w": 0.3333
+    },
+    "taille": {
+     "s": 0.5519,
+     "w": 0.3333
+    },
+    "vitesse": {
+     "s": -0.0733,
+     "w": 0.3333
+    },
+    "sociabilite": {
+     "s": 0.0863,
+     "w": 0.3333
+    }
+   }
+  }
+ },
+ "derniere_lecture": "2026-10-31T05:50:11.804069+00:00"
 }

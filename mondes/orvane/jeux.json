@@ -1,5 +1,11 @@
 [
  {
+  "id": "last-embers",
+  "nom": "Last Embers",
+  "actif": true,
+  "exposition": {}
+ },
+ {
   "id": "stone-valley",
   "nom": "Stone Valley",
   "actif": true,
